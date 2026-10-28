@@ -366,6 +366,9 @@ body { font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, R
 #setApp .sline.err { box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 50%, transparent) inset; }
 #setApp .sres { margin-top: 14px; padding: 14px; border-radius: 18px; background: color-mix(in srgb, var(--ok, #0a7d32) 10%, transparent); border-left: 4px solid var(--ok, #0a7d32); }
 #setApp .sres ul { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; }
+@media (max-width: 560px) { #segFm label { white-space: normal; font-size: 13px; line-height: 1.25; display: flex; align-items: center; justify-content: center; } }
+/* chạy trong Word (khung add-in hẹp): bỏ băng rôn lớn cho gọn */
+.in-office .banner { display: none; } .in-office .tooltabs button small { display: none; } .in-office .tooltabs button { min-width: 0; padding: 9px 10px; font-size: 14px; }
 @media (max-width: 560px) { #setApp .sline { grid-template-columns: 30px 1fr; } #setApp .seg label { white-space: normal; font-size: 13px; } #setApp .sline .ctl { grid-column: 1 / -1; justify-content: flex-start; } }
 body[data-tool="set"] .wizard, body[data-tool="set"] #dock { display: none !important; }
 body[data-tool="one"] #setApp { display: none !important; }
@@ -755,7 +758,7 @@ body[data-tool="one"] #setApp { display: none !important; }
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.28-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.28-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4195,7 +4198,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
         openForms.clear(); drafts.clear(); filter = 'all';
         origTitle = r.title; setEssay(r.essayHint);
         $('dropT1').textContent = f.name;
-        $('dropT2').textContent = 'Nhận ra ' + r.order.length + ' câu hỏi · bấm để đổi file khác';
+        $('dropT2').textContent = 'Nhận ra ' + r.order.length + ' câu hỏi · ' + (window.__office ? 'bấm để đọc lại tài liệu đang mở' : 'bấm để đổi file khác');
         $('drop').classList.add('has');
         if (!$('tende').dataset.touched) $('tende').value = origTitle;
         if (!$('ma1').dataset.touched) $('ma1').value = toMaCD(rawName);
@@ -4723,6 +4726,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
     return { style: isM1() ? 'm1' : 'cur', p4: $('p4Keep').checked ? 'keep' : 'drop', ma1: $('ma1').value.trim() || toMaCD(rawName), titleMode: mode(), tende: $('tende').value.trim(), loai: $('loai').value.trim() || 'ĐỀ THI THAM KHẢO', mon: $('mon').value.trim() || 'VẬT LÍ', lop: $('lop').value.trim(), thoigian: $('tg').value.trim(), ma: $('ma').value.trim() || '001', keepTag: $('keepTag').checked, keepTheory: !!theory && $('keepTheory').checked, pageNum: $('pageNum').checked ? $('pnFmt').value : 'off' };
   }
   function save(blob, name) {
+    if (window.__saveHook && window.__saveHook(blob, name)) return;   // chạy trong Word (add-in): mở thành tài liệu Word mới
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click();
@@ -4746,7 +4750,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
         $('notesSum').textContent = 'Có ' + out.notes.length + ' mục nên xem lại'; $('notes').hidden = false;
       } else $('notes').hidden = true;
       $('notes').open = false;
-      if (fileHandle && fileHandle.createWritable) { $('owTxt').textContent = isM1() ? 'Thay file gốc "' + fileHandle.name + '" bằng bản Giáo viên theo chuẩn ngân hàng đề. Công cụ tải về một bản sao lưu của file gốc trước khi ghi.' : 'Ghi bản Giáo viên (đủ đáp án, lời giải, giữ tiêu đề gốc) đè lên "' + fileHandle.name + '". Một bản sao lưu của file gốc sẽ được tải về trước.'; $('owBtn').disabled = false; }
+      if (fileHandle && fileHandle.createWritable) { $('owTxt').textContent = isM1() ? 'Thay file gốc "' + fileHandle.name + '" bằng bản Giáo viên theo chuẩn ngân hàng đề. Công cụ tải về một bản sao lưu của file gốc trước khi ghi.' : 'Ghi bản Giáo viên (đủ đáp án, lời giải, giữ tiêu đề gốc) đè lên "' + fileHandle.name + '". Một bản sao lưu của file gốc sẽ được tải về trước.'; if (window.__office) $('owTxt').textContent = 'Thay nội dung tài liệu đang mở trong Word bằng bản Giáo viên đã định dạng' + (isM1() ? ' theo chuẩn ngân hàng đề.' : ' (đủ đáp án, lời giải, giữ tiêu đề gốc).') + ' File trên máy chỉ đổi khi bạn bấm Lưu.'; $('owBtn').disabled = false; }
       else { $('owTxt').textContent = 'Chỉ dùng được trên Chrome hoặc Edge và khi chọn file bằng nút "Bấm để chọn file" ở bước 1 (kéo thả hoặc trình duyệt khác không ghi đè trực tiếp được).'; $('owBtn').disabled = true; }
       go(3);
     } catch (e) { setStatus('status', 'Không xử lý được: ' + (e && e.message ? e.message : e), 'err'); if (cur === 0) setStatus('status1', 'Không xử lý được: ' + (e && e.message ? e.message : e), 'err'); }
@@ -4862,6 +4866,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
     $('owMsg').textContent = isM1()
       ? 'File "' + (fileHandle ? fileHandle.name : '') + '" sẽ bị thay hoàn toàn bằng bản Giáo viên theo chuẩn ngân hàng đề (đã gắn nhãn, đánh số lại, bỏ tiêu đề cũ). Trước khi ghi, công cụ tải về bản sao lưu "' + rawName + '_saoluu.docx" vào thư mục Tải về của trình duyệt. Hãy kiểm tra bản sao lưu đã có trong thư mục đó rồi mới bấm "Ghi đè".'
       : 'File "' + (fileHandle ? fileHandle.name : '') + '" sẽ được thay bằng bản Giáo viên đã chỉnh (giữ tiêu đề gốc). Bản sao lưu "' + rawName + '_saoluu.docx" được tải về trước khi ghi.';
+    if (window.__office) $('owMsg').textContent = 'Nội dung tài liệu đang mở trong Word sẽ được thay bằng bản Giáo viên đã định dạng' + (isM1() ? ' theo chuẩn ngân hàng đề' : ' (giữ tiêu đề gốc)') + '. File trên máy chỉ đổi khi bạn bấm Lưu (Ctrl+S); muốn quay lại thì bấm Ctrl+Z hoặc đóng không lưu.';
     $('dlgOw').showModal();
   }
   $('owBtn').addEventListener('click', openOw);
@@ -4872,9 +4877,10 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
       const perm = await fileHandle.requestPermission({ mode: 'readwrite' });
       if (perm !== 'granted') throw new Error('Trình duyệt không cấp quyền ghi file.');
       const raw = isM1() ? await window.DeThi.generate(curOpt(), keptIds()) : await window.DeThi.generate(curOpt(), keptIds(), { only: ['GV'], titleMode: 'keep' });
-      save(new Blob([rawBuf]), rawName + '_saoluu.docx');
+      if (!window.__office) save(new Blob([rawBuf]), rawName + '_saoluu.docx');
       const w = await fileHandle.createWritable();
       await w.write(raw.gv); await w.close();
+      if (window.__office) { $('owTxt').textContent = 'Đã thay nội dung tài liệu đang mở bằng bản đã định dạng. File trên máy chưa đổi: bấm Ctrl+S để lưu, hoặc Ctrl+Z để quay lại.'; toast('Đã định dạng ngay trên tài liệu đang mở. Bấm Ctrl+S để lưu, Ctrl+Z để quay lại.'); return; }
       $('owTxt').textContent = 'Đã ghi đè "' + fileHandle.name + '" (bản sao lưu đã tải về).';
       toast('Đã ghi đè "' + fileHandle.name + '". Bản sao lưu "' + rawName + '_saoluu.docx" nằm trong thư mục Tải về.');
     } catch (err) { $('owTxt').textContent = 'Không ghi đè được: ' + (err && err.message ? err.message : err); toast('Không ghi đè được: ' + (err && err.message ? err.message : err)); }
@@ -4935,7 +4941,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.10.28-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.10.28-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
@@ -4986,7 +4992,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
       out = null;
       order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
       openForms.clear(); drafts.clear(); filter = 'all';
-      $('dropT2').textContent = 'Nhận ra ' + r.order.length + ' câu hỏi · bấm để đổi file khác';
+      $('dropT2').textContent = 'Nhận ra ' + r.order.length + ' câu hỏi · ' + (window.__office ? 'bấm để đọc lại tài liệu đang mở' : 'bấm để đổi file khác');
       renderRaw(r.raw); L.scrollTop = st;
       renderReview(); refreshPreview();
     } catch (err) { setStatus('status1', 'Không đọc lại được: ' + (err && err.message ? err.message : err), 'err'); }
@@ -5106,6 +5112,8 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
     setBusy = false; setRender();
   });
   toolTab(pref('tool') === 'set' ? 'set' : 'one'); setRender();
+  // cầu nối cho bản chạy trong Word (add-in)
+  window.__dtApi = { setFile: (f) => setFile(f), setHandle: (h) => { fileHandle = h; syncDock(); }, resetAll: () => { try { resetAll(); } catch (e) { /* bỏ qua */ } }, toast };
   locUI(); applyPrefs(); syncDock();
   if (pref('p4') === 'keep') $('p4Keep').checked = true;
   applyFm();
