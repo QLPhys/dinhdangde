@@ -199,7 +199,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.29.3</span>
+    <span class="ver">v2026.10.29.4</span>
   </footer>
 </div>
 <script>
@@ -2132,6 +2132,58 @@ function runsOrig(toks) {
   flush();
   return out;
 }
+// màu / kiểu chữ thống nhất cho khối lời giải ở bản GV (kiểu Hiện tại); kiểu Ngân hàng đề giữ nguyên
+let SOLSTYLE = '';
+const SOL_STYLES = {
+  // thầy chốt (29/10): lời giải chữ đen, bỏ nghiêng, cả khối "Hướng dẫn giải" trên nền xanh lá nhạt
+  std: { color: '000000', fill: 'EEF7E9' },
+};
+const RPR_AFTER_COLOR = ['spacing', 'w', 'kern', 'position', 'sz', 'szCs', 'highlight', 'u', 'effect', 'bdr', 'shd', 'fitText', 'vertAlign', 'rtl', 'cs', 'em', 'lang', 'eastAsianLayout', 'specVanish', 'oMath'];
+const RPR_AFTER_SZ = ['highlight', 'u', 'effect', 'bdr', 'shd', 'fitText', 'vertAlign', 'rtl', 'cs', 'em', 'lang', 'eastAsianLayout', 'specVanish', 'oMath'];
+const PPR_AFTER_SHD = ['tabs', 'suppressAutoHyphens', 'kinsoku', 'wordWrap', 'overflowPunct', 'topLinePunct', 'autoSpaceDE', 'autoSpaceDN', 'bidi', 'adjustRightInd', 'snapToGrid', 'spacing', 'ind', 'contextualSpacing', 'mirrorIndents', 'suppressOverlap', 'jc', 'textDirection', 'textAlignment', 'textboxTightWrap', 'outlineLvl', 'divId', 'cnfStyle', 'rPr', 'sectPr', 'pPrChange'];
+function styleSolBlock(elems) {
+  const cfg = SOL_STYLES[SOLSTYLE];
+  if (!cfg || STYLE === 'm1') return elems;
+  const col = cfg.color;
+  const put = (parent, node, after) => parent.insertBefore(node, Array.from(parent.children).find((c) => after.includes(c.localName)) || null);
+  elems.forEach((el, k) => {
+    if (!isW(el, 'p')) return;
+    let pPr = findW(el, 'pPr'); if (!pPr) { pPr = mk('pPr'); el.insertBefore(pPr, el.firstChild); }
+    if (cfg.bar || cfg.box) {
+      Array.from(pPr.children).filter((c) => isW(c, 'pBdr')).forEach((c) => pPr.removeChild(c));
+      const bd = mk('pBdr');
+      const side = (nm, sz, color, space) => { const e = mk(nm); e.setAttributeNS(NS.w, 'w:val', 'single'); e.setAttributeNS(NS.w, 'w:sz', String(sz)); e.setAttributeNS(NS.w, 'w:space', String(space)); e.setAttributeNS(NS.w, 'w:color', color); bd.appendChild(e); };
+      if (cfg.box) { side('top', 6, cfg.box, 2); side('left', 6, cfg.box, 4); side('bottom', 6, cfg.box, 2); side('right', 6, cfg.box, 4); }
+      else side('left', 24, cfg.bar, 8);
+      put(pPr, bd, ['shd'].concat(PPR_AFTER_SHD));
+    }
+    if (cfg.fill) {
+      Array.from(pPr.children).filter((c) => isW(c, 'shd')).forEach((c) => pPr.removeChild(c));
+      const shd = mk('shd'); shd.setAttributeNS(NS.w, 'w:val', 'clear'); shd.setAttributeNS(NS.w, 'w:color', 'auto'); shd.setAttributeNS(NS.w, 'w:fill', cfg.fill);
+      put(pPr, shd, PPR_AFTER_SHD);
+    }
+    if (k === 0) return;   // dòng tiêu đề "Hướng dẫn giải" giữ màu đỏ
+    for (const rPr of Array.from(el.getElementsByTagNameNS(NS.w, 'rPr'))) {
+      if (rPr.parentNode && rPr.parentNode.localName === 'pPr') continue;
+      const c0 = Array.from(rPr.children).find((c) => isW(c, 'color'));
+      const cv = c0 ? (wattr(c0, 'val') || '').toUpperCase() : '';
+      if (cfg.sz) {
+        Array.from(rPr.children).filter((c) => isW(c, 'sz') || isW(c, 'szCs')).forEach((c) => rPr.removeChild(c));
+        const a1 = mk('sz'); a1.setAttributeNS(NS.w, 'w:val', String(cfg.sz)); const a2 = mk('szCs'); a2.setAttributeNS(NS.w, 'w:val', String(cfg.sz));
+        put(rPr, a1, RPR_AFTER_SZ); put(rPr, a2, RPR_AFTER_SZ);
+      }
+      if (cv === BLUE || cv === RED) continue;   // chữ "đúng/sai", nhãn ý, dấu đáp án: giữ nguyên
+      Array.from(rPr.children).filter((c) => isW(c, 'i') || isW(c, 'iCs') || isW(c, 'color')).forEach((c) => rPr.removeChild(c));
+      const cc = mk('color'); cc.setAttributeNS(NS.w, 'w:val', col);
+      put(rPr, cc, RPR_AFTER_COLOR);
+    }
+    for (const r of Array.from(el.getElementsByTagNameNS(NS.w, 'r'))) {
+      if (findW(r, 'rPr') || !findW(r, 't')) continue;
+      const rPr = mk('rPr'), cc = mk('color'); cc.setAttributeNS(NS.w, 'w:val', col); rPr.appendChild(cc); r.insertBefore(rPr, r.firstChild);
+    }
+  });
+  return elems;
+}
 function buildSolParas(q) {
   if (q.part === 2 && Object.keys(stmtTruth(q)).length) return buildSolParasTF(q);
   const out = [solHeader()];
@@ -2289,7 +2341,7 @@ function buildBody(qs, showAnswer, headerElems) {
         if (m && !/[\uFFFC]/.test(m[1])) { ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
       }
       if (showAnswer && q.part === 3 && ansT) body.push(STYLE === 'm1' ? makeP([lit('Đáp án: ' + ansT, { bold: true, color: BLUE })], { keepNext: true, before: 120 }) : makeP([lit('Đáp án: ', { bold: true, color: BLUE }), lit(ansT, { bold: true })], { keepNext: true }));
-      if (showAnswer && (qs2.sol.some((t) => hasContent(trim(t))) || (q.part === 2 && Object.keys(stmtTruth(q)).length))) body.push(...buildSolParas(qs2));
+      if (showAnswer && (qs2.sol.some((t) => hasContent(trim(t))) || (q.part === 2 && Object.keys(stmtTruth(q)).length))) body.push(...styleSolBlock(buildSolParas(qs2)));
     });
   }
   if (STYLE !== 'm1') body.push(makeP([lit('--------------------- HẾT ------------------------', { bold: true })], { jc: 'center', before: 120 }));
@@ -3127,6 +3179,7 @@ async function generate(opt, ids, extra) {
     if (dropP4) extra.only = ['GV'];
   }
   KEEP_TAG = !!opt.keepTag;
+  SOLSTYLE = opt.solStyle === 'none' ? '' : (opt.solStyle && SOL_STYLES[opt.solStyle] ? opt.solStyle : 'std');
   if (!opt.tende) opt.tende = S.title || 'ĐỀ';
   const titleMode = extra.titleMode || opt.titleMode;
   const root = S.root, body = S.body, files = S.files;
@@ -4421,7 +4474,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.29.3', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.29.4', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
