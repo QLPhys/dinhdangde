@@ -13,10 +13,14 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 button:disabled { opacity: .5; cursor: default; }
 button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
-.hd { padding: 12px 14px 10px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; position: sticky; top: 0; z-index: 5; }
+.hd { padding: 8px 14px 6px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; z-index: 5; }
 .brand { display: flex; align-items: center; gap: 8px; }
 .logo { width: 24px; height: 24px; border-radius: 6px; background: var(--blue); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .brand b { font-size: 15px; margin-right: auto; }
+.brand .nm { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip { flex: none; border-radius: 99px; padding: 0 10px; height: 28px; display: inline-flex; align-items: center; font-size: 12.5px; font-weight: 700; }
+.chip.cw { background: var(--warnBg); border: 1px solid var(--warnBd); color: var(--warnInk); } .chip.ck { background: var(--okBg); border: 1px solid var(--okBd); color: var(--okInk); }
+.cnt { font-size: 12px; color: var(--ink2); padding-left: 32px; } .cnt b { color: var(--ink); }
 .ibtn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line2); background: #fff; color: var(--blueT); font-size: 15px; line-height: 1; padding: 0; }
 .hdbody { display: flex; flex-direction: column; gap: 8px; }
 .mini { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink2); flex-wrap: wrap; } .mini .lnk { margin-left: auto; color: var(--warnInk); font-weight: 600; }
@@ -31,10 +35,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .warnbar b { font-weight: 600; } .warnbar span { margin-left: auto; font-size: 12.5px; }
 .okbar { background: var(--okBg); border: 1px solid var(--okBd); color: var(--okInk); border-radius: 6px; padding: 8px 10px; font-size: 13px; }
 .sec { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-.pri { background: var(--blue); color: #fff; border: 0; border-radius: 8px; padding: 11px 14px; min-height: 56px; text-align: left; display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.pri { background: var(--blue); color: #fff; border: 0; border-radius: 8px; padding: 9px 14px; min-height: 44px; justify-content: center; text-align: left; display: flex; flex-direction: column; gap: 2px; width: 100%; }
 .pri b { font-size: 16px; } .pri small { font-size: 12px; color: #e3edff; }
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.sec2 { background: var(--card); color: var(--ink); border: 1px solid var(--line2); border-radius: 8px; padding: 8px 10px; min-height: 52px; text-align: left; display: flex; flex-direction: column; gap: 2px; }
+.sec2 { background: var(--card); color: var(--ink); border: 1px solid var(--line2); border-radius: 8px; padding: 6px 10px; min-height: 36px; text-align: center; justify-content: center; display: flex; flex-direction: column; gap: 2px; }
 .sec2 b { font-size: 13.5px; font-weight: 600; } .sec2 small { font-size: 11.5px; color: var(--mut); }
 .card { margin: 0 14px 12px; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; gap: 9px; }
 .card h3 { margin: 0; font-size: 13px; display: flex; align-items: center; gap: 8px; } .card h3 small { margin-left: auto; font-weight: 400; font-size: 11.5px; color: var(--mut); }
@@ -57,14 +61,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .lbl { font-size: 12px; color: var(--mut); }
 .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .row input[type=number] { width: 52px; min-height: 34px; border: 1px solid var(--line2); border-radius: 6px; text-align: center; }
-.opts { margin: 0 14px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
-.opts summary { padding: 10px 12px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.opts { margin: 12px 14px 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.opts summary { padding: 8px 12px; cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; min-height: 36px; }
+.opts summary .tg { margin-left: auto; font-style: normal; font-size: 12px; color: var(--blueT); white-space: nowrap; } .opts summary .tg::after { content: 'Đổi ›'; } .opts[open] summary .tg::after { content: 'Thu gọn ▴'; }
+.opts[open] summary span { display: none; }
 .opts summary::-webkit-details-marker { display: none; }
-.opts summary b { font-size: 13px; } .opts summary b::before { content: '▸ '; color: var(--blueT); } .opts[open] summary b::before { content: '▾ '; }
-.opts summary span { font-size: 12px; color: var(--mut); padding-left: 14px; }
-.ob { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 12px; }
+.opts summary b { font-size: 13px; white-space: nowrap; }
+.opts summary span { font-size: 12px; color: var(--mut); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ob { padding: 0 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+.ob .lbl { margin-bottom: 3px !important; }
 .seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #e8edf5; border-radius: 8px; padding: 3px; gap: 3px; }
-.seg button { border: 0; border-radius: 6px; min-height: 38px; font-size: 12.5px; background: transparent; color: var(--ink2); padding: 2px 4px; }
+.seg button { border: 0; border-radius: 6px; min-height: 32px; font-size: 12.5px; background: transparent; color: var(--ink2); padding: 2px 4px; }
 .seg button.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
 .fields { display: flex; flex-direction: column; gap: 5px; padding: 8px; background: var(--bg); border-radius: 6px; }
 .fields label { font-size: 12px; color: var(--ink2); }
@@ -98,28 +105,23 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .qi .acts button.drop.on { background: var(--red); border-color: var(--red); color: #fff; }
 .note { font-size: 12px; color: var(--mut); padding: 0 2px; }
 .back { width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--line2); background: #fff; font-size: 16px; }
+.chk .sum span { color: var(--okInk); } .chk .sum .m { color: var(--mut); }
+.chk .sum { align-items: baseline; } .ed { margin-left: auto; font-size: 12.5px; min-height: 0; white-space: nowrap; flex: none; }
+.chumd summary { cursor: pointer; font-size: 12.5px; color: var(--blueT); list-style: none; min-height: 26px; display: flex; align-items: center; } .chumd summary::-webkit-details-marker { display: none; }
+.chumd[open] { display: flex; flex-direction: column; gap: 6px; }
 [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <div id="app">
   <header class="hd">
-    <div class="brand"><div class="logo" aria-hidden="true">Đ</div><b>Định dạng nhanh</b>
+    <div class="brand"><div class="logo" aria-hidden="true">Đ</div>
+      <div class="nm" id="fname" title="">Đang mở…</div>
+      <button class="chip cw" id="warnbar" type="button" hidden aria-label="Mở danh sách câu cần xem"><span id="warnTx">⚠ 0</span></button>
+      <span class="chip ck" id="okbar" hidden title="Các câu đã đủ cấu trúc" aria-label="Các câu đã đủ cấu trúc">✓</span>
       <button class="ibtn" id="recheck" type="button" aria-label="Kiểm tra lại" title="Kiểm tra lại (đọc lại đề)">⟳</button>
-      <button class="ibtn" id="hdToggle" type="button" aria-expanded="true" aria-controls="hdBody" title="Thu gọn / mở rộng phần tổng quan">▴</button>
     </div>
-    <div class="mini" id="hdMini" hidden><span id="miniTx"></span><button class="lnk" id="miniWarn" type="button" hidden></button></div>
-    <div id="hdBody" class="hdbody">
-    <div class="file">
-      <span aria-hidden="true">📄</span>
-      <div class="nm" id="fname">Đang mở…</div>
-    </div>
-    <div class="counts" id="counts" aria-label="Số câu từng phần">
-      <div><b id="c1">–</b><span>Phần I</span></div><div><b id="c2">–</b><span>Phần II</span></div><div><b id="c3">–</b><span>Phần III</span></div><div><b id="c4">–</b><span>Phần IV</span></div>
-    </div>
-    <button class="warnbar" id="warnbar" type="button" hidden><b id="warnTx">0 câu cần xem</b><span>Xem danh sách ›</span></button>
-    <div class="okbar" id="okbar" hidden>Các câu đã đủ cấu trúc.</div>
-    </div>
+    <div class="cnt" id="counts" aria-label="Số câu từng phần">I <b id="c1">–</b> · II <b id="c2">–</b> · III <b id="c3">–</b> · IV <b id="c4">–</b> câu</div>
   </header>
 
   <main id="vMain">
@@ -127,35 +129,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
     <div class="err" id="err" role="alert" hidden></div>
     <div class="res" id="res" hidden></div>
 
-    <div class="sec">
-      <button class="pri" id="bFormat" type="button" disabled><b>Định dạng ngay</b><small id="bFormatSub">Thay file đang mở bằng bản GV · mở bản HS ở cửa sổ mới</small></button>
-      <div class="two">
-        <button class="sec2" id="bHS" type="button" disabled><b>Tạo bản Học sinh</b><small>Mở ở cửa sổ mới</small></button>
-        <button class="sec2" id="bRenum" type="button" disabled><b>Chỉ đánh lại số câu</b><small>Giữ nguyên trình bày</small></button>
-      </div>
-    </div>
-
-    <section class="card" aria-labelledby="curH">
-      <h3 id="curH">Câu đang đặt con nháy <small>tự cập nhật</small></h3>
-      <div class="where" id="where"><span>Bấm vào một câu trong Word để xem.</span></div>
-      <div class="chk" id="chk"></div>
-      <div class="fix" id="fix" hidden></div>
-      <div class="hr"></div>
-      <div class="lbl" id="tagLbl">Mức độ (tự ghép tiền tố TN / DS / TLN theo phần)</div>
-      <div class="grid5" id="tagBtns">
-        <button class="kb" type="button" data-lv="B">B</button><button class="kb" type="button" data-lv="H">H</button><button class="kb" type="button" data-lv="VD">VD</button><button class="kb" type="button" data-lv="VDC">VDC</button><button class="kb del" type="button" data-lv="" aria-label="Xóa nhãn mức độ">Xóa</button>
-      </div>
-      <div class="hr"></div>
-      <div class="lbl">Câu hỏi chùm: đặt con nháy ở đoạn câu dẫn</div>
-      <div class="row">
-        <label for="chumN">Dùng cho</label><input id="chumN" type="number" min="1" max="12" value="2"><span>câu đi sau</span>
-        <button class="kb" id="bChum" type="button" style="margin-left:auto">Gắn [CHUM-2]</button>
-        <button class="kb del" id="bChumDel" type="button" aria-label="Xóa nhãn chùm ở đoạn đang chọn">Xóa</button>
-      </div>
-    </section>
-
-    <details class="opts" id="opts">
-      <summary><b>Tùy chọn</b><span id="optSum"></span></summary>
+    <details class="opts" id="opts" open>
+      <summary><b>⚙ Tùy chọn</b><span id="optSum"></span><em class="tg"></em></summary>
       <div class="ob">
         <div><div class="lbl" style="margin-bottom:5px">Kiểu trình bày</div>
           <div class="seg" id="segStyle"><button type="button" data-v="cur">Hiện tại · GV + HS</button><button type="button" data-v="m1">Ngân hàng đề</button></div></div>
@@ -177,6 +152,35 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
         <label class="cbx"><input type="checkbox" id="fOpenHS">Định dạng ngay xong thì tự mở bản HS</label>
       </div>
     </details>
+
+    <div class="sec">
+      <button class="pri" id="bFormat" type="button" disabled><b>Định dạng ngay</b></button>
+      <div class="two">
+        <button class="sec2" id="bHS" type="button" disabled title="Tạo bản Học sinh, mở ở cửa sổ Word mới; file đang mở giữ nguyên"><b>Tạo bản HS</b></button>
+        <button class="sec2" id="bRenum" type="button" disabled title="Chỉ đánh lại số câu liên tục, giữ nguyên trình bày"><b>Chỉ đánh lại số câu</b></button>
+      </div>
+    </div>
+
+    <section class="card" aria-labelledby="curH">
+      <h3 id="curH">Câu đang đặt con nháy <small>tự cập nhật</small></h3>
+      <div class="where" id="where"><span>Bấm vào một câu trong Word để xem.</span></div>
+      <div class="chk" id="chk"></div>
+      <div class="fix" id="fix" hidden></div>
+      <div class="hr"></div>
+      <div class="lbl" id="tagLbl">Mức độ</div>
+      <div class="grid5" id="tagBtns">
+        <button class="kb" type="button" data-lv="B">B</button><button class="kb" type="button" data-lv="H">H</button><button class="kb" type="button" data-lv="VD">VD</button><button class="kb" type="button" data-lv="VDC">VDC</button><button class="kb del" type="button" data-lv="" aria-label="Xóa nhãn mức độ">Xóa</button>
+      </div>
+      <details class="chumd" id="chumD"><summary>Gắn chùm…</summary>
+      <div class="lbl">Đặt con nháy ở đoạn dữ kiện dùng chung (câu dẫn chùm)</div>
+      <div class="row">
+        <label for="chumN">Dùng cho</label><input id="chumN" type="number" min="1" max="12" value="2"><span>câu đi sau</span>
+        <button class="kb" id="bChum" type="button" style="margin-left:auto">Gắn [CHUM-2]</button>
+        <button class="kb del" id="bChumDel" type="button" aria-label="Xóa nhãn chùm ở đoạn đang chọn">Xóa</button>
+      </div>
+      </details>
+    </section>
+
   </main>
 
   <main id="vList" hidden>
@@ -195,7 +199,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.29-a6</span>
+    <span class="ver">v2026.10.29-a7</span>
   </footer>
 </div>
 <script>
@@ -3540,8 +3544,8 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     $('p4Keep').checked = !!O.p4;
     $('fPn').value = O.pn; $('fOpenHS').checked = !!O.openHS;
     $('optSum').textContent = (O.style === 'm1' ? 'Ngân hàng đề' : 'Hiện tại (GV + HS)') + ' · ' + (O.titleMode === 'new' ? 'Tiêu đề mới' : 'Giữ tiêu đề gốc') + ' · ' + $('fPn').selectedOptions[0].textContent;
-    $('bFormatSub').textContent = O.style === 'm1' ? 'Thay file đang mở bằng bản GV chuẩn ngân hàng đề' : 'Thay file đang mở bằng bản GV' + (O.openHS ? ' · mở bản HS ở cửa sổ mới' : '');
-    $('tagLbl').textContent = 'Mức độ (tự ghép tiền tố TN / DS / TLN theo phần)' + (O.style === 'm1' ? ' · bắt buộc khi xuất ngân hàng đề' : '');
+    $('bFormat').title = O.style === 'm1' ? 'Thay file đang mở bằng bản GV chuẩn ngân hàng đề' : 'Thay file đang mở bằng bản GV' + (O.openHS ? ' · mở bản HS ở cửa sổ mới' : '');
+    $('tagLbl').textContent = 'Mức độ' + (O.style === 'm1' ? ' · bắt buộc với ngân hàng đề' : ''); $('tagLbl').title = 'Tự ghép tiền tố TN / DS / TLN theo phần';
   }
   ['fTruong', 'fTende', 'fMon', 'fLop', 'fTg', 'fMa'].forEach((id) => {
     const k = { fTruong: 'truong', fTende: 'tende', fMon: 'mon', fLop: 'lop', fTg: 'tg', fMa: 'ma' }[id];
@@ -3601,7 +3605,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     loading = true;
     if (!quiet) { setBusy('Đang đọc đề…'); showErr(''); }
     try {
-      fileName = docName(); $('fname').textContent = fileName;
+      fileName = docName(); $('fname').textContent = fileName; $('fname').title = fileName;
       const u8 = await readDoc();
       try { R = await window.DeThi.load(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength)); }
       catch (e) { R = null; renderCounts(); renderList(); showErr('Chưa nhận ra câu hỏi trong tài liệu này: ' + (e && e.message ? e.message : e)); return; }
@@ -3649,9 +3653,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     ['c1', 'c2', 'c3', 'c4'].forEach((id, i) => { $(id).textContent = R ? c[i] : '–'; });
     const n = R ? R.views.filter((v, i) => issuesAt(i).length).length : 0;
     $('warnbar').hidden = !R || !n; $('okbar').hidden = !R || !!n;
-    $('warnTx').textContent = n + ' câu cần xem';
-    $('miniTx').textContent = R ? fileName.replace(/\.docx$/i, '').slice(0, 26) + ' · ' + c.join(' / ') + ' câu' : '';
-    $('miniWarn').hidden = !R || !n; $('miniWarn').textContent = '⚠ ' + n + ' cần xem ›';
+    $('warnTx').textContent = '⚠ ' + n; $('warnbar').title = n + ' câu cần xem · bấm để mở danh sách'; $('warnbar').setAttribute('aria-label', n + ' câu cần xem, mở danh sách');
     const total = R ? R.views.length - dropped.size : 0;
     $('bFormat2Tx').textContent = 'Định dạng ngay (' + total + ' câu)';
     setBusy(busy ? $('busyTx').textContent : '');
@@ -3792,6 +3794,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     if (rg.kind === 'head') { W.innerHTML = '<b>' + PN[rg.part] + '</b><span>Tiêu đề phần · ' + PNAME[rg.part] + '</span>'; renderList(); return; }
     if (rg.kind === 'lead') {
       const m = R.map.qs[rg.i];
+      $('chumD').open = true;
       W.innerHTML = '<b>Đoạn dẫn chùm</b><span>' + PN[m.part] + ' · dùng cho ' + m.clusterN + ' câu từ Câu ' + m.k + '</span>';
       renderList(); return;
     }
@@ -3834,7 +3837,9 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     if (m.lead >= 0) na('Thuộc chùm câu hỏi (dữ kiện dùng chung cho ' + m.clusterN + ' câu)');
     const other = (d ? d.warn : v.warn || []).filter((w) => !skipWarn(w) && !/Chưa (đánh dấu|chọn) đáp án|Thiếu đáp án|Thiếu ý|Chưa có đáp án số|Chưa biết ý nào|Có ý chưa có đáp án/.test(w));
     other.forEach((w) => bad(w));
-    C.innerHTML = rows.map(([c, i, t]) => '<div class="' + c + '"><i aria-hidden="true">' + i + '</i><span>' + esc(t) + '</span></div>').join('');
+    const bads = rows.filter((r) => r[0] === 'bad'), goods = rows.filter((r) => r[0] === 'ok').map((r) => shortOf(r[2])), nas = rows.filter((r) => r[0] === 'na').map((r) => shortOf(r[2]));
+    C.innerHTML = bads.map(([c, i, t]) => '<div class="bad"><i aria-hidden="true">!</i><span>' + esc(t) + '</span></div>').join('')
+      + (goods.length || nas.length ? '<div class="sum" title="' + esc(rows.filter((r) => r[0] !== 'bad').map((r) => r[2]).join('\n')) + '"><i aria-hidden="true">' + (goods.length ? '✓' : '–') + '</i><span>' + esc(goods.join(' · ')) + (nas.length ? '<span class="m">' + (goods.length ? ' · ' : '') + esc(nas.join(' · ')) + '</span>' : '') + '</span></div>' : '');
     // đồng bộ danh sách "cần xem" và dòng tổng quan với kết quả vừa kiểm tra của câu này
     if (d) {
       const before = issuesAt(rg.i).length;
@@ -3842,9 +3847,35 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
       if (live[curKey].length) resolved.delete(curKey); else if (before && !$('vList').hidden) resolved.add(curKey);
       renderCounts();
     }
-    if (fixes.length) { F.innerHTML = fixes.join(''); F.hidden = false; F.className = 'fix' + (rows.some((r) => r[0] === 'bad') ? '' : ' calm'); }
+    if (fixes.length) {
+      const hasBad = rows.some((r) => r[0] === 'bad');
+      F.innerHTML = fixes.join(''); F.className = 'fix' + (hasBad ? '' : ' calm');
+      F.hidden = !hasBad && editKey !== curKey;
+      if (!hasBad) (C.querySelector('.sum') || W).insertAdjacentHTML('beforeend', '<button class="lnk ed" type="button" id="bEdit" aria-expanded="' + !F.hidden + '">' + (F.hidden ? 'Sửa ›' : 'Thu gọn ▴') + '</button>');
+    }
     setTagBtns(m.part <= 3 ? tagLv : 'none');
     renderList();
+  }
+  let editKey = null;
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#bEdit')) return;
+    const F = $('fix'); F.hidden = !F.hidden; editKey = F.hidden ? null : curKey;
+    e.target.textContent = F.hidden ? 'Sửa ›' : 'Thu gọn ▴'; e.target.setAttribute('aria-expanded', String(!F.hidden));
+  });
+  function shortOf(t) {
+    let m;
+    if ((m = /^Nhãn mức độ: \[(.+)\]/.exec(t))) return 'Nhãn ' + m[1];
+    if (/^Nhãn mức độ: chưa có/.test(t)) return 'chưa có nhãn';
+    if (/^Đủ 4 phương án/.test(t)) return '4 phương án';
+    if ((m = /^Đáp án đúng: (\S+)/.exec(t))) return 'Đáp án ' + m[1];
+    if (/^Đủ 4 ý/.test(t)) return '4 ý';
+    if ((m = /^Đúng\/Sai: (.*)/.exec(t))) return 'Đ/S ' + m[1].replace(/[a-d]\s+/g, '').replace(/\s*·\s*/g, '');
+    if ((m = /^Đáp án: (.*)/.exec(t))) return 'Đáp án ' + m[1];
+    if (/^Có hướng dẫn giải/.test(t)) return 'HDG';
+    if (/^Có lời giải/.test(t)) return 'Lời giải';
+    if (/^Hướng dẫn giải: chưa có/.test(t)) return 'chưa có HDG';
+    if ((m = /^Thuộc chùm.*cho (\d+) câu/.exec(t))) return 'chùm ' + m[1] + ' câu';
+    return t;
   }
   function setTagBtns(lv) {
     document.querySelectorAll('#tagBtns .kb').forEach((b) => { b.disabled = lv === 'none' || !R || !curKey; b.classList.toggle('on', !!lv && lv !== 'none' && b.dataset.lv === lv); });
@@ -4178,16 +4209,11 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.29-a6', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.29-a7', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
 
-  let hdOpen = true; try { hdOpen = localStorage.getItem('dethi.addin.hd') !== '0'; } catch (e) { /* bỏ qua */ }
-  function applyHd() { $('hdBody').hidden = !hdOpen; $('hdMini').hidden = hdOpen; $('hdToggle').textContent = hdOpen ? '▴' : '▾'; $('hdToggle').setAttribute('aria-expanded', String(hdOpen)); try { localStorage.setItem('dethi.addin.hd', hdOpen ? '1' : '0'); } catch (e) { /* bỏ qua */ } }
-  $('hdToggle').addEventListener('click', () => { hdOpen = !hdOpen; applyHd(); });
-  $('miniWarn').addEventListener('click', () => { $('vMain').hidden = true; $('vList').hidden = false; renderList(); });
-  applyHd();
   Office.onReady((info) => {
     if (info.host !== Office.HostType.Word) { showErr('Add-in này chỉ chạy trong Word.'); return; }
     try { Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, () => refreshCursor(false)); } catch (e) { log('event: ' + e); }
