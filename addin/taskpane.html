@@ -188,7 +188,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.29-a3</span>
+    <span class="ver">v2026.10.29-a4</span>
   </footer>
 </div>
 <script>
@@ -2654,6 +2654,12 @@ function wordMap(parsed, qs, wpi) {
   const heads = (parsed.heads || []).map((h) => ({ part: h.part, at: at(entEl(h.ei)) })).filter((h) => h.at >= 0);
   return { qs: out, heads, total: wpi.total || 0 };
 }
+// đáp án số ghi ở dòng đầu lời giải: "Đáp án: 0,01" / "Đáp số: 7,5" / "Kết quả = 4"
+function ans3FromSol(lines) {
+  const l = (lines || []).find((x) => String(x || '').trim());
+  const m = l && /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*([^\uFFFC]{1,30}?)\s*\.?\s*$/i.exec(l);
+  return m ? m[1] : null;
+}
 // kiểm tra nhanh MỘT câu từ đoạn OOXML Word đưa ra (range.getOoxml()): trả về cấu trúc và cảnh báo của câu đó
 function inspect(pkgXml, part) {
   const keepDOC = DOC, keepOLE = OLE, keepNUMQ = USE_NUMQ;
@@ -2681,7 +2687,7 @@ function inspect(pkgXml, part) {
       ansHow: q.part === 1 ? (q.keyAns && q.ans === q.keyAns ? 'bảng đáp án' : q.textAns && q.ans === q.textAns ? 'lời giải' : q.ans ? 'đánh dấu' : '') : '',
       stmts: q.part === 2 ? 'abcd'.split('').filter((L) => has(q.stmts[L])) : null,
       tf: q.part === 2 ? stmtTruth(q) : null,
-      ansText: q.part === 3 ? q.ansText || null : null,
+      ansText: q.part === 3 ? q.ansText || ans3FromSol(q.sol.map((t) => textOf(trim(t)))) : null,
       hasSol: q.sol.some((t) => hasContent(trim(t))),
       warn: q.warn.filter((w) => !isAutoWarn(w)),
     };
@@ -3495,7 +3501,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, setTag, setTags, tagState };
+window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, setTag, setTags, tagState };
 })();
 
 </script>
@@ -3758,7 +3764,7 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
       if (!miss.length) ok('Đúng/Sai: ' + 'abcd'.split('').map((L) => L + ' ' + tf[L]).join(' · ')); else bad('Chưa rõ Đúng/Sai ở ý ' + miss.join(', '));
       fixes.push('<p>Đặt Đúng/Sai từng ý (Đúng = gạch chân nhãn ý):</p>' + 'abcd'.split('').map((L) => '<div class="row" style="gap:6px"><b style="width:18px">' + L + '</b><button class="kb' + (tf[L] === 'Đ' ? ' on' : '') + '" type="button" data-tf="' + L + ':Đ" style="flex:1">Đúng</button><button class="kb' + (tf[L] === 'S' ? ' on' : '') + '" type="button" data-tf="' + L + ':S" style="flex:1">Sai</button></div>').join(''));
     } else if (m.part === 3) {
-      const at = d ? d.ansText : v.ansText;
+      const at = d ? d.ansText : (v.ansText || window.DeThi.ans3FromSol((v.sol || []).map((x) => String(x).replace(/⟦[^⟧]*⟧/g, '\uFFFC'))));
       if (at) ok('Đáp án: ' + at); else { bad('Chưa có đáp án số'); fixes.push('<button class="lnk" type="button" data-ins="ans">Thêm dòng "Đáp án:" cho câu này</button>'); }
     }
     const hasSol = d ? d.hasSol : !!(v.sol && v.sol.length);
@@ -4004,7 +4010,7 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.29-a3', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.29-a4', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
