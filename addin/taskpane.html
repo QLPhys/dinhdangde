@@ -81,7 +81,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .spin { width: 14px; height: 14px; border: 2px solid var(--line2); border-top-color: var(--blue); border-radius: 50%; animation: sp 0.8s linear infinite; } @keyframes sp { to { transform: rotate(360deg); } }
 .list { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 .qi { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
-.qi.cur { border: 2px solid var(--blue); }
+.qi.cur { border: 2px solid var(--blue); box-shadow: 0 0 0 3px rgba(10,108,255,.12); }
+.qi { position: relative; }
+.qi.next { border-color: var(--blue); border-style: dashed; }
+.qi .here { align-self: flex-start; font-size: 11.5px; font-weight: 700; color: #fff; background: var(--blue); border-radius: 99px; padding: 1px 8px; }
+.qi.done { background: #eefaf1; border-color: #9fd6ae; } .qi.done .go em.okm { color: #1f7a3a; font-weight: 600; }
+.lwhere { position: sticky; top: 0; z-index: 2; background: #eaf2ff; color: var(--blueT); border-bottom: 1px solid var(--line); font-size: 12.5px; padding: 6px 14px; }
 .qi.off { background: #f1f4f9; border-style: dashed; }
 .qi .go { background: none; border: 0; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 3px; }
 .qi .go b { font-size: 13.5px; color: var(--blueT); } .qi.off .go b { color: var(--ink2); text-decoration: line-through; }
@@ -179,6 +184,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
       <button class="back" id="bBack" type="button" aria-label="Quay lại khung chính">‹</button>
       <div style="display:flex;flex-direction:column"><b id="listTitle" style="font-size:15px">Câu cần xem</b><span class="lbl">Bấm vào câu để Word nhảy đến câu đó</span></div>
     </div>
+    <div class="lwhere" id="listWhere" role="status" hidden></div>
     <div class="list" id="list"></div>
     <div class="sec" style="border-top:1px solid var(--line);background:#fff">
       <button class="pri" id="bFormat2" type="button" style="min-height:48px;align-items:center"><b id="bFormat2Tx">Định dạng ngay</b></button>
@@ -189,7 +195,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.29-a5</span>
+    <span class="ver">v2026.10.29-a6</span>
   </footer>
 </div>
 <script>
@@ -3555,6 +3561,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   let anchorTx = {};      // chữ đầu của đoạn mốc lúc đọc (để biết bản đồ còn đúng không)
   let dropped = new Set(); // khóa "phần:thứ tự" của câu bị bỏ
   let kept = new Set();    // câu "vẫn định dạng" (đã xem)
+  let resolved = new Set(); // câu đã sửa đủ khi đang xem danh sách: còn hiện (màu xanh) đến khi làm mới
   let curKey = null, busy = false, loading = false, fileName = 'De.docx';
   const keyOf = (m) => m.part + ':' + m.k;
 
@@ -3608,6 +3615,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
       const valid = new Set(m.qs.map(keyOf));
       dropped = new Set(Array.from(dropped).filter((k) => valid.has(k)));
       kept = new Set(Array.from(kept).filter((k) => valid.has(k)));
+      resolved = quiet ? new Set(Array.from(resolved).filter((k) => valid.has(k))) : new Set();
       renderCounts(); renderList();
     } catch (e) { showErr('Không đọc được đề đang mở: ' + (e && e.message ? e.message : e)); }
     finally { loading = false; if (!quiet) setBusy(''); }
@@ -3651,20 +3659,68 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   function stemTx(v) { return (v.stem && v.stem[0] ? v.stem[0] : '').replace(/⟦[^⟧]*⟧/g, '…').replace(/\s+/g, ' ').trim().slice(0, 70); }
   function renderList() {
     const L = $('list');
-    if (!R) { L.innerHTML = '<p class="note">Chưa đọc được đề.</p>'; return; }
-    const items = R.views.map((v, i) => ({ v, m: R.map.qs[i], i })).filter((x) => issuesAt(x.i).length || dropped.has(keyOf(x.m)));
-    $('listTitle').textContent = items.length + ' câu cần xem';
+    if (!R) { L.innerHTML = '<p class="note">Chưa đọc được đề.</p>'; $('listWhere').hidden = true; return; }
+    // giữ ô đáp số đang gõ dở khi vẽ lại
+    const ae = document.activeElement, typing = ae && ae.classList && ae.classList.contains('ans3') && L.contains(ae) ? { q: ae.dataset.q, v: ae.value, s: ae.selectionStart } : null;
+    const keep = {}; L.querySelectorAll('input.ans3').forEach((x) => { if (x.value) keep[x.dataset.q] = x.value; });
+    const items = R.views.map((v, i) => ({ v, m: R.map.qs[i], i })).filter((x) => issuesAt(x.i).length || dropped.has(keyOf(x.m)) || resolved.has(keyOf(x.m)));
+    const nDone = items.filter((x) => !issuesAt(x.i).length && !dropped.has(keyOf(x.m))).length;
+    $('listTitle').textContent = (items.length - nDone) + ' câu cần xem' + (nDone ? ' · ' + nDone + ' đã sửa' : '');
     L.innerHTML = items.map(({ v, m, i }) => {
-      const k = keyOf(m), off = dropped.has(k), ok = kept.has(k);
-      return '<div class="qi' + (off ? ' off' : '') + (k === curKey ? ' cur' : '') + '" data-k="' + k + '">'
+      const k = keyOf(m), off = dropped.has(k), ok = kept.has(k), iss = issuesAt(i), done = !iss.length && !off;
+      return '<div class="qi' + (off ? ' off' : '') + (done ? ' done' : '') + (k === curKey ? ' cur' : '') + '" data-k="' + k + '" data-i="' + i + '">'
+        + (k === curKey ? '<span class="here">◀ Con nháy ở đây</span>' : '')
         + '<button class="go" type="button" data-go="' + m.start + '"><b>' + PN[m.part] + ' · Câu ' + m.k + (m.num && String(m.num) !== String(m.k) ? ' (gốc: Câu ' + esc(m.num) + ')' : '') + ' ›</b><span>' + esc(stemTx(v)) + '</span>'
-        + issuesAt(i).map((w) => '<em>' + esc(w) + '</em>').join('') + '</button>'
-        + (m.part === 3 && !off && issuesAt(i).some((w) => /đáp án số/.test(w)) ? '<div class="fix" style="padding:6px">' + ansForm(String(i), '', null) + '</div>' : '')
+        + (done ? '<em class="okm">✓ Đã đủ · rời danh sách khi bấm ⟳</em>' : iss.map((w) => '<em>' + esc(w) + '</em>').join('')) + '</button>'
+        + (m.part === 3 && !off && iss.some((w) => /đáp án số/.test(w)) ? '<div class="fix" style="padding:6px">' + ansForm(String(i), keep[String(i)] || '', null) + '</div>' : '')
         + (m.part <= 3 && needTag(i) && !off ? '<div class="tagrow" role="group" aria-label="Gắn nhãn mức độ cho câu này">' + ['B', 'H', 'VD', 'VDC'].map((lv) => '<button class="kb" type="button" data-qtag="' + i + ':' + lv + '">' + lv + '</button>').join('') + '</div>' : '')
-        + '<div class="acts"><button type="button" class="drop' + (off ? ' on' : '') + '" data-act="drop">' + (off ? 'Đã bỏ · lấy lại' : 'Bỏ câu này') + '</button><button type="button" class="' + (ok && !off ? 'on' : '') + '" data-act="keep">Vẫn định dạng</button></div></div>';
+        + (done ? '' : '<div class="acts"><button type="button" class="drop' + (off ? ' on' : '') + '" data-act="drop">' + (off ? 'Đã bỏ · lấy lại' : 'Bỏ câu này') + '</button><button type="button" class="' + (ok && !off ? 'on' : '') + '" data-act="keep">Vẫn định dạng</button></div>') + '</div>';
     }).join('') + '<p class="note">Câu chỉ thiếu hướng dẫn giải không nằm trong danh sách.' + (O.style === 'm1' ? ' Câu chưa có nhãn mức độ cũng nằm ở đây.' : '') + '</p>';
     $('listSum').textContent = dropped.size ? 'Bỏ ' + dropped.size + ' câu' : 'Không bỏ câu nào';
+    if (typing) { const el = L.querySelector('input.ans3[data-q="' + typing.q + '"]'); if (el) { el.value = typing.v; el.focus(); try { el.setSelectionRange(typing.s, typing.s); } catch (e) { /* bỏ qua */ } } }
+    followCursor(items);
   }
+  /* danh sách chạy theo con nháy */
+  let userScrollAt = 0, progScrollUntil = 0, lastFollow = '';
+  window.addEventListener('scroll', () => { if (Date.now() > progScrollUntil) userScrollAt = Date.now(); }, { passive: true });
+  function followCursor(items) {
+    const bar = $('listWhere');
+    const rg = curInfo && curInfo.rg;
+    if (!R || !rg) { bar.hidden = true; return; }
+    let txt = '', target = null;
+    const inList = (i) => items.some((x) => x.i === i);
+    if (rg.kind === 'q' && inList(rg.i)) target = rg.i;
+    else if (rg.kind === 'q' || rg.kind === 'lead') {
+      const m = R.map.qs[rg.i];
+      txt = rg.kind === 'q' ? PN[m.part] + ' · Câu ' + m.k + ' (câu này ổn)' : 'đoạn dẫn chùm ' + PN[m.part] + ', trước Câu ' + m.k;
+      const nx = items.find((x) => x.i >= rg.i + (rg.kind === 'q' ? 1 : 0));
+      if (nx) target = nx.i;
+      txt += nx ? ' · câu cần xem kế tiếp: ' + PN[nx.m.part] + ' · Câu ' + nx.m.k : ' · phía sau không còn câu cần xem';
+    } else if (rg.kind === 'head') txt = 'tiêu đề ' + PN[rg.part] + ' · ' + PNAME[rg.part];
+    else txt = 'phần đầu đề (tiêu đề, thông tin chung)';
+    bar.hidden = !txt; bar.textContent = txt ? 'Con nháy: ' + txt : '';
+    { const hd = document.querySelector('.hd'); bar.style.top = (hd ? hd.offsetHeight : 0) + 'px'; }
+    L_mark(target);
+    // chỉ cuộn khi con nháy đổi chỗ, danh sách đang mở, không gõ trong ô, không vừa tự cuộn
+    const sig = rg.kind + ':' + (rg.i !== undefined ? rg.i : rg.part !== undefined ? rg.part : '') + ':' + target;
+    if (sig === lastFollow) return;
+    if ($('vList').hidden) return;
+    const ae = document.activeElement;
+    if (ae && ae.tagName === 'INPUT' && $('vList').contains(ae)) return;
+    if (Date.now() - userScrollAt < 2000) return;
+    lastFollow = sig;
+    if (target === null) return;
+    const el = $('list').querySelector('.qi[data-i="' + target + '"]');
+    if (el) {
+      // chừa chỗ cho phần đầu khung (dính trên cùng) và dòng vị trí con nháy
+      const hd = document.querySelector('.hd'), top = (hd ? hd.getBoundingClientRect().bottom : 0) + (bar.hidden ? 0 : bar.offsetHeight) + 8;
+      const r = el.getBoundingClientRect();
+      let dy = 0;
+      if (r.top < top) dy = r.top - top; else if (r.bottom > innerHeight - 8) dy = Math.min(r.bottom - innerHeight + 8, r.top - top);
+      if (dy) { progScrollUntil = Date.now() + 900; window.scrollBy({ top: dy, behavior: 'smooth' }); }
+    }
+  }
+  function L_mark(target) { $('list').querySelectorAll('.qi.next').forEach((x) => x.classList.remove('next')); if (target !== null && (!curInfo || curInfo.rg.kind !== 'q' || curInfo.rg.i !== target)) { const el = $('list').querySelector('.qi[data-i="' + target + '"]'); if (el) el.classList.add('next'); } }
   $('list').addEventListener('click', async (e) => {
     const qt = e.target.closest('[data-qtag]');
     if (qt) { const [i, lv] = qt.dataset.qtag.split(':'); await jumpTo(R.map.qs[+i].start); return act(() => setTag(lv, +i), true); }
@@ -3676,7 +3732,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     else { kept.add(k); dropped.delete(k); }
     renderList(); renderCounts();
   });
-  $('warnbar').addEventListener('click', () => { $('vMain').hidden = true; $('vList').hidden = false; renderList(); });
+  $('warnbar').addEventListener('click', () => { resolved = new Set(); lastFollow = ''; userScrollAt = 0; $('vMain').hidden = true; $('vList').hidden = false; renderList(); });
   $('bBack').addEventListener('click', () => { $('vList').hidden = true; $('vMain').hidden = false; });
   async function jumpTo(at) {
     if (at < 0) return;
@@ -3780,7 +3836,12 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     other.forEach((w) => bad(w));
     C.innerHTML = rows.map(([c, i, t]) => '<div class="' + c + '"><i aria-hidden="true">' + i + '</i><span>' + esc(t) + '</span></div>').join('');
     // đồng bộ danh sách "cần xem" và dòng tổng quan với kết quả vừa kiểm tra của câu này
-    if (d) { live[curKey] = rows.filter((r) => r[0] === 'bad').map((r) => r[2]); renderCounts(); }
+    if (d) {
+      const before = issuesAt(rg.i).length;
+      live[curKey] = rows.filter((r) => r[0] === 'bad').map((r) => r[2]);
+      if (live[curKey].length) resolved.delete(curKey); else if (before && !$('vList').hidden) resolved.add(curKey);
+      renderCounts();
+    }
     if (fixes.length) { F.innerHTML = fixes.join(''); F.hidden = false; F.className = 'fix' + (rows.some((r) => r[0] === 'bad') ? '' : ' calm'); }
     setTagBtns(m.part <= 3 ? tagLv : 'none');
     renderList();
@@ -4117,7 +4178,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.29-a5', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.29-a6', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
