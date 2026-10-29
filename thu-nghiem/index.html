@@ -758,7 +758,7 @@ body[data-tool="one"] #setApp { display: none !important; }
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.28-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29-b3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -1811,6 +1811,7 @@ function parseRaw(body, qkeys, popt) {
   let expOpt = 0, expStmt = 0, first = !popt.noTitle, blankSeen = false;
   const items = kids(body).filter((c) => !isW(c, 'sectPr'));
   const itemIdx = new Map(items.map((e, i) => [e, i]));
+  const heads = [];
   // đánh dấu chùm do người dùng chọn trên đề thô: { marks: [{i, j, n}], off: [chỉ số đoạn câu dẫn tự nhận bị bỏ] } (chỉ số theo đoạn/bảng cấp ngoài cùng)
   const CLm = popt.clu && popt.clu.marks ? popt.clu.marks.map((m) => ({ i: m.i, j: m.j, n: m.n })) : [];
   const CLoff = new Set(popt.clu && popt.clu.off ? popt.clu.off : []);
@@ -2070,12 +2071,12 @@ function parseRaw(body, qkeys, popt) {
     }
     if (isKeyLine(txt)) { addKey(keyPairs(txt)); rk('key'); continue; }
     // tiêu đề phần
-    if (hp !== null) { part = hp; cur = null; mode = 'stem'; pc = null; pcAct = null; pendSg = null; continue; }
+    if (hp !== null) { part = hp; heads.push({ ei, part: hp }); cur = null; mode = 'stem'; pc = null; pcAct = null; pendSg = null; continue; }
     if (/^[-–— ]*H[ẾE]T[-–— ]*$/.test(up)) break;
     // câu dẫn của chùm câu hỏi (dữ kiện dùng chung)
     {
       const qm0 = QSTART_T.exec(txt) || numqMatch(txt, cur) || tagqMatch(txt);
-      const ctag = !qm0 && !CLoff.has(eIdx) ? /^[\s\uFFFC]*\[\s*CH[UÙ]M\s*(\d{1,2})?\s*\]\s*/i.exec(txt) : null;
+      const ctag = !qm0 && !CLoff.has(eIdx) ? /^[\s\uFFFC]*\[\s*CH[UÙ]M\s*[-–]?\s*(\d{1,2})?\s*\]\s*/i.exec(txt) : null;
       if (ctag) {   // quy ước "[CHUM n]" đầu câu dẫn: n câu đi sau dùng chung dữ kiện (không ghi n = 2 câu)
         ents[ei].chumCut = ctag[0].length;
         pc = { intro: trim(toks.slice(ctag[0].length)), body: [], refs: [], count: Math.max(1, parseInt(ctag[1] || '2', 10)), implicit: true, tagged: true, members: [], open: true, ei, eis: [ei] }; pcAct = pc; rk('lead'); continue;
@@ -2250,7 +2251,7 @@ function parseRaw(body, qkeys, popt) {
     } else if (isW(e, 'tbl')) { if (tblHasQuestions(e)) break; preEls.push(e); }
     else break;
   }
-  return { titleEl, titleTxt, qs, theoryEls, theoryHead: theoryHead0, ents, noHead: NOHEAD, preEls };
+  return { titleEl, titleTxt, qs, theoryEls, theoryHead: theoryHead0, ents, noHead: NOHEAD, preEls, heads };
 }
 
 // đáp án đánh dấu bằng dấu *, chữ đỏ, in đậm (chỉ dùng khi không có gạch chân / tô nền)
@@ -3212,6 +3213,7 @@ async function load(arrayBuffer, lopt) {
   const body = Array.from(root.children).find((c) => isW(c, 'body'));
   const numDoc = files['word/numbering.xml'] ? new DOMParser().parseFromString(dec.decode(files['word/numbering.xml']), 'application/xml') : null;
   const stylesDoc = files['word/styles.xml'] ? new DOMParser().parseFromString(dec.decode(files['word/styles.xml']), 'application/xml') : null;
+  const wpi = wordParaIndex(body);
   pickCopy(body);
   const copyNote = COPYNOTE;
   const parsed = parseRaw(body, questionNumKeys(numDoc), { num: makeNumbering(numDoc, stylesDoc), part: lopt.forcePart || 0, clu: lopt.clu || null });
@@ -3237,7 +3239,78 @@ async function load(arrayBuffer, lopt) {
   const order = qs.map((q) => q.id);
   const emN = qs.filter((q) => q.essayMaybe).length;
   const essayHint = parsed.noHead && !lopt.forcePart && emN ? { n: emN } : null;
-  return { title, theory, order, views: order.map((id) => viewOf(reg.get(id))), essayHint, raw: rawList(body, parsed, qs) };
+  return { title, theory, order, views: order.map((id) => viewOf(reg.get(id))), essayHint, raw: rawList(body, parsed, qs), map: wordMap(parsed, qs, wpi) };
+}
+// thứ tự đoạn văn đúng như Word đếm (body.paragraphs): mọi w:p trong thân, kể cả trong bảng; bỏ đoạn trong hộp văn bản và bản dự phòng (mc:Fallback)
+function wordParaIndex(body) {
+  const m = new Map();
+  let n = 0;
+  const walk = (el) => {
+    for (const c of Array.from(el.children)) {
+      if (c.localName === 'txbxContent' || c.localName === 'Fallback') continue;
+      if (isW(c, 'p')) { m.set(c, n++); walk(c); continue; }
+      walk(c);
+    }
+  };
+  walk(body);
+  m.total = n;
+  return m;
+}
+// bản đồ câu hỏi theo số thứ tự đoạn trong Word (dùng cho add-in: nhảy đến câu, xác định câu đang đặt con nháy)
+function wordMap(parsed, qs, wpi) {
+  const ents = parsed.ents;
+  const firstP = (el) => { if (!el) return null; if (isW(el, 'p')) return el; const ps = el.getElementsByTagNameNS(NS.w, 'p'); for (const p of Array.from(ps)) if (wpi.has(p)) return p; return null; };
+  const at = (el) => { const p = firstP(el); return p && wpi.has(p) ? wpi.get(p) : -1; };
+  const entEl = (ei) => (ents[ei] ? ents[ei].srcTbl || ents[ei].el : null);
+  const cnt = {};
+  const out = qs.map((q) => {
+    cnt[q.part] = (cnt[q.part] || 0) + 1;
+    let start = -1;
+    if (q.rowPath) {
+      const tbl = entEl(q.rowPath.ei);
+      const tr = tbl && findAllW(tbl, 'tr')[q.rowPath.ti], tc = tr && findAllW(tr, 'tc')[q.rowPath.ci], p = tc && findAllW(tc, 'p')[q.rowPath.pi];
+      start = p && wpi.has(p) ? wpi.get(p) : at(tbl);
+    } else if (q.srcEi !== undefined) start = at(entEl(q.srcEi));
+    const c = q.cluster;
+    return { id: q.id, part: q.part, k: cnt[q.part], num: q.numSrc || null, start, lead: c && c.ei !== undefined ? at(entEl(c.ei)) : -1, clusterN: c ? (c.count || c.refs.length || c.members.length) : 0, clusterFirst: !!(c && c.members[0] === q) };
+  });
+  const heads = (parsed.heads || []).map((h) => ({ part: h.part, at: at(entEl(h.ei)) })).filter((h) => h.at >= 0);
+  return { qs: out, heads, total: wpi.total || 0 };
+}
+// kiểm tra nhanh MỘT câu từ đoạn OOXML Word đưa ra (range.getOoxml()): trả về cấu trúc và cảnh báo của câu đó
+function inspect(pkgXml, part) {
+  const keepDOC = DOC, keepOLE = OLE, keepNUMQ = USE_NUMQ;
+  try {
+    const pkg = new DOMParser().parseFromString(pkgXml, 'application/xml');
+    const partOf = (name) => { const ps = pkg.getElementsByTagNameNS('*', 'part'); for (const x of Array.from(ps)) { if ((x.getAttribute('pkg:name') || x.getAttribute('name')) === name) { const xd = x.getElementsByTagNameNS('*', 'xmlData')[0]; return xd ? Array.from(xd.children)[0] : null; } } return null; };
+    const docEl = partOf('/word/document.xml');
+    if (!docEl) return null;
+    const body = Array.from(docEl.children).find((c) => isW(c, 'body'));
+    if (!body) return null;
+    DOC = docEl.ownerDocument; OLE = { rels: {}, files: {} };
+    const numEl = partOf('/word/numbering.xml'), stEl = partOf('/word/styles.xml');
+    const wrap = (el) => { if (!el) return null; const d = document.implementation.createDocument(el.namespaceURI, null, null); d.appendChild(d.importNode(el, true)); return d; };
+    const numDoc = wrap(numEl), stylesDoc = wrap(stEl);
+    const parsed = parseRaw(body, questionNumKeys(numDoc), { num: makeNumbering(numDoc, stylesDoc), part: part || 1, noTitle: true });
+    const q = parsed.qs[0];
+    if (!q) return { none: true };
+    applyStmtMarks([q]);
+    finalizeQ(q);
+    const has = (t) => !!t && hasContent(trim(t));
+    return {
+      part: q.part, num: q.numSrc || null, tag: q.tag || '', tagLv: q.tagLv || null,
+      opts: q.part === 1 ? 'ABCD'.split('').filter((L) => has(q.opts[L])) : null,
+      ans: q.part === 1 ? q.ans || null : null,
+      ansHow: q.part === 1 ? (q.keyAns && q.ans === q.keyAns ? 'bảng đáp án' : q.textAns && q.ans === q.textAns ? 'lời giải' : q.ans ? 'đánh dấu' : '') : '',
+      stmts: q.part === 2 ? 'abcd'.split('').filter((L) => has(q.stmts[L])) : null,
+      tf: q.part === 2 ? stmtTruth(q) : null,
+      ansText: q.part === 3 ? q.ansText || null : null,
+      hasSol: q.sol.some((t) => hasContent(trim(t))),
+      warn: q.warn.filter((w) => !isAutoWarn(w)),
+    };
+  } catch (e) {
+    return { error: String(e && e.message ? e.message : e) };
+  } finally { DOC = keepDOC; OLE = keepOLE; USE_NUMQ = keepNUMQ; }
 }
 // đề thô để người dùng xem và đánh dấu chùm: mỗi phần tử cấp ngoài cùng (đoạn/bảng) một dòng
 function rawList(body, parsed, qs) {
@@ -4045,7 +4118,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, setTag, setTags, tagState };
+window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, setTag, setTags, tagState };
 })();
 
 </script>
@@ -4941,7 +5014,7 @@ window.DeThi = { setSummary, buildSet, mergeDocx, load, generate, quick, reset, 
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.10.28-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29-b3 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
