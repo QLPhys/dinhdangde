@@ -16,7 +16,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .hd { padding: 12px 14px 10px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; position: sticky; top: 0; z-index: 5; }
 .brand { display: flex; align-items: center; gap: 8px; }
 .logo { width: 24px; height: 24px; border-radius: 6px; background: var(--blue); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-.brand b { font-size: 15px; } .brand span { margin-left: auto; font-size: 12px; color: var(--mut); }
+.brand b { font-size: 15px; margin-right: auto; }
+.ibtn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line2); background: #fff; color: var(--blueT); font-size: 15px; line-height: 1; padding: 0; }
+.hdbody { display: flex; flex-direction: column; gap: 8px; }
+.mini { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink2); flex-wrap: wrap; } .mini .lnk { margin-left: auto; color: var(--warnInk); font-weight: 600; }
+.tagrow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; } .tagrow .kb { min-height: 32px; }
 .file { display: flex; align-items: center; gap: 8px; }
 .file .nm { font-weight: 600; font-size: 13.5px; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbtn { background: var(--card); border: 1px solid var(--line2); color: var(--blueT); border-radius: 6px; padding: 5px 10px; min-height: 32px; font-size: 12.5px; }
@@ -94,17 +98,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 <body>
 <div id="app">
   <header class="hd">
-    <div class="brand"><div class="logo" aria-hidden="true">Đ</div><b>Định dạng nhanh</b><span>QL Physics</span></div>
+    <div class="brand"><div class="logo" aria-hidden="true">Đ</div><b>Định dạng nhanh</b>
+      <button class="ibtn" id="recheck" type="button" aria-label="Kiểm tra lại" title="Kiểm tra lại (đọc lại đề)">⟳</button>
+      <button class="ibtn" id="hdToggle" type="button" aria-expanded="true" aria-controls="hdBody" title="Thu gọn / mở rộng phần tổng quan">▴</button>
+    </div>
+    <div class="mini" id="hdMini" hidden><span id="miniTx"></span><button class="lnk" id="miniWarn" type="button" hidden></button></div>
+    <div id="hdBody" class="hdbody">
     <div class="file">
       <span aria-hidden="true">📄</span>
       <div class="nm" id="fname">Đang mở…</div>
-      <button class="sbtn" id="recheck" type="button">Kiểm tra lại</button>
     </div>
     <div class="counts" id="counts" aria-label="Số câu từng phần">
       <div><b id="c1">–</b><span>Phần I</span></div><div><b id="c2">–</b><span>Phần II</span></div><div><b id="c3">–</b><span>Phần III</span></div><div><b id="c4">–</b><span>Phần IV</span></div>
     </div>
     <button class="warnbar" id="warnbar" type="button" hidden><b id="warnTx">0 câu cần xem</b><span>Xem danh sách ›</span></button>
     <div class="okbar" id="okbar" hidden>Các câu đã đủ cấu trúc.</div>
+    </div>
   </header>
 
   <main id="vMain">
@@ -179,7 +188,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.29-a2</span>
+    <span class="ver">v2026.10.29-a3</span>
   </footer>
 </div>
 <script>
@@ -3588,7 +3597,7 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
       m.heads.forEach((h) => an.push({ at: h.at, kind: 'head', part: h.part }));
       an.sort((a, b) => a.at - b.at || (a.kind === 'head' ? -1 : 1));
       anchorTx = await snapAnchors(an);
-      anchors = an;
+      anchors = an; live = {};
       const valid = new Set(m.qs.map(keyOf));
       dropped = new Set(Array.from(dropped).filter((k) => valid.has(k)));
       kept = new Set(Array.from(kept).filter((k) => valid.has(k)));
@@ -3615,13 +3624,19 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
     if (O.style === 'm1' && v.part <= 3 && !v.tagLv) w.push('Chưa có nhãn mức độ');
     return w;
   }
+  // kết quả kiểm tra mới nhất của từng câu (cập nhật khi đặt con nháy vào câu) ưu tiên hơn kết quả đọc cả đề
+  let live = {};
+  function issuesAt(i) { const k = keyOf(R.map.qs[i]); return live[k] ? live[k].slice() : issuesOf(R.views[i]); }
+  const needTag = (i) => issuesAt(i).some((w) => /nhãn mức độ/.test(w));
   function renderCounts() {
     const c = [0, 0, 0, 0];
     if (R) R.views.forEach((v) => { c[v.part - 1]++; });
     ['c1', 'c2', 'c3', 'c4'].forEach((id, i) => { $(id).textContent = R ? c[i] : '–'; });
-    const n = R ? R.views.filter((v) => issuesOf(v).length).length : 0;
+    const n = R ? R.views.filter((v, i) => issuesAt(i).length).length : 0;
     $('warnbar').hidden = !R || !n; $('okbar').hidden = !R || !!n;
     $('warnTx').textContent = n + ' câu cần xem';
+    $('miniTx').textContent = R ? fileName.replace(/\.docx$/i, '').slice(0, 26) + ' · ' + c.join(' / ') + ' câu' : '';
+    $('miniWarn').hidden = !R || !n; $('miniWarn').textContent = '⚠ ' + n + ' cần xem ›';
     const total = R ? R.views.length - dropped.size : 0;
     $('bFormat2Tx').textContent = 'Định dạng ngay (' + total + ' câu)';
     setBusy(busy ? $('busyTx').textContent : '');
@@ -3630,18 +3645,21 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
   function renderList() {
     const L = $('list');
     if (!R) { L.innerHTML = '<p class="note">Chưa đọc được đề.</p>'; return; }
-    const items = R.views.map((v, i) => ({ v, m: R.map.qs[i] })).filter((x) => issuesOf(x.v).length || dropped.has(keyOf(x.m)));
+    const items = R.views.map((v, i) => ({ v, m: R.map.qs[i], i })).filter((x) => issuesAt(x.i).length || dropped.has(keyOf(x.m)));
     $('listTitle').textContent = items.length + ' câu cần xem';
-    L.innerHTML = items.map(({ v, m }) => {
+    L.innerHTML = items.map(({ v, m, i }) => {
       const k = keyOf(m), off = dropped.has(k), ok = kept.has(k);
       return '<div class="qi' + (off ? ' off' : '') + (k === curKey ? ' cur' : '') + '" data-k="' + k + '">'
         + '<button class="go" type="button" data-go="' + m.start + '"><b>' + PN[m.part] + ' · Câu ' + m.k + (m.num && String(m.num) !== String(m.k) ? ' (gốc: Câu ' + esc(m.num) + ')' : '') + ' ›</b><span>' + esc(stemTx(v)) + '</span>'
-        + issuesOf(v).map((w) => '<em>' + esc(w) + '</em>').join('') + '</button>'
+        + issuesAt(i).map((w) => '<em>' + esc(w) + '</em>').join('') + '</button>'
+        + (m.part <= 3 && needTag(i) && !off ? '<div class="tagrow" role="group" aria-label="Gắn nhãn mức độ cho câu này">' + ['B', 'H', 'VD', 'VDC'].map((lv) => '<button class="kb" type="button" data-qtag="' + i + ':' + lv + '">' + lv + '</button>').join('') + '</div>' : '')
         + '<div class="acts"><button type="button" class="drop' + (off ? ' on' : '') + '" data-act="drop">' + (off ? 'Đã bỏ · lấy lại' : 'Bỏ câu này') + '</button><button type="button" class="' + (ok && !off ? 'on' : '') + '" data-act="keep">Vẫn định dạng</button></div></div>';
     }).join('') + '<p class="note">Câu chỉ thiếu hướng dẫn giải không nằm trong danh sách.' + (O.style === 'm1' ? ' Câu chưa có nhãn mức độ cũng nằm ở đây.' : '') + '</p>';
     $('listSum').textContent = dropped.size ? 'Bỏ ' + dropped.size + ' câu' : 'Không bỏ câu nào';
   }
   $('list').addEventListener('click', async (e) => {
+    const qt = e.target.closest('[data-qtag]');
+    if (qt) { const [i, lv] = qt.dataset.qtag.split(':'); await jumpTo(R.map.qs[+i].start); return act(() => setTag(lv, +i), true); }
     const go = e.target.closest('[data-go]');
     if (go) { const at = +go.dataset.go; await jumpTo(at); return; }
     const b = e.target.closest('[data-act]'); if (!b) return;
@@ -3725,10 +3743,13 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
     if (m.part === 1) {
       const opts = d ? d.opts : 'ABCD'.split('').filter((L) => v.opts && v.opts[L]);
       if (opts.length >= 4) ok('Đủ 4 phương án A, B, C, D'); else bad('Thiếu phương án ' + 'ABCD'.split('').filter((L) => !opts.includes(L)).join(', '));
-      const ans = d ? d.ans : v.ans;
-      if (ans) ok('Đáp án đúng: ' + ans + (d && d.ansHow && d.ansHow !== 'đánh dấu' ? ' (lấy từ ' + d.ansHow + ')' : ''));
+      let ans = d ? d.ans : v.ans;
+      const fromKey = !(d && d.ans) && v.ans && (v.warn || []).some((w) => /lấy từ bảng/.test(w));
+      if (fromKey) ans = v.ans;
+      if (fromKey) bad('Đáp án ' + ans + ' chỉ có trong bảng đáp án cuối đề, chưa gạch chân trong câu');
+      else if (ans) ok('Đáp án đúng: ' + ans + (d && d.ansHow && d.ansHow !== 'đánh dấu' ? ' (lấy từ ' + d.ansHow + ')' : ''));
       else { bad('Chưa đánh dấu đáp án đúng'); }
-      fixes.push('<p>' + (ans ? 'Đổi đáp án đúng (công cụ gạch chân nhãn):' : 'Chọn đáp án đúng, công cụ gạch chân giúp:') + '</p><div class="grid4">' + 'ABCD'.split('').map((L) => '<button class="kb' + (ans === L ? ' on' : '') + '" type="button" data-ans="' + L + '">' + L + '</button>').join('') + '</div>');
+      fixes.push('<p>' + (ans && !fromKey ? 'Đổi đáp án đúng (công cụ gạch chân nhãn):' : 'Chọn đáp án đúng, công cụ gạch chân giúp:') + '</p><div class="grid4">' + 'ABCD'.split('').map((L) => '<button class="kb' + (ans === L ? ' on' : '') + '" type="button" data-ans="' + L + '">' + L + '</button>').join('') + '</div>');
     } else if (m.part === 2) {
       const st = d ? d.stmts : 'abcd'.split('').filter((L) => v.stmts && v.stmts[L]);
       const tf = (d ? d.tf : v.tf) || {};
@@ -3746,6 +3767,8 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
     const other = (d ? d.warn : v.warn || []).filter((w) => !skipWarn(w) && !/Chưa (đánh dấu|chọn) đáp án|Thiếu đáp án|Thiếu ý|Chưa có đáp án số|Chưa biết ý nào|Có ý chưa có đáp án/.test(w));
     other.forEach((w) => bad(w));
     C.innerHTML = rows.map(([c, i, t]) => '<div class="' + c + '"><i aria-hidden="true">' + i + '</i><span>' + esc(t) + '</span></div>').join('');
+    // đồng bộ danh sách "cần xem" và dòng tổng quan với kết quả vừa kiểm tra của câu này
+    if (d) { live[curKey] = rows.filter((r) => r[0] === 'bad').map((r) => r[2]); renderCounts(); }
     if (fixes.length) { F.innerHTML = fixes.join(''); F.hidden = false; F.className = 'fix' + (rows.some((r) => r[0] === 'bad') ? '' : ' calm'); }
     setTagBtns(m.part <= 3 ? tagLv : 'none');
     renderList();
@@ -3774,9 +3797,11 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
     }
     return null;
   }
-  async function withQuestion(fn) {
-    if (!curInfo || !curInfo.rg || curInfo.rg.kind !== 'q') return;
-    const rg = curInfo.rg;
+  function rangeOf(i) { const m = R.map.qs[i]; const nx = anchors.find((x) => x.at > m.start); return { kind: 'q', i, start: m.start, end: (nx ? nx.at : R.map.total) - 1 }; }
+  async function withQuestion(fn, qi) {
+    let rg;
+    if (qi !== undefined) rg = rangeOf(qi);
+    else { if (!curInfo || !curInfo.rg || curInfo.rg.kind !== 'q') return; rg = curInfo.rg; }
     await Word.run(async (ctx) => {
       const all = ctx.document.body.paragraphs; all.load('$none'); await ctx.sync();
       const ps = all.items.slice(rg.start, Math.min(rg.end, all.items.length - 1) + 1);
@@ -3849,9 +3874,9 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
     });
   }
   const TAG_ANY = /\[\s*(?:TN|DS|TLN|TTN)?\s*[-–]?\s*(?:NB|TH|VDC|VD|B|H)\s*\]/i;
-  async function setTag(lv) {
-    if (!curInfo || curInfo.rg.kind !== 'q') return;
-    const m = R.map.qs[curInfo.rg.i];
+  async function setTag(lv, qi) {
+    if (qi === undefined && (!curInfo || curInfo.rg.kind !== 'q')) return;
+    const m = R.map.qs[qi !== undefined ? qi : curInfo.rg.i];
     if (m.part > 3) return;
     const tag = lv ? '[' + TPRE[m.part] + '-' + lv + ']' : '';
     await withQuestion(async (ctx, ps, texts) => {
@@ -3868,7 +3893,7 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
         if (r.items[0]) { r.items[0].insertText(' ' + tag, 'After'); await ctx.sync(); return; }
       }
       ps[0].insertText(tag + ' ', 'Start'); await ctx.sync();
-    });
+    }, qi);
   }
   const CHUM_RE = /^\s*\[\s*CH[UÙ]M\s*[-–]?\s*\d{0,2}\s*\]\s*/i;
   async function setChum(del) {
@@ -3979,11 +4004,16 @@ window.DeThi = { inspect, setSummary, buildSet, mergeDocx, load, generate, quick
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.29-a2', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.29-a3', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
 
+  let hdOpen = true; try { hdOpen = localStorage.getItem('dethi.addin.hd') !== '0'; } catch (e) { /* bỏ qua */ }
+  function applyHd() { $('hdBody').hidden = !hdOpen; $('hdMini').hidden = hdOpen; $('hdToggle').textContent = hdOpen ? '▴' : '▾'; $('hdToggle').setAttribute('aria-expanded', String(hdOpen)); try { localStorage.setItem('dethi.addin.hd', hdOpen ? '1' : '0'); } catch (e) { /* bỏ qua */ } }
+  $('hdToggle').addEventListener('click', () => { hdOpen = !hdOpen; applyHd(); });
+  $('miniWarn').addEventListener('click', () => { $('vMain').hidden = true; $('vList').hidden = false; renderList(); });
+  applyHd();
   Office.onReady((info) => {
     if (info.host !== Office.HostType.Word) { showErr('Add-in này chỉ chạy trong Word.'); return; }
     try { Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, () => refreshCursor(false)); } catch (e) { log('event: ' + e); }
