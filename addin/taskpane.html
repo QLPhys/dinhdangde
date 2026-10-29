@@ -44,6 +44,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .chk .ok i { color: #17663a; } .chk .bad i { color: #a35a00; } .chk .bad span { color: var(--warnInk); } .chk .na i, .chk .na span { color: var(--mut); }
 .fix { background: var(--warnBg); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .fix p { margin: 0; font-size: 12px; color: var(--warnInk); }
+.hint3 { font-size: 11.5px !important; color: var(--mut) !important; } .hint3:empty { display: none; }
 .fix.calm { background: var(--bg); } .fix.calm p { color: var(--mut); } .fix.calm .kb { border-color: var(--line2); }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .grid5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
@@ -188,7 +189,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.29-a4</span>
+    <span class="ver">v2026.10.29-a5</span>
   </footer>
 </div>
 <script>
@@ -3626,7 +3627,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   /* ---------------- tổng quan & danh sách cần xem ---------------- */
   const skipWarn = (w) => /hướng dẫn giải/i.test(w);
   function issuesOf(v) {
-    const w = (v.warn || []).filter((x) => !skipWarn(x));
+    const w = (v.warn || []).filter((x) => !skipWarn(x)).map((x) => /^Chưa có đáp án số/.test(x) ? 'Chưa có đáp án số' : x);
     if (O.style === 'm1' && v.part <= 3 && !v.tagLv) w.push('Chưa có nhãn mức độ');
     return w;
   }
@@ -3658,6 +3659,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
       return '<div class="qi' + (off ? ' off' : '') + (k === curKey ? ' cur' : '') + '" data-k="' + k + '">'
         + '<button class="go" type="button" data-go="' + m.start + '"><b>' + PN[m.part] + ' · Câu ' + m.k + (m.num && String(m.num) !== String(m.k) ? ' (gốc: Câu ' + esc(m.num) + ')' : '') + ' ›</b><span>' + esc(stemTx(v)) + '</span>'
         + issuesAt(i).map((w) => '<em>' + esc(w) + '</em>').join('') + '</button>'
+        + (m.part === 3 && !off && issuesAt(i).some((w) => /đáp án số/.test(w)) ? '<div class="fix" style="padding:6px">' + ansForm(String(i), '', null) + '</div>' : '')
         + (m.part <= 3 && needTag(i) && !off ? '<div class="tagrow" role="group" aria-label="Gắn nhãn mức độ cho câu này">' + ['B', 'H', 'VD', 'VDC'].map((lv) => '<button class="kb" type="button" data-qtag="' + i + ':' + lv + '">' + lv + '</button>').join('') + '</div>' : '')
         + '<div class="acts"><button type="button" class="drop' + (off ? ' on' : '') + '" data-act="drop">' + (off ? 'Đã bỏ · lấy lại' : 'Bỏ câu này') + '</button><button type="button" class="' + (ok && !off ? 'on' : '') + '" data-act="keep">Vẫn định dạng</button></div></div>';
     }).join('') + '<p class="note">Câu chỉ thiếu hướng dẫn giải không nằm trong danh sách.' + (O.style === 'm1' ? ' Câu chưa có nhãn mức độ cũng nằm ở đây.' : '') + '</p>';
@@ -3713,8 +3715,9 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
           if ((p0.text || '').trim().slice(0, 40) !== anchorTx[rg.start]) { info.stale = true; return; }
           const pe = all.items[Math.min(rg.end, all.items.length - 1)];
           const ox = p0.getRange('Start').expandTo(pe.getRange('End')).getOoxml();
+          const rps = all.items.slice(rg.start, Math.min(rg.end, all.items.length - 1) + 1); rps.forEach((p) => p.load('text'));
           await ctx.sync();
-          info.ooxml = ox.value;
+          info.ooxml = ox.value; info.texts = rps.map((p) => p.text || '');
         }
       });
       if (seq !== curSeq) return;
@@ -3765,7 +3768,10 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
       fixes.push('<p>Đặt Đúng/Sai từng ý (Đúng = gạch chân nhãn ý):</p>' + 'abcd'.split('').map((L) => '<div class="row" style="gap:6px"><b style="width:18px">' + L + '</b><button class="kb' + (tf[L] === 'Đ' ? ' on' : '') + '" type="button" data-tf="' + L + ':Đ" style="flex:1">Đúng</button><button class="kb' + (tf[L] === 'S' ? ' on' : '') + '" type="button" data-tf="' + L + ':S" style="flex:1">Sai</button></div>').join(''));
     } else if (m.part === 3) {
       const at = d ? d.ansText : (v.ansText || window.DeThi.ans3FromSol((v.sol || []).map((x) => String(x).replace(/⟦[^⟧]*⟧/g, '\uFFFC'))));
-      if (at) ok('Đáp án: ' + at); else { bad('Chưa có đáp án số'); fixes.push('<button class="lnk" type="button" data-ins="ans">Thêm dòng "Đáp án:" cho câu này</button>'); }
+      if (at) ok('Đáp án: ' + at); else bad('Chưa có đáp án số');
+      const sg = info.texts ? suggestAns(info.texts) : null;
+      fixes.push('<p>' + (at ? 'Sửa đáp số' : 'Nhập đáp số') + ' (ghi thành dòng "Đáp án:" trước Hướng dẫn giải):</p>' + ansForm('cur', at || '', sg)
+        + '<p class="hint3" id="ans3Note">' + esc(roundHint(info.texts || [])) + '</p>');
     }
     const hasSol = d ? d.hasSol : !!(v.sol && v.sol.length);
     if (hasSol) ok(m.part === 4 ? 'Có lời giải / thang điểm' : 'Có hướng dẫn giải'); else { na('Hướng dẫn giải: chưa có (không bắt buộc)'); fixes.push('<button class="lnk" type="button" data-ins="sol">Thêm dòng "Hướng dẫn giải" cho câu này</button>'); }
@@ -3782,6 +3788,107 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   function setTagBtns(lv) {
     document.querySelectorAll('#tagBtns .kb').forEach((b) => { b.disabled = lv === 'none' || !R || !curKey; b.classList.toggle('on', !!lv && lv !== 'none' && b.dataset.lv === lv); });
   }
+
+  /* ---------------- đáp số Phần III ---------------- */
+  const ANS_LINE = /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]/i;
+  function ansForm(id, val, sg) {
+    return '<div class="row" style="gap:6px;flex-wrap:nowrap"><label for="ans3-' + id + '" style="font-size:13px;font-weight:600;white-space:nowrap">Đáp án:</label>'
+      + '<input id="ans3-' + id + '" class="ans3" data-q="' + id + '" type="text" inputmode="decimal" autocomplete="off" value="' + esc(val) + '" style="flex:1;min-width:0;min-height:36px;border:1px solid var(--line2);border-radius:6px;padding:0 8px;font-size:14px">'
+      + '<button class="kb" type="button" data-ans3="' + id + '" style="white-space:nowrap">Ghi vào đề</button></div>'
+      + (sg ? '<button class="lnk" type="button" data-sg="' + id + ':' + esc(sg) + '">Gợi ý từ lời giải: ' + esc(sg) + ' · dùng</button>' : '');
+  }
+  // số ở cuối dòng lời giải cuối cùng ("… = 0,01 s") — chỉ khi lời giải viết bằng chữ thường
+  function suggestAns(texts) {
+    const solAt = texts.findIndex((t, i) => i > 0 && SOL_RE.test(t));
+    if (solAt < 0) return null;
+    const ls = texts.slice(solAt + 1).map((t) => t.trim()).filter(Boolean);
+    for (let i = ls.length - 1; i >= 0; i--) {
+      const m = /=\s*(-?\d+(?:[.,]\d+)?)\s*(?:[A-Za-zμΩ°%\/²³⁻¹·.]{0,8})?\s*\.?\s*$/.exec(ls[i]);
+      if (m) return m[1].replace('.', ',');
+    }
+    return null;
+  }
+  // yêu cầu làm tròn trong đề: "làm tròn 2 chữ số thập phân", "lấy đến phần nguyên"
+  function roundReq(texts) {
+    const t = texts.join(' ');
+    if (/(lấy|làm tròn)\s*(?:đến|tới)?\s*phần\s*nguyên|không lấy chữ số sau dấu phẩy/i.test(t)) return 0;
+    const m = /làm\s*tròn\s*(?:kết quả\s*)?(?:đến|tới)?\s*(\d|một|hai|ba|bốn)\s*chữ\s*số\s*(?:thập\s*phân|sau\s*dấu\s*phẩy)/i.exec(t);
+    if (!m) return null;
+    return /\d/.test(m[1]) ? +m[1] : { 'một': 1, hai: 2, ba: 3, 'bốn': 4 }[m[1].toLowerCase()];
+  }
+  function roundHint(texts) { const r = roundReq(texts); return r === null ? '' : 'Đề yêu cầu ' + (r === 0 ? 'lấy phần nguyên' : 'làm tròn ' + r + ' chữ số thập phân') + '.'; }
+  function checkAns(raw, texts) {
+    const v = String(raw || '').replace(/\s+/g, '').replace(/\./g, ',');
+    if (!v) return { err: 'Chưa nhập đáp số.' };
+    if (!/^-?\d+(,\d+)?$/.test(v)) return { err: 'Đáp số chỉ gồm chữ số, dấu "-" và một dấu phẩy thập phân.' };
+    const notes = [];
+    if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu từ 2025 chỉ có 4 ô (kể cả dấu "-" và dấu phẩy).');
+    const r = roundReq(texts || []);
+    const dec = v.includes(',') ? v.split(',')[1].length : 0;
+    if (r !== null && dec !== r) notes.push('Đề yêu cầu ' + (r === 0 ? 'lấy phần nguyên' : 'làm tròn ' + r + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
+    return { v, notes };
+  }
+  async function writeAns(qi, raw) {
+    let res = null;
+    await withQuestion(async (ctx, ps, texts) => {
+      const c = checkAns(raw, texts);
+      if (c.err) throw new Error(c.err);
+      res = c;
+      const line = 'Đáp án: ' + c.v;
+      const ex = texts.findIndex((t, i) => i > 0 && ANS_LINE.test(t));
+      let p;
+      if (ex > 0) { p = ps[ex]; p.insertText(line, 'Replace'); }
+      else {
+        const solAt = texts.findIndex((t, i) => i > 0 && SOL_RE.test(t));
+        let lastStem = 0;
+        texts.forEach((t, i) => { if ((solAt < 0 || i < solAt) && t.trim()) lastStem = i; });
+        p = ps[lastStem].insertParagraph(line, 'After');
+      }
+      p.font.bold = true; p.font.color = '#0000FF'; p.font.underline = 'None'; p.font.highlightColor = null;
+      await ctx.sync();
+    }, qi);
+    return res;
+  }
+  // sau khi ghi: nhảy đến câu Phần III kế tiếp còn thiếu đáp số
+  function nextMissing(fromI) {
+    if (!R) return -1;
+    const n = R.map.qs.length;
+    for (let d = 1; d < n; d++) { const i = (fromI + d) % n; if (R.map.qs[i].part === 3 && issuesAt(i).some((w) => /đáp án số/.test(w))) return i; }
+    return -1;
+  }
+  async function submitAns(qi, raw, inList) {
+    try {
+      showErr('');
+      const r = await writeAns(qi, raw);
+      await analyze(true);
+      const nx = nextMissing(qi);
+      const msg = (r && r.notes.length ? '⚠ ' + r.notes.join(' ') + ' ' : '') + (nx >= 0 ? 'Đã ghi. Chuyển sang Phần III · Câu ' + R.map.qs[nx].k + '.' : 'Đã ghi. Không còn câu Phần III nào thiếu đáp số.');
+      if (nx >= 0) {
+        await jumpTo(R.map.qs[nx].start);
+        const sel = inList ? '#list input.ans3[data-q="' + nx + '"]' : '#ans3-cur';
+        if (inList) renderList(); else await checkCursor();
+        const fo = () => { const el = document.querySelector(sel); if (el && document.activeElement !== el) { el.focus(); el.scrollIntoView({ block: 'nearest' }); } };
+        fo(); setTimeout(fo, 500); setTimeout(fo, 1200);
+      } else refreshCursor(true);
+      flash(msg, r && r.notes.length);
+    } catch (e) { showErr(e && e.message ? e.message : String(e)); }
+  }
+  function flash(msg, warn) {
+    const n = document.getElementById('ans3Note');
+    const el = $('res'); el.hidden = false; el.style.background = warn ? 'var(--warnBg)' : ''; el.style.borderColor = warn ? 'var(--warnBd)' : '';
+    el.innerHTML = '<div>' + esc(msg) + '</div>';
+    clearTimeout(flash.t); flash.t = setTimeout(() => { el.hidden = true; el.style.background = ''; el.style.borderColor = ''; }, 9000);
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ans3]');
+    if (b) { const id = b.dataset.ans3, inp = document.getElementById('ans3-' + id); const qi = id === 'cur' ? curInfo.rg.i : +id; submitAns(qi, inp ? inp.value : '', id !== 'cur'); return; }
+    const g = e.target.closest('[data-sg]');
+    if (g) { const [id, v] = g.dataset.sg.split(':'); const inp = document.getElementById('ans3-' + id); if (inp) { inp.value = v; inp.focus(); } }
+  });
+  document.addEventListener('keydown', (e) => {
+    const inp = e.target.closest && e.target.closest('input.ans3');
+    if (inp && e.key === 'Enter') { e.preventDefault(); const id = inp.dataset.q; const qi = id === 'cur' ? curInfo.rg.i : +id; submitAns(qi, inp.value, id !== 'cur'); }
+  });
 
   /* ---------------- sửa nhanh trên Word ---------------- */
   // vị trí nhãn (A./B)… hoặc a)/b.…) trong các đoạn của câu: [chỉ số đoạn, lần xuất hiện thứ k của chuỗi nhãn trong đoạn, chuỗi nhãn]
@@ -4010,7 +4117,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.29-a4', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.29-a5', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
