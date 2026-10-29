@@ -857,7 +857,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29.2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29.3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -3761,7 +3761,21 @@ function pageNumPara(fmt, ma, sec, bm) {
   else if (fmt === 'xyma' && ma) runs = txtRun('Trang ') + fldRuns('PAGE') + txtRun('/') + fldRuns(NP) + txtRun(' – Mã đề ' + ma);
   else runs = txtRun('Trang ') + fldRuns('PAGE') + txtRun('/') + fldRuns(NP);
   // after=567 (≈1 cm): đẩy dòng số trang lên cao hơn mép dưới trang khoảng 1 cm
-  return '<w:p><w:pPr><w:spacing w:before="0" w:after="567"/><w:jc w:val="center"/></w:pPr>' + runs + '</w:p>';
+  // dòng số trang: canh giữa, thụt lề 0, cách trên 0 pt, cách dưới 6 pt, giãn dòng đơn
+  return '<w:p><w:pPr><w:spacing w:before="0" w:after="120" w:line="240" w:lineRule="auto"/><w:ind w:left="0" w:right="0" w:firstLine="0"/><w:jc w:val="center"/></w:pPr>' + runs + '</w:p>';
+}
+// khổ giấy và lề cho mọi bản xuất ra: A4 dọc, trên 1 cm, dưới 1 cm, trái 1,5 cm, phải 1 cm, gáy 0
+const PAGE_MAR = [['top', 567], ['right', 567], ['bottom', 567], ['left', 851], ['header', 284], ['footer', 284], ['gutter', 0]];
+const PAGE_USABLE = (11906 - 851 - 567) / 20;
+function applyPage(sect, doc) {
+  let sz = findW(sect, 'pgSz'), mg = findW(sect, 'pgMar');
+  const anchor = Array.from(sect.children).find((c) => !isW(c, 'headerReference') && !isW(c, 'footerReference') && !isW(c, 'footnotePr') && !isW(c, 'endnotePr') && !isW(c, 'type')) || null;
+  if (!sz) { sz = doc.createElementNS(NS.w, 'w:pgSz'); sect.insertBefore(sz, anchor); }
+  sz.setAttributeNS(NS.w, 'w:w', '11906'); sz.setAttributeNS(NS.w, 'w:h', '16838');
+  if (sz.hasAttributeNS(NS.w, 'orient')) sz.removeAttributeNS(NS.w, 'orient');
+  if (!mg) { mg = doc.createElementNS(NS.w, 'w:pgMar'); sect.insertBefore(mg, sz.nextSibling); }
+  PAGE_MAR.forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
+  return sect;
 }
 const FTR_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:ftr xmlns:w="' + NS.w + '" xmlns:r="' + NS.r + '">';
 function addPageNumbers(sect, out, opt) {
@@ -3807,7 +3821,7 @@ async function generate(opt, ids, extra) {
   extra = extra || {};
   DOC = S.docX; OLE = S.ole; USABLE_PT = S.usable;
   opt = Object.assign({}, opt);
-  if (opt.fresh) USABLE_PT = (11906 - 2 * 1134) / 20;   // bộ đề in: trang A4 sạch, lề 2 cm, không lấy đầu/chân trang của file nguồn
+  USABLE_PT = PAGE_USABLE;   // mọi bản xuất ra: A4, lề trái 1,5 cm, phải 1 cm
   let qs = ids.map((id) => S.reg.get(id)).filter(Boolean);
   const dropP4 = (opt.style === 'm1' && opt.p4 !== 'keep') || !!opt.noP4;
   const nP4 = qs.filter((q) => q.part === 4).length;
@@ -3844,21 +3858,8 @@ async function generate(opt, ids, extra) {
       const mg = DOC.createElementNS(NS.w, 'w:pgMar'); [['top', 567], ['right', 567], ['bottom', 567], ['left', 851], ['header', 0], ['footer', 284], ['gutter', 0]].forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
       sectEl.appendChild(sz); sectEl.appendChild(mg);
     }
-    if (!sectEl && opt.pageNum && opt.pageNum !== 'off') {
-      sectEl = DOC.createElementNS(NS.w, 'w:sectPr');
-      const sz = DOC.createElementNS(NS.w, 'w:pgSz'); sz.setAttributeNS(NS.w, 'w:w', '11906'); sz.setAttributeNS(NS.w, 'w:h', '16838');
-      const mg = DOC.createElementNS(NS.w, 'w:pgMar'); [['top', 1134], ['right', 1134], ['bottom', 1134], ['left', 1134], ['header', 567], ['footer', 567]].forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
-      sectEl.appendChild(sz); sectEl.appendChild(mg);
-    }
-    if (sectEl && !opt.fresh && !M1 && (findW(sectEl, 'footerReference') || (opt.pageNum && opt.pageNum !== 'off'))) {
-      // đề gốc để chân trang sát mép giấy (footer = 0): khi in bị mất số trang -> cách mép dưới ≥ 1 cm, lề dưới đủ chỗ cho dòng số trang
-      const pm = findW(sectEl, 'pgMar');
-      if (pm) {
-        const g = (n) => parseInt(wattr(pm, n) || '0', 10);
-        if (g('footer') < 567) pm.setAttributeNS(NS.w, 'w:footer', '567');
-        if (g('bottom') < 1400) pm.setAttributeNS(NS.w, 'w:bottom', '1400');
-      }
-    }
+    if (!sectEl) sectEl = DOC.createElementNS(NS.w, 'w:sectPr');
+    if (!M1) applyPage(sectEl, DOC);   // khổ A4 dọc, lề 1 / 1 / 1,5 / 1 cm cho cả hai bản (ngân hàng đề đã có lề riêng giống vậy)
     if (sectEl) body.appendChild(sectEl);
     if (sectEl && opt.pageNum && opt.pageNum !== 'off') addPageNumbers(sectEl, out, opt);
     const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ser(root).replace(/^<\?xml[^>]*\?>\s*/, '');
@@ -4143,7 +4144,7 @@ async function quick(arrayBuffer, opt) {
     if (!lastSect && pnFmt !== 'off') {
       lastSect = cdoc.createElementNS(NS.w, 'w:sectPr');
       const sz = cdoc.createElementNS(NS.w, 'w:pgSz'); sz.setAttributeNS(NS.w, 'w:w', '11906'); sz.setAttributeNS(NS.w, 'w:h', '16838');
-      const mg = cdoc.createElementNS(NS.w, 'w:pgMar'); [['top', 1134], ['right', 1134], ['bottom', 1134], ['left', 1134], ['header', 567], ['footer', 567]].forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
+      const mg = cdoc.createElementNS(NS.w, 'w:pgMar'); PAGE_MAR.forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
       lastSect.appendChild(sz); lastSect.appendChild(mg); cbody.appendChild(lastSect); sects.push(lastSect);
     }
     if (pnFmt !== 'off') sects.forEach((sc) => addPageNumbers(sc, out, { pageNum: pnFmt, ma: '' }));
@@ -4249,7 +4250,7 @@ async function mergeDocx(blobs, mopt) {
   const defaultSect = () => {
     const sp = baseDoc.createElementNS(NS.w, 'w:sectPr');
     const sz = baseDoc.createElementNS(NS.w, 'w:pgSz'); sz.setAttributeNS(NS.w, 'w:w', '11906'); sz.setAttributeNS(NS.w, 'w:h', '16838');
-    const mg = baseDoc.createElementNS(NS.w, 'w:pgMar'); [['top', 1134], ['right', 1134], ['bottom', 1134], ['left', 1134], ['header', 567], ['footer', 567], ['gutter', 0]].forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
+    const mg = baseDoc.createElementNS(NS.w, 'w:pgMar'); PAGE_MAR.forEach(([k, v]) => mg.setAttributeNS(NS.w, 'w:' + k, String(v)));
     sp.appendChild(sz); sp.appendChild(mg); return sp;
   };
   // phần thân + dòng kẻ sectPr của đề đầu
@@ -5589,7 +5590,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29.2 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29.3 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
