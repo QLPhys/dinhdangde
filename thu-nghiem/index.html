@@ -758,7 +758,7 @@ body[data-tool="one"] #setApp { display: none !important; }
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29-b4</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29-b5</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -1255,7 +1255,26 @@ function afterTag(q, toks) {
   const keep = toks.slice(0, m[0].length).filter((t) => t.kind === 'n');
   return trim(keep.concat(toks.slice(m[0].length)));
 }
-function stripQprefix(q, toks) {
+// nguồn câu hỏi ngay sau số câu: "Câu 43 (Nguyễn Khuyến – TP. HCM 2025). …", "Câu 46 [Đề minh họa BGD 2025]. …"
+const SRC_KW = /(?:19|20)\d{2}|S[ởo]\s*GD|SGD|THPT|THCS|Chuy[êe]n|Tr[ườư]+ng|Đề|minh\s*h[ọo]a|thi\s*th[ửu]|BGD|B[ộo]\s*GD|C[ụu]m|Li[êe]n\s*tr|TN\s*THPT|HSG|SGK|SBT|Olympic|[ÔO]n\s*thi|S[áa]ch/i;
+function isSrcNote(inner) {
+  const t = inner.trim();
+  if (t.length < 3 || tagLevel(t)) return false;
+  if (/(?:điểm|đ|pt)(?![A-Za-zÀ-ỹ])/i.test(t) && /\d/.test(t) && t.length < 20) return false;
+  if (/^(?:h[ìi]nh|b[ảa]ng)\s*\d/i.test(t)) return false;
+  return SRC_KW.test(t);
+}
+function takeSource(q, toks) {
+  const s = textOf(toks), lead = keep0(toks), s2 = s.slice(lead);
+  const m = /^(\s*)(?:\(([^()\n]{3,100})\)|\[([^\[\]\n]{3,100})\])([ \t]*[\.:]?)[ \t]*/.exec(s2);
+  if (!m || !isSrcNote(m[2] || m[3])) return toks;
+  const a = lead + m[1].length, b = a + 2 + (m[2] || m[3]).length;
+  q.srcNote = trim(toks.slice(a, b));
+  q.srcPunct = m[4].trim();
+  return trim(toks.slice(0, lead).concat(toks.slice(lead + m[0].length)));
+}
+function stripQprefix(q, toks) { return takeSource(q, stripQprefix0(q, toks)); }
+function stripQprefix0(q, toks) {
   let s = textOf(toks);
   { // "[TN-B] Câu 1: ..." : tách nhãn trước, rồi mới bỏ chữ "Câu 1:"
     const mt0 = /^[\s\uFFFC]*(\[[^\]]{1,24}\])\s*/.exec(s);
@@ -1307,7 +1326,7 @@ function stripQprefix(q, toks) {
     }
   }
   const m2 = TAG_RE.exec(s2);
-  if (m2) { q.tag = m2[1]; q.tagLv = tagLevel(q.tag); q.tagSrcPre = tagPre(q.tag); q.tagToks = trim(toks.slice(lead, lead + m2[0].length)); toks = toks.slice(0, lead).concat(toks.slice(lead + m2[0].length)); return afterTag(q, trim(toks)); }
+  if (m2 && (tagLevel(m2[1].slice(1, -1)) || !/\s/.test(m2[1].slice(1, -1).trim()))) { q.tag = m2[1]; q.tagLv = tagLevel(q.tag); q.tagSrcPre = tagPre(q.tag); q.tagToks = trim(toks.slice(lead, lead + m2[0].length)); toks = toks.slice(0, lead).concat(toks.slice(lead + m2[0].length)); return afterTag(q, trim(toks)); }
   return trim(toks);
 }
 
@@ -2432,7 +2451,12 @@ function stemParas(q, num) {
   const out = [];
   const pics = [];   // hình luôn đặt ở cuối câu dẫn (ngay trước các đáp án/phát biểu), canh giữa
   let labelDone = false, tagDone = false;
-  const lab = () => { const r = labelRuns(num).concat(tagDone ? [] : tagRuns(q)); tagDone = true; return r; };
+  const lab = () => {
+    let r;
+    if (q.srcNote && STYLE !== 'm1' && hasContent(q.srcNote)) r = [lit('Câu ' + num, { bold: true, color: BLUE }), lit(' ')].concat(runsFrom(q.srcNote), [lit((q.srcPunct || '.') + ' ')], tagDone ? [] : tagRuns(q));
+    else r = labelRuns(num).concat(tagDone ? [] : tagRuns(q));
+    tagDone = true; return r;
+  };
   for (let toks of q.stem) {
     toks = trim(toks);
     if (!hasContent(toks)) continue;
@@ -5020,7 +5044,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29-b4 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29-b5 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
