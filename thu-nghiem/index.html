@@ -421,6 +421,36 @@ body[data-tool="one"] #setApp { display: none !important; }
 .dock .dkow { color: var(--accent, var(--blue)); font-weight: 700; margin-top: 1px; } .dock .dkow:hover, .dock .dkow:focus-visible { color: var(--red); }
 .toast { position: fixed; left: 50%; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 92px); transform: translateX(-50%); z-index: 60; max-width: min(560px, calc(100% - 28px)); padding: 10px 16px; border-radius: 14px; font-size: 13.5px; background: var(--ink); color: var(--bg, #fff); box-shadow: 0 10px 28px -8px rgba(0,0,0,.5); }
 .toast[hidden] { display: none; }
+/* khung "Cần xem lại" cạnh danh sách câu (bước 2) */
+.sidep { position: fixed; z-index: 35; top: 16px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 96px); right: calc(max(0px, (100vw - 1560px) / 2) + clamp(10px, 2.2vw, 36px) + 14px); width: 300px; display: flex; flex-direction: column; background: var(--glass-b); border: 1px solid var(--stroke); border-radius: 20px; box-shadow: var(--shadow); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); overflow: hidden; }
+.sidep .sh { padding: 12px 12px 8px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--hair); }
+.sidep .sh b { font-size: 15px; } .sidep .sh .cnt { font-size: 12.5px; font-weight: 700; border-radius: 99px; padding: 1px 9px; background: var(--amber-bg); color: var(--amber-ink); } .sidep .sh .cnt.ok { background: color-mix(in srgb, var(--green) 18%, transparent); color: var(--green); }
+.sidep .sh .x { margin-left: auto; border: 0; background: none; color: var(--ink2); font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
+.sidep .sub { font-size: 12px; color: var(--ink2); padding: 6px 14px 0; }
+.sidep .sb { overflow: auto; padding: 6px 8px 12px; flex: 1 1 auto; overscroll-behavior: contain; }
+.sidep .gh { font-size: 12px; font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: .03em; padding: 8px 8px 4px; }
+.sidep .it { display: block; width: 100%; text-align: left; font: inherit; border: 0; background: none; color: var(--ink); padding: 7px 8px 7px 10px; border-radius: 10px; cursor: pointer; }
+.sidep .it b { font-size: 13.5px; font-weight: 600; } .sidep .it span { display: block; color: var(--amber-ink); font-size: 12.5px; line-height: 1.35; }
+.sidep .it:hover { background: color-mix(in srgb, var(--blue) 9%, transparent); }
+.sidep .it.on { background: color-mix(in srgb, var(--blue) 13%, transparent); box-shadow: inset 3px 0 0 var(--blue); }
+.sidep .it.done span { color: var(--green); font-weight: 600; } .sidep .it.done b { color: var(--ink2); }
+.sidep details.grp { margin-top: 6px; border-top: 1px solid var(--hair); padding-top: 4px; }
+.sidep details.grp > summary { cursor: pointer; font-size: 13px; color: var(--ink2); padding: 7px 8px; list-style: none; border-radius: 10px; } .sidep details.grp > summary::-webkit-details-marker { display: none; }
+.sidep details.grp > summary::after { content: ' ›'; } .sidep details.grp[open] > summary::after { content: ' ⌄'; }
+.sidep details.grp .it span { color: var(--ink2); }
+.sidep .empty { padding: 14px 10px; font-size: 13.5px; color: var(--green); font-weight: 600; }
+.sidefab { position: fixed; right: 14px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 96px); z-index: 36; font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--stroke); border-radius: 99px; padding: 9px 16px; cursor: pointer; background: var(--glass-b); color: var(--amber-ink); box-shadow: var(--shadow); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.sidefab.ok { color: var(--green); }
+body.side-wide .step[data-i="1"] { padding-right: 318px; }
+.sidep.drawer { width: min(340px, calc(100vw - 24px)); right: 12px; top: 12px; }
+.backbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 92px); z-index: 41; display: flex; gap: 8px; padding: 6px; border-radius: 99px; background: var(--glass-b); border: 1px solid var(--stroke); box-shadow: var(--shadow); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); max-width: calc(100% - 20px); }
+.backbar .mini { font-size: 13.5px; padding: 7px 14px; } .backbar .mini.pri { background: var(--blue); color: var(--on-ink); }
+.qfix { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: var(--amber-bg); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13.5px; }
+.qfix > span { color: var(--amber-ink); font-weight: 600; } .qfix .tfg { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; color: var(--ink); white-space: nowrap; } .qfix .mini { min-width: 38px; }
+.qfix input.qa3 { font: inherit; width: 110px; padding: 5px 10px; border-radius: 10px; border: 1px solid var(--hair); background: var(--glass); color: var(--ink); }
+.qfix .hint3 { flex-basis: 100%; font-size: 12.5px; color: var(--ink2); } .qfix .hint3:empty { display: none; }
+.qfix .err3 { flex-basis: 100%; font-size: 12.5px; color: var(--red); } .qfix .err3:empty { display: none; }
+.notes details.optn { margin-top: 6px; } .notes details.optn > summary { cursor: pointer; color: var(--ink2); }
 .tagrow .tnx { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
 .dock .rst:disabled { opacity: .4; pointer-events: none; }
 .navb { display: none !important; }
@@ -753,12 +783,19 @@ body[data-tool="one"] #setApp { display: none !important; }
     </div>
   </section>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <aside class="sidep" id="sideP" aria-label="Danh sách câu cần xem lại" hidden>
+    <div class="sh"><b>Cần xem lại</b><span class="cnt" id="sideCnt">0</span><button class="x" id="sideX" type="button" aria-label="Đóng danh sách" hidden>×</button></div>
+    <div class="sub">Bấm một mục để đến câu đó. Sửa xong, mục chuyển xanh.</div>
+    <div class="sb" id="sideB"></div>
+  </aside>
+  <button class="sidefab" id="sideFab" type="button" hidden aria-controls="sideP">⚠ 0</button>
+  <div class="backbar" id="backBar" hidden><button class="mini pri" id="bbBack" type="button">‹ Về báo cáo (Bước 4)</button><button class="mini" id="bbNext" type="button">Câu cần xem kế tiếp ›</button></div>
   <nav class="dock" id="dock" aria-label="Chuyển bước">
     <button class="btn back" id="dkBack" type="button">‹ Quay lại</button>
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29-b5</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.29-b6</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4196,6 +4233,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     steps.forEach((s, k) => { s.classList.toggle('on', k === i); s.classList.toggle('past', k < i); s.classList.toggle('seen', k <= maxSeen); s.inert = skin === 'modern' && k !== i; });
     dots.forEach((d, k) => { d.className = k === i ? 'on' : (k < i ? 'done' : ''); });
     fit(); if (typeof syncDock === 'function') syncDock();
+    if (typeof sideOnStep === 'function') sideOnStep(i);
     if (skin === 'classic') steps[i].scrollIntoView({ block: 'start' });
     else window.scrollTo({ top: 0, behavior: instant ? 'auto' : 'smooth' });
     const f = steps[i].querySelector('h2'); if (f) { f.tabIndex = -1; f.focus({ preventScroll: true }); }
@@ -4352,6 +4390,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     [/Chưa có hướng dẫn giải/, 'Không bắt buộc. Có thể bấm Sửa để thêm lời giải.'],
     [/nhiều đáp án/, 'Bấm Sửa để chọn lại một đáp án đúng.'],
   ];
+  const shortW = (w) => (/^Chưa có đáp án số/.test(w) ? 'Chưa có đáp án số' : w);
   const sugg = (w) => { for (const [re, t] of SUG) if (re.test(w)) return t; return ''; };
 
   const pp = (x) => (x.indexOf('<table') >= 0 ? '<div>' + x + '</div>' : '<p>' + x + '</p>');
@@ -4393,13 +4432,14 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     if (v.ansText) h += '<p class="ansl">Đáp án: <span style="color:var(--ok,#0a7d32)">' + esc(v.ansText) + '</span></p>';
     if (v.sol.length) h += '<details class="sol"><summary>Hướng dẫn giải</summary>' + v.sol.map((l) => pp(fmt(l, v))).join('') + '</details>';
     h += '</div>';
-    const pills = v.warn.map((w) => '<span class="pill">' + esc(w) + '</span>').concat(v.hints.map((w) => '<span class="pill dup">' + esc(w) + '</span>'));
+    const pills = v.warn.map((w) => '<span class="pill">' + esc(shortW(w)) + '</span>').concat(v.hints.map((w) => '<span class="pill dup">' + esc(w) + '</span>'));
     if (pills.length) {
       h += '<div class="pills">' + pills.join('') + '</div>';
       const ss = Array.from(new Set(v.warn.map(sugg).filter(Boolean)));
       if (v.hints.length) ss.push('Đề xuất: Bỏ câu này nếu thật sự trùng, hoặc Đổi sang câu khác.');
       if (ss.length) h += '<p class="sugg">' + esc(ss.join(' ')) + '</p>';
     }
+    if (!off && !openForms.has(v.id)) h += quickFixHTML(v);
     if (openForms.has(v.id)) h += formHTML(v);
     return h + '</article>';
   }
@@ -4531,6 +4571,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
     $('n2').disabled = k.length === 0 || nt > 0;
     $('n2').title = nt ? 'Cần gắn nhãn mức độ cho mọi câu trước khi tiếp tục (còn ' + nt + ' câu)' : '';
     renderTagPanel();
+    renderSide();
     document.querySelectorAll('#rfilt .mini').forEach((b) => b.classList.toggle('on', b.dataset.f === filter));
   }
   $('rfilt').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; filter = b.dataset.f; renderReview(); });
@@ -4675,7 +4716,180 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
       el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
     }, skin === 'modern' ? 420 : 30));
   }
-  $('notesList').addEventListener('click', (e) => { const b = e.target.closest('[data-goto]'); if (b) focusQ(+b.dataset.goto); });
+  $('notesList').addEventListener('click', (e) => { const b = e.target.closest('[data-goto]'); if (b) { fromReport = true; lastGo = +b.dataset.goto; focusQ(+b.dataset.goto); setTimeout(sideSync, 50); } });
+
+  /* ================= khung "Cần xem lại" (bước 2) + về báo cáo ================= */
+  var OPT_RE = /Chưa có hướng dẫn giải/;
+  var fromReport = false, lastGo = null, resolved = new Set(), prevNeed = new Set(), drawerOpen = false, optOpen = false;
+  function sideLists() {
+    const need = [], opt = [];
+    for (const part of [1, 2, 3, 4]) {
+      let n = 0;
+      order.forEach((id) => {
+        const v = views.get(id); if (!v || v.part !== part || dropped.has(id)) return;
+        n++;
+        const msgs = v.warn.filter((w) => !OPT_RE.test(w)).map((w) => shortW(w).replace(/\s*\([^)]*\)\s*$/, '')).concat(v.hints || []);
+        if (v.sugg && !v.sugg.n) msgs.push('Có thể là chùm câu hỏi (xem gợi ý trong thẻ câu)');
+        if (isM1() && part <= 3 && !v.tagLv) msgs.push('Chưa gắn nhãn mức độ');
+        const lab = PN[part] + ' · Câu ' + n;
+        if (msgs.length) need.push({ id, lab, msgs });
+        else if (resolved.has(id)) need.push({ id, lab, msgs: [], done: true });
+        if (v.warn.some((w) => OPT_RE.test(w))) opt.push({ id, lab, msgs: ['Chưa có hướng dẫn giải'] });
+      });
+    }
+    return { need, opt };
+  }
+  function renderSide() {
+    const P = $('sideP');
+    if (!order.length) { P.hidden = true; $('sideFab').hidden = true; return; }
+    const { need, opt } = sideLists();
+    // câu vừa hết lỗi: giữ lại với dấu ✓ cho tới khi rời bước 2
+    const nowNeed = new Set(need.filter((x) => !x.done).map((x) => x.id));
+    prevNeed.forEach((id) => { if (!nowNeed.has(id) && !dropped.has(id) && views.has(id)) resolved.add(id); });
+    resolved.forEach((id) => { if (nowNeed.has(id) || dropped.has(id)) resolved.delete(id); });
+    prevNeed = nowNeed;
+    const lst = sideLists();
+    const nN = nowNeed.size;
+    const it = (x) => '<button class="it' + (x.done ? ' done' : '') + '" type="button" data-sid="' + x.id + '"><b>' + esc(x.lab) + '</b>' + (x.done ? '<span>✓ Đã sửa</span>' : x.msgs.map((m) => '<span>' + esc(m) + '</span>').join('')) + '</button>';
+    let h = '<div class="gh">Cần sửa · ' + nN + '</div>';
+    h += lst.need.length ? lst.need.map(it).join('') : '<div class="empty">✓ Không còn câu cần sửa.</div>';
+    if (lst.opt.length) h += '<details class="grp"' + (optOpen ? ' open' : '') + '><summary>Không bắt buộc · ' + lst.opt.length + ' câu chưa có hướng dẫn giải</summary>' + lst.opt.map(it).join('') + '</details>';
+    const sb = $('sideB'), st = sb.scrollTop;
+    sb.innerHTML = h; sb.scrollTop = st;
+    $('sideCnt').textContent = nN ? nN : '✓'; $('sideCnt').classList.toggle('ok', !nN);
+    $('sideFab').textContent = nN ? '⚠ ' + nN + ' cần sửa' : '✓ Đủ' + (lst.opt.length ? ' · ' + lst.opt.length + ' chưa HDG' : '');
+    $('sideFab').classList.toggle('ok', !nN);
+    sideSync(); spy();
+  }
+  function isWide() { return window.innerWidth >= 1280; }
+  function sideSync() {
+    const on = cur === 1 && order.length > 0 && document.body.dataset.tool !== 'set';
+    const wide = isWide();
+    document.body.classList.toggle('side-wide', on && wide);
+    const P = $('sideP');
+    P.classList.toggle('drawer', !wide); if (!wide) { P.style.top = ''; P.style.bottom = ''; }
+    P.hidden = !on || (!wide && !drawerOpen);
+    $('sideX').hidden = wide;
+    $('sideFab').hidden = !on || wide || drawerOpen;
+    $('backBar').hidden = !(on && fromReport);
+    if (on) {
+      const dk = $('dock'), off = (parseFloat(getComputedStyle(dk).bottom) || 12) + dk.offsetHeight + 10;
+      $('sideFab').style.bottom = off + 'px'; $('backBar').style.bottom = off + 'px';
+      if (!$('sideFab').hidden && !$('backBar').hidden && !wide) $('backBar').style.bottom = (off + 52) + 'px';
+    }
+    if (on && wide) placeSide();
+    fit();
+  }
+  function placeSide() {
+    const P = $('sideP'), q = $('qlist').getBoundingClientRect(), w = stage.getBoundingClientRect();
+    const dockGap = parseFloat(getComputedStyle($('dock')).bottom) + $('dock').offsetHeight + 12;
+    let top = Math.max(16, q.top), bottom = Math.max(dockGap, window.innerHeight - w.bottom);
+    if (window.innerHeight - top - bottom < 240) top = Math.max(16, window.innerHeight - bottom - 240);
+    P.style.top = top + 'px'; P.style.bottom = bottom + 'px';
+  }
+  function sideOnStep(i) {
+    if (i !== 1) { fromReport = false; drawerOpen = false; resolved = new Set(); prevNeed = new Set(); }
+    sideSync();
+  }
+  // câu đang xem trên màn hình -> tô đậm mục tương ứng trong khung
+  var spyRaf = 0;
+  function spy() {
+    if ($('sideP').hidden) return;
+    const cards = $('qlist').querySelectorAll('.qc[data-id]'), y = window.innerHeight * 0.5;
+    let curId = null;
+    for (const c of cards) { const r = c.getBoundingClientRect(); if (r.bottom > y) { if (r.top < window.innerHeight) curId = c.dataset.id; break; } }
+    const sb = $('sideB');
+    sb.querySelectorAll('.it.on').forEach((e) => e.classList.remove('on'));
+    if (curId == null) return;
+    const el = sb.querySelector('.it[data-sid="' + curId + '"]');
+    if (!el) return;
+    el.classList.add('on');
+    const er = el.getBoundingClientRect(), br = sb.getBoundingClientRect();
+    if (er.top < br.top || er.bottom > br.bottom) sb.scrollTop += (er.top - br.top) - br.height / 3;
+  }
+  window.addEventListener('scroll', () => { if (cur !== 1) return; if (isWide()) placeSide(); cancelAnimationFrame(spyRaf); spyRaf = requestAnimationFrame(spy); }, { passive: true });
+  window.addEventListener('resize', () => { if (cur === 1) sideSync(); });
+  $('sideB').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sid]'); if (!b) return;
+    lastGo = +b.dataset.sid; focusQ(lastGo);
+    if (!isWide()) { drawerOpen = false; sideSync(); }
+  });
+  $('sideB').addEventListener('toggle', (e) => { if (e.target.classList && e.target.classList.contains('grp')) optOpen = e.target.open; }, true);
+  $('sideFab').addEventListener('click', () => { drawerOpen = true; sideSync(); spy(); });
+  $('sideX').addEventListener('click', () => { drawerOpen = false; sideSync(); });
+  $('bbBack').addEventListener('click', () => { saveDrafts(); fromReport = false; sideSync(); refreshPreview(); runGenerate(); });
+  $('bbNext').addEventListener('click', () => {
+    const { need, opt } = sideLists();
+    const seq = need.filter((x) => !x.done).concat(opt).map((x) => x.id).filter((id, k, a) => a.indexOf(id) === k);
+    if (!seq.length) { toast('Không còn mục cần xem.'); return; }
+    const pos = (id) => order.indexOf(id);
+    const nx = seq.find((id) => lastGo == null || pos(id) > pos(lastGo)) ?? seq[0];
+    lastGo = nx; focusQ(nx);
+  });
+
+  /* ---------- sửa nhanh ngay trên thẻ câu (giống add-in Word) ---------- */
+  function quickFixHTML(v) {
+    let h = '';
+    if (v.part === 1 && v.opts && !v.ans) {
+      h += '<div class="qfix"><span>Chọn đáp án đúng:</span>' + 'ABCD'.split('').map((L) => '<button class="mini" type="button" data-act="qans" data-v="' + L + '">' + L + '</button>').join('') + '</div>';
+    } else if (v.part === 2 && v.stmts) {
+      const miss = 'abcd'.split('').filter((L) => v.stmts[L] && !(v.tf && v.tf[L]));
+      if (miss.length) h += '<div class="qfix"><span>Đặt Đúng/Sai:</span>' + miss.map((L) => '<span class="tfg"><b>' + L + ')</b><button class="mini" type="button" data-act="qtf" data-l="' + L + '" data-v="Đ">Đúng</button><button class="mini" type="button" data-act="qtf" data-l="' + L + '" data-v="S">Sai</button></span>').join('') + '</div>';
+    } else if (v.part === 3 && !v.ansText && v.warn.some((w) => /đáp án số/i.test(w))) {
+      const sg = suggestAns3(v.sol || []), rh = roundHint3(v.stem.join(' '));
+      h += '<div class="qfix"><span>Đáp án:</span><input class="qa3" type="text" inputmode="decimal" autocomplete="off" aria-label="Đáp số"><button class="mini" type="button" data-act="qa3">Ghi</button>'
+        + (sg ? '<button class="mini" type="button" data-act="qsg" data-v="' + esc(sg) + '">Gợi ý từ lời giải: ' + esc(sg) + '</button>' : '')
+        + '<span class="hint3">' + esc(rh) + '</span><span class="err3"></span></div>';
+    }
+    return h;
+  }
+  const plain3 = (t) => String(t || '').replace(/⟦[^⟧]*⟧/g, ' ').replace(/\s+/g, ' ').trim();
+  function suggestAns3(sol) {
+    const ls = sol.map(plain3).filter(Boolean);
+    for (let i = ls.length - 1; i >= 0; i--) { const m = /=\s*(-?\d+(?:[.,]\d+)?)\s*(?:[A-Za-zμΩ°%\/²³⁻¹·.]{0,8})?\s*\.?\s*$/.exec(ls[i]); if (m) return m[1].replace('.', ','); }
+    return null;
+  }
+  function roundReq3(t) {
+    if (/(lấy|làm tròn)\s*(?:đến|tới)?\s*phần\s*nguyên|không lấy chữ số sau dấu phẩy/i.test(t)) return 0;
+    const m = /làm\s*tròn\s*(?:kết quả\s*)?(?:đến|tới)?\s*(\d|một|hai|ba|bốn)\s*chữ\s*số\s*(?:thập\s*phân|sau\s*dấu\s*phẩy)/i.exec(t);
+    if (!m) return null;
+    return /\d/.test(m[1]) ? +m[1] : { 'một': 1, hai: 2, ba: 3, 'bốn': 4 }[m[1].toLowerCase()];
+  }
+  function roundHint3(t) { const r = roundReq3(t); return r === null ? '' : 'Đề yêu cầu ' + (r === 0 ? 'lấy phần nguyên' : 'làm tròn ' + r + ' chữ số thập phân') + '.'; }
+  function checkAns3(raw, stemText) {
+    const v = String(raw || '').replace(/\s+/g, '').replace(/\./g, ',');
+    if (!v) return { err: 'Chưa nhập đáp số.' };
+    if (!/^-?\d+(,\d+)?$/.test(v)) return { err: 'Đáp số chỉ gồm chữ số, dấu "-" và một dấu phẩy thập phân.' };
+    const notes = [];
+    if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu từ 2025 chỉ có 4 ô (kể cả dấu "-" và dấu phẩy).');
+    const r = roundReq3(stemText), dec = v.includes(',') ? v.split(',')[1].length : 0;
+    if (r !== null && dec !== r) notes.push('Đề yêu cầu ' + (r === 0 ? 'lấy phần nguyên' : 'làm tròn ' + r + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
+    return { v, notes };
+  }
+  const need3 = (id) => { const v = views.get(id); return v && v.part === 3 && !dropped.has(id) && !v.ansText && v.warn.some((w) => /đáp án số/i.test(w)); };
+  function quickEdit(id, fields, msg) {
+    try { views.set(id, window.DeThi.edit(id, fields)); renderReview(); if (msg) toast(msg); return true; }
+    catch (err) { alert('Không lưu được: ' + (err && err.message ? err.message : err)); return false; }
+  }
+  function submitAns3(card) {
+    const id = +card.dataset.id, v = views.get(id), inp = card.querySelector('input.qa3');
+    const c = checkAns3(inp ? inp.value : '', v.stem.join(' '));
+    if (c.err) { const e = card.querySelector('.err3'); if (e) e.textContent = c.err; if (inp) inp.focus(); return; }
+    if (!quickEdit(id, { ans3: c.v })) return;
+    const ids = keptIds(), k = ids.indexOf(id);
+    const nx = ids.slice(k + 1).concat(ids.slice(0, k)).find(need3);
+    toast((c.notes.length ? '⚠ ' + c.notes.join(' ') + ' ' : '') + 'Đã ghi Đáp án: ' + c.v + '.' + (nx != null ? ' Chuyển sang câu Phần III kế tiếp còn thiếu đáp số.' : ' Không còn câu Phần III nào thiếu đáp số.'));
+    if (nx != null) { lastGo = nx; focusQ(nx); setTimeout(() => { const el = $('qlist').querySelector('[data-id="' + nx + '"] input.qa3'); if (el) el.focus({ preventScroll: true }); }, skin === 'modern' ? 700 : 120); }
+  }
+  $('qlist').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act="qans"],[data-act="qtf"],[data-act="qa3"],[data-act="qsg"]'); if (!b) return;
+    const card = b.closest('[data-id]'), id = +card.dataset.id, act = b.dataset.act;
+    if (act === 'qans') quickEdit(id, { ans: b.dataset.v }, 'Đã chọn đáp án ' + b.dataset.v + '.');
+    else if (act === 'qtf') quickEdit(id, { tf: { [b.dataset.l]: b.dataset.v } }, 'Ý ' + b.dataset.l + ') ' + (b.dataset.v === 'Đ' ? 'Đúng' : 'Sai') + '.');
+    else if (act === 'qsg') { const inp = card.querySelector('input.qa3'); if (inp) { inp.value = b.dataset.v; inp.focus(); } }
+    else if (act === 'qa3') submitAns3(card);
+  });
+  $('qlist').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('qa3')) { e.preventDefault(); submitAns3(e.target.closest('[data-id]')); } });
 
   /* ---------- sửa công thức trong file gốc rồi nạp lại ---------- */
   let wordTarget = null;
@@ -4849,10 +5063,12 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
       $('chips').innerHTML = '<span class="chip">Phần I · ' + a + ' câu</span><span class="chip">Phần II · ' + b + ' câu</span><span class="chip">Phần III · ' + c + ' câu</span>' + (d4 ? '<span class="chip">Phần IV · ' + d4 + ' câu</span>' : '');
       const list = $('notesList'); list.textContent = '';
       if (out.notes.length) {
-        out.notes.forEach((n) => { const li = document.createElement('li'); li.appendChild(document.createTextNode(n.text + ' ')); const b = document.createElement('button'); b.type = 'button'; b.className = 'mini'; b.textContent = 'Đến câu này →'; b.dataset.goto = n.id; li.appendChild(b); list.appendChild(li); });
-        $('notesSum').textContent = 'Có ' + out.notes.length + ' mục nên xem lại'; $('notes').hidden = false;
-      } else $('notes').hidden = true;
-      $('notes').open = false;
+        const noteLi = (n) => '<li>' + esc(n.text.replace(/Chưa có đáp án số \(.*$/, 'Chưa có đáp án số')) + ' ' + (n.id != null ? '<button type="button" class="mini" data-goto="' + n.id + '">Đến câu này →</button>' : '') + '</li>';
+        const nNeed = out.notes.filter((n) => !OPT_RE.test(n.text)), nOpt = out.notes.filter((n) => OPT_RE.test(n.text));
+        list.innerHTML = nNeed.map(noteLi).join('') + (nOpt.length ? '<li style="list-style:none"><details class="optn"><summary>Không bắt buộc · ' + nOpt.length + ' câu chưa có hướng dẫn giải</summary><ul>' + nOpt.map(noteLi).join('') + '</ul></details></li>' : '');
+        $('notesSum').textContent = nNeed.length ? 'Có ' + nNeed.length + ' mục cần sửa' + (nOpt.length ? ' · ' + nOpt.length + ' câu chưa có hướng dẫn giải (không bắt buộc)' : '') : 'Không có mục cần sửa · ' + nOpt.length + ' câu chưa có hướng dẫn giải (không bắt buộc)';
+        $('notes').hidden = false; $('notes').open = nNeed.length > 0;
+      } else { $('notes').hidden = true; $('notes').open = false; }
       if (fileHandle && fileHandle.createWritable) { $('owTxt').textContent = isM1() ? 'Thay file gốc "' + fileHandle.name + '" bằng bản Giáo viên theo chuẩn ngân hàng đề. Công cụ tải về một bản sao lưu của file gốc trước khi ghi.' : 'Ghi bản Giáo viên (đủ đáp án, lời giải, giữ tiêu đề gốc) đè lên "' + fileHandle.name + '". Một bản sao lưu của file gốc sẽ được tải về trước.'; if (window.__office) $('owTxt').textContent = 'Thay nội dung tài liệu đang mở trong Word bằng bản Giáo viên đã định dạng' + (isM1() ? ' theo chuẩn ngân hàng đề.' : ' (đủ đáp án, lời giải, giữ tiêu đề gốc).') + ' File trên máy chỉ đổi khi bạn bấm Lưu.'; $('owBtn').disabled = false; }
       else { $('owTxt').textContent = 'Chỉ dùng được trên Chrome hoặc Edge và khi chọn file bằng nút "Bấm để chọn file" ở bước 1 (kéo thả hoặc trình duyệt khác không ghi đè trực tiếp được).'; $('owBtn').disabled = true; }
       go(3);
@@ -5044,7 +5260,7 @@ window.DeThi = { ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, ge
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29-b5 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.10.29-b6 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
