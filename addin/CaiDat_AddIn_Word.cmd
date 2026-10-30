@@ -3,8 +3,13 @@ rem Cai add-in "QL_Format - Dinh dang de thi" (QL Physics) cho Word tren may nay
 setlocal
 set "D=%LOCALAPPDATA%\QLPhysics\DinhDangDe"
 if not exist "%D%" mkdir "%D%"
+if exist "%D%\manifest.xml" del /q "%D%\manifest.xml"
 echo Dang tai file cau hinh add-in...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri 'https://qlphys.github.io/dinhdangde/addin/manifest.xml' -OutFile '%D%\manifest.xml'"
+if not exist "%D%\manifest.xml" if exist "%~dp0manifest.xml" (
+  echo Khong tai duoc qua mang, dung file manifest.xml di kem bo cai.
+  copy /y "%~dp0manifest.xml" "%D%\manifest.xml" >nul
+)
 if not exist "%D%\manifest.xml" (
   echo KHONG TAI DUOC. Kiem tra mang Internet roi chay lai.
   pause
