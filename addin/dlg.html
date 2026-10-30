@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QL_Format</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+:root{--ink:#1b2433;--mut:#5b6575;--blue:#0a6cff;--ok:#1f7a3a;--warn:#8a4b00;--err:#a3261f;--line:#cfd8e6}
+*{box-sizing:border-box} html,body{margin:0;height:100%;background:#fff;color:var(--ink);font:14px/1.45 'Segoe UI',system-ui,sans-serif}
+.w{padding:14px 16px;display:flex;flex-direction:column;gap:10px;height:100%}
+.t{font-size:14.5px} .k-ok .t{color:var(--ok);font-weight:600} .k-warn .t{color:var(--warn)} .k-err .t{color:var(--err)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font:inherit;border-radius:8px;border:1px solid var(--line);background:#fff;padding:7px 14px;cursor:pointer;min-height:36px}
+button.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+input{font:inherit;font-size:16px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;width:150px}
+.mut{color:var(--mut);font-size:12.5px} .note{font-size:12.5px;color:var(--warn)} .note:empty,.mut:empty{display:none}
+pre{white-space:pre-wrap;background:#f5f7fb;border-radius:8px;padding:8px;font-size:12px;margin:0;max-height:120px;overflow:auto}
+table{border-collapse:collapse;font-size:12.5px} td{padding:2px 8px 2px 0}
+kbd{border:1px solid #c5ccd8;border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px Consolas,monospace;background:#f7f8fa}
+</style></head>
+<body><div class="w" id="w"></div>
+<script>
+(function () {
+  const P = new URLSearchParams(location.search), m = P.get('m') || 'msg';
+  const W = document.getElementById('w');
+  const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const send = (o) => { try { Office.context.ui.messageParent(JSON.stringify(o)); } catch (e) { /* bỏ qua */ } };
+  function render() {
+    if (m === 'msg') {
+      W.className = 'w k-' + (P.get('k') || 'info');
+      W.innerHTML = '<div class="t">' + esc(P.get('t')) + '</div><div class="row"><button class="pri" id="ok" type="button">Đóng</button></div>';
+      document.getElementById('ok').onclick = () => send({ ok: 1 });
+    } else if (m === 'confirm') {
+      W.innerHTML = '<div class="t">' + esc(P.get('t')) + '</div><div class="row"><button class="pri" id="y" type="button">' + esc(P.get('y') || 'Đồng ý') + '</button><button id="n" type="button">' + esc(P.get('n') || 'Thôi') + '</button></div>';
+      document.getElementById('y').onclick = () => send({ yes: 1 });
+      document.getElementById('n').onclick = () => send({ no: 1 });
+      document.getElementById('y').focus();
+    } else if (m === 'ans') {
+      const rd = P.get('rd'), sg = P.get('sg');
+      W.innerHTML = '<div class="mut">' + esc(P.get('q')) + '</div>'
+        + '<div class="row"><b>Đáp án:</b><input id="v" inputmode="decimal" autocomplete="off" value="' + esc(P.get('v') || '') + '"><button class="pri" id="ok" type="button">Ghi vào đề</button><button id="no" type="button">Thôi</button></div>'
+        + (sg ? '<div class="row"><button id="sg" type="button">Gợi ý từ lời giải: ' + esc(sg) + '</button></div>' : '')
+        + '<div class="mut">' + (rd !== null && rd !== '' ? 'Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + '.' : '') + '</div><div class="note" id="nt"></div>';
+      const inp = document.getElementById('v'); inp.focus(); inp.select();
+      let warned = '';
+      const go = () => {
+        const v = inp.value.replace(/\s+/g, '').replace(/\./g, ',');
+        const nt = document.getElementById('nt');
+        if (!v) { nt.textContent = 'Chưa nhập đáp số.'; return; }
+        if (!/^-?\d+(,\d+)?$/.test(v)) { nt.textContent = 'Đáp số chỉ gồm chữ số, dấu "-" và một dấu phẩy thập phân.'; return; }
+        const notes = [];
+        if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu 2025 chỉ có 4 ô.');
+        const dec = v.includes(',') ? v.split(',')[1].length : 0;
+        if (rd !== null && rd !== '' && dec !== +rd) notes.push('Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
+        if (notes.length && warned !== v) { warned = v; nt.textContent = notes.join(' ') + ' Bấm "Ghi vào đề" lần nữa để vẫn ghi.'; document.getElementById('ok').textContent = 'Vẫn ghi'; return; }
+        send({ v });
+      };
+      document.getElementById('ok').onclick = go;
+      document.getElementById('no').onclick = () => send({ cancel: 1 });
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } if (e.key === 'Escape') send({ cancel: 1 }); });
+      const sb = document.getElementById('sg'); if (sb) sb.onclick = () => { inp.value = sg; inp.focus(); };
+    } else if (m === 'web') {
+      const U = 'https://qlphys.github.io/dinhdangde/chinh-thuc/';
+      W.innerHTML = '<div class="t">Mở công cụ định dạng đề (bản chính thức) trên trình duyệt.</div><div class="row"><button class="pri" id="go" type="button">Mở công cụ web</button><button id="no" type="button">Đóng</button></div><div class="mut">' + U + '</div>';
+      document.getElementById('go').onclick = () => { window.open(U, '_blank'); setTimeout(() => send({ ok: 1 }), 400); };
+      document.getElementById('no').onclick = () => send({ ok: 1 });
+    } else if (m === 'about') {
+      const info = ['QL_Format ' + P.get('v'), 'Word: ' + (P.get('wv') || '?'), 'Lỗi gần đây:', P.get('b') || '(không có)', '', 'Mô tả lỗi: '].join('\n');
+      W.innerHTML = '<div class="t"><b>QL_Format</b> · ' + esc(P.get('v')) + '<br><span class="mut" style="display:inline">Định dạng và xuất đề thi Vật lí trong Word · QL Physics</span></div>'
+        + '<div><b>Dùng bàn phím (phím Alt):</b> bấm <kbd>Alt</kbd>, Word hiện chữ gợi ý trên từng thẻ; bấm chữ của thẻ <b>QL_Format</b>, rồi bấm chữ hiện trên nút cần dùng.</div>'
+        + '<table><tr><td><b>Đúng / Sai</b></td><td>con nháy ở dòng phương án hoặc dòng ý</td></tr><tr><td><b>A B C D</b></td><td>con nháy ở bất kỳ đâu trong câu Phần I</td></tr><tr><td><b>Mức độ, Xóa HDG</b></td><td>bôi đen nhiều câu để làm một lần</td></tr><tr><td><b>Xuất GV + HS</b></td><td>file đang soạn được lưu và giữ nguyên</td></tr></table>'
+        + '<div class="row"><button class="pri" id="cp" type="button">Sao chép thông tin lỗi</button><button id="no" type="button">Đóng</button></div><pre id="pi">' + esc(info) + '</pre>';
+      document.getElementById('cp').onclick = async () => { try { await navigator.clipboard.writeText(info); document.getElementById('cp').textContent = 'Đã sao chép ✓'; } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById('pi')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); document.getElementById('cp').textContent = 'Đã sao chép ✓'; } };
+      document.getElementById('no').onclick = () => send({ ok: 1 });
+    }
+  }
+  if (window.Office && Office.onReady) Office.onReady(render); else render();
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send({ cancel: 1 }); });
+})();
+</script></body></html>

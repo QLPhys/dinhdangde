@@ -35,7 +35,7 @@ small, .muted { color: var(--ink2); }
     <div class="card">
       <span class="tag t-ok">Chính thức</span>
       <h2>Dùng hằng ngày</h2>
-      <p>Bản đã kiểm tra, dùng chung cho cả tổ. Phiên bản v2026.10.29.4.</p>
+      <p>Bản đã kiểm tra, dùng chung cho cả tổ. Phiên bản v2026.10.30.</p>
       <a class="btn" href="chinh-thuc/">Mở công cụ</a>
     </div>
     <div class="card">
@@ -50,10 +50,15 @@ small, .muted { color: var(--ink2); }
     <h2>Dùng ngay trong Word</h2>
     <div class="card">
       <span class="tag t-ok">Add-in Word · Chính thức</span>
-      <p>Nút <b>Định dạng đề</b> trên thẻ Home của Word mở khung <b>Định dạng nhanh</b>: đọc đề đang mở, kiểm tra câu tại con nháy, sửa nhanh đáp án/nhãn mức độ/đáp số, định dạng ngay trên file đang mở; bản Học sinh mở ra cửa sổ Word mới (bấm Ctrl+S để lưu). Cần Word 2016 trở lên hoặc Microsoft 365 trên Windows.</p>
+      <p>Thẻ <b>QL_Format</b> trên thanh Ribbon của Word: đặt con nháy vào câu rồi bấm lệnh. Cần Word 2019 trở lên hoặc Microsoft 365 trên Windows.</p>
       <ul style="color:var(--ink2);font-size:14.5px">
-        <li>Tải <a href="addin/CaiDat_AddIn_Word.cmd" download>CaiDat_AddIn_Word.cmd</a>, bấm đúp để chạy (nếu Windows hỏi, chọn <i>More info → Run anyway</i>).</li>
-        <li>Đóng hết Word rồi mở lại. Nút <b>Định dạng đề</b> nằm ở nhóm <b>QL Physics</b> trên thẻ Home.</li>
+        <li><b>Đáp án:</b> Đúng / Sai (Phần I, II tại dòng con nháy), <b>A B C D</b> (chọn đáp án Phần I ở bất kỳ đâu trong câu), <b>Đáp số…</b> (Phần III).</li>
+        <li><b>Nhãn &amp; lời giải:</b> Mức độ (B/H/VD/VDC, bôi đen nhiều câu được), Chùm, Thêm HDG, Xóa HDG (câu này hoặc toàn đề, giữ đáp án).</li>
+        <li><b>Câu cần xem</b> nhảy tới câu còn thiếu kế tiếp; <b>Xuất GV + HS</b> mở 2 cửa sổ mới, giữ nguyên file gốc; <b>Đánh lại số câu</b>; <b>Nâng cao</b> mở khung Add-in hoặc công cụ web.</li>
+      </ul>
+      <ul style="color:var(--ink2);font-size:14.5px">
+        <li>Tải <a href="addin/CaiDat_AddIn_Word.cmd" download>CaiDat_AddIn_Word.cmd</a>, đóng hết Word rồi bấm đúp để chạy (nếu Windows hỏi, chọn <i>More info → Run anyway</i>). Máy đã cài bản cũ cũng chạy lại 1 lần.</li>
+        <li>Mở lại Word, thẻ <b>QL_Format</b> xuất hiện trên Ribbon.</li>
         <li>Gỡ bỏ: tải và chạy <a href="addin/GoCaiDat_AddIn_Word.cmd" download>GoCaiDat_AddIn_Word.cmd</a>.</li>
       </ul>
     </div>
@@ -71,6 +76,14 @@ small, .muted { color: var(--ink2); }
   <section>
     <h2>Nhật ký thay đổi</h2>
     <div class="log">
+      <h3>Chính thức · v2026.10.30 (30/10) · Add-in Word: thẻ QL_Format trên Ribbon</h3>
+      <ul>
+        <li>Thẻ Ribbon mới <b>QL_Format</b> thay nút "Định dạng đề" ở thẻ Home: Đúng, Sai, Đáp số…, A B C D (4 màu), Mức độ, Chùm, Thêm HDG, Xóa HDG, Câu cần xem, Xuất GV + HS, Đánh lại số câu, Nâng cao (Mở Add-in, Mở công cụ web, Giới thiệu &amp; báo lỗi).</li>
+        <li>Lệnh chạy tại con nháy, im lặng khi thành công; chỉ hiện hộp nhỏ khi có lỗi hoặc cần xác nhận. Mức độ và Xóa HDG áp dụng cho nhiều câu khi bôi đen.</li>
+        <li>Xuất GV + HS tự lưu file trước, hỏi lại nếu còn câu cần xem, mở 2 cửa sổ mới và giữ nguyên file gốc.</li>
+        <li>Xóa HDG toàn đề giữ đáp án: chép đáp án từ lời giải sang gạch chân/dòng "Đáp án:" trước khi xóa.</li>
+        <li>Cần chạy lại <b>CaiDat_AddIn_Word.cmd</b> một lần (đóng Word trước).</li>
+      </ul>
       <h3>Chính thức · v2026.10.29.4 (29/10) · công cụ web + Add-in Word</h3>
       <ul>
         <li>Bản GV: khối "Hướng dẫn giải" trên nền xanh lá nhạt, lời giải chữ đen, bỏ chữ nghiêng (kiểu Ngân hàng đề giữ nguyên).</li>
@@ -171,7 +184,7 @@ small, .muted { color: var(--ink2); }
         <li>Số trang cách mép dưới ít nhất 1 cm, in không bị mất.</li>
         <li>Bộ đề in nhiều đề; nhận diện thêm nhiều kiểu trình bày đề.</li>
       </ul>
-      <p class="muted" style="margin:10px 0 0">Các bản chính thức đã phát hành: <a href="phien-ban/v2026.10.29.4/">v2026.10.29.4</a> · <a href="phien-ban/v2026.10.29.3/">v2026.10.29.3</a> · <a href="phien-ban/v2026.10.29.2/">v2026.10.29.2</a> · <a href="phien-ban/v2026.10.29/">v2026.10.29</a> · <a href="phien-ban/v2026.10.28/">v2026.10.28</a>.</p>
+      <p class="muted" style="margin:10px 0 0">Các bản chính thức đã phát hành: <a href="phien-ban/v2026.10.30/">v2026.10.30</a> · <a href="phien-ban/v2026.10.29.4/">v2026.10.29.4</a> · <a href="phien-ban/v2026.10.29.3/">v2026.10.29.3</a> · <a href="phien-ban/v2026.10.29.2/">v2026.10.29.2</a> · <a href="phien-ban/v2026.10.29/">v2026.10.29</a> · <a href="phien-ban/v2026.10.28/">v2026.10.28</a>.</p>
     </div>
   </section>
 </main>
