@@ -199,7 +199,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   <footer class="ft">
     <a href="https://qlphys.github.io/dinhdangde/chinh-thuc/" target="_blank" rel="noopener">Mở công cụ đầy đủ (web) ↗</a>
     <button class="lnk" id="bBug" type="button">Báo lỗi</button>
-    <span class="ver">v2026.10.30.2</span>
+    <span class="ver">v2026.10.30.3</span>
   </footer>
 </div>
 <script>
@@ -4474,7 +4474,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   $('bRenum').addEventListener('click', runRenum);
   $('recheck').addEventListener('click', () => analyze(false));
   $('bBug').addEventListener('click', async () => {
-    const info = ['Add-in Định dạng nhanh v2026.10.30.2', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
+    const info = ['Add-in Định dạng nhanh v2026.10.30.3', 'File: ' + fileName, 'Word: ' + (Office.context.diagnostics ? Office.context.diagnostics.platform + ' ' + Office.context.diagnostics.version : '?'), 'Lỗi gần đây:', ...(bugs.length ? bugs : ['(không có)']), '', 'Mô tả lỗi: '].join('\n');
     try { await navigator.clipboard.writeText(info); showRes('<b>Đã sao chép thông tin lỗi</b><div>Dán (Ctrl+V) vào tin nhắn gửi người phụ trách, kèm file đề nếu được.</div>'); }
     catch (e) { window.prompt('Sao chép nội dung sau:', info); }
   });
