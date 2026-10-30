@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
+  <Id>d1a0c3f2-5b7e-4c11-9a51-7f3e2b8c1001</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>QL Physics</ProviderName>
+  <DefaultLocale>vi-VN</DefaultLocale>
+  <DisplayName DefaultValue="QL_Format thử bố cục 1"/>
+  <Description DefaultValue="Định dạng và xuất đề thi Vật lí ngay trong Word: đánh dấu đáp án, gắn mức độ, xuất bản Giáo viên và bản Học sinh."/>
+  <IconUrl DefaultValue="https://qlphys.github.io/dinhdangde/addin/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://qlphys.github.io/dinhdangde/addin/icon-64.png"/>
+  <SupportUrl DefaultValue="https://qlphys.github.io/dinhdangde/"/>
+  <AppDomains><AppDomain>https://qlphys.github.io</AppDomain></AppDomains>
+  <Hosts><Host Name="Document"/></Hosts>
+  <Requirements><Sets DefaultMinVersion="1.1"><Set Name="WordApi" MinVersion="1.1"/></Sets></Requirements>
+  <DefaultSettings><SourceLocation DefaultValue="https://qlphys.github.io/dinhdangde/addin/taskpane.html"/></DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="GetStarted.LearnMoreUrl"/></GetStarted>
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="QLThu1.Tab">
+              <Group id="QLT1.gT4"><Label resid="G.T4"/><Icon><bt:Image size="16" resid="i.a.16"/><bt:Image size="32" resid="i.a.32"/><bt:Image size="80" resid="i.a.80"/></Icon><Control xsi:type="Button" id="QLT1.T4A"><Label resid="L.T4A"/><Supertip><Title resid="L.T4A"/><Description resid="T.T4A"/></Supertip><Icon><bt:Image size="16" resid="i.a.16"/><bt:Image size="32" resid="i.a.32"/><bt:Image size="80" resid="i.a.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdA</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T4B"><Label resid="L.T4B"/><Supertip><Title resid="L.T4B"/><Description resid="T.T4B"/></Supertip><Icon><bt:Image size="16" resid="i.b.16"/><bt:Image size="32" resid="i.b.32"/><bt:Image size="80" resid="i.b.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdB</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T4C"><Label resid="L.T4C"/><Supertip><Title resid="L.T4C"/><Description resid="T.T4C"/></Supertip><Icon><bt:Image size="16" resid="i.c.16"/><bt:Image size="32" resid="i.c.32"/><bt:Image size="80" resid="i.c.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdC</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T4D"><Label resid="L.T4D"/><Supertip><Title resid="L.T4D"/><Description resid="T.T4D"/></Supertip><Icon><bt:Image size="16" resid="i.d.16"/><bt:Image size="32" resid="i.d.32"/><bt:Image size="80" resid="i.d.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdD</FunctionName></Action></Control></Group>
+              <Group id="QLT1.gT5"><Label resid="G.T5"/><Icon><bt:Image size="16" resid="i.a.16"/><bt:Image size="32" resid="i.a.32"/><bt:Image size="80" resid="i.a.80"/></Icon><Control xsi:type="Button" id="QLT1.T5A"><Label resid="L.T5A"/><Supertip><Title resid="L.T5A"/><Description resid="T.T5A"/></Supertip><Icon><bt:Image size="16" resid="i.a.16"/><bt:Image size="32" resid="i.a.32"/><bt:Image size="80" resid="i.a.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdA</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T5B"><Label resid="L.T5B"/><Supertip><Title resid="L.T5B"/><Description resid="T.T5B"/></Supertip><Icon><bt:Image size="16" resid="i.b.16"/><bt:Image size="32" resid="i.b.32"/><bt:Image size="80" resid="i.b.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdB</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T5C"><Label resid="L.T5C"/><Supertip><Title resid="L.T5C"/><Description resid="T.T5C"/></Supertip><Icon><bt:Image size="16" resid="i.c.16"/><bt:Image size="32" resid="i.c.32"/><bt:Image size="80" resid="i.c.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdC</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T5D"><Label resid="L.T5D"/><Supertip><Title resid="L.T5D"/><Description resid="T.T5D"/></Supertip><Icon><bt:Image size="16" resid="i.d.16"/><bt:Image size="32" resid="i.d.32"/><bt:Image size="80" resid="i.d.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdD</FunctionName></Action></Control><Control xsi:type="Button" id="QLT1.T5Bo"><Label resid="L.T5Bo"/><Supertip><Title resid="L.T5Bo"/><Description resid="T.T5Bo"/></Supertip><Icon><bt:Image size="16" resid="i.lvX.16"/><bt:Image size="32" resid="i.lvX.32"/><bt:Image size="80" resid="i.lvX.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdSai</FunctionName></Action></Control></Group>
+              <Label resid="Tab.Label"/>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images><bt:Image id="i.a.16" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/a-16.png"/><bt:Image id="i.a.32" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/a-32.png"/><bt:Image id="i.a.80" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/a-80.png"/><bt:Image id="i.b.16" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/b-16.png"/><bt:Image id="i.b.32" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/b-32.png"/><bt:Image id="i.b.80" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/b-80.png"/><bt:Image id="i.c.16" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/c-16.png"/><bt:Image id="i.c.32" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/c-32.png"/><bt:Image id="i.c.80" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/c-80.png"/><bt:Image id="i.d.16" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/d-16.png"/><bt:Image id="i.d.32" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/d-32.png"/><bt:Image id="i.d.80" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/d-80.png"/><bt:Image id="i.lvX.16" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/lvX-16.png"/><bt:Image id="i.lvX.32" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/lvX-32.png"/><bt:Image id="i.lvX.80" DefaultValue="https://qlphys.github.io/dinhdangde/addin/ic/lvX-80.png"/></bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://qlphys.github.io/dinhdangde/"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://qlphys.github.io/dinhdangde/addin/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://qlphys.github.io/dinhdangde/addin/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings><bt:String id="L.T4A" DefaultValue="A"/><bt:String id="L.T4B" DefaultValue="B"/><bt:String id="L.T4C" DefaultValue="C"/><bt:String id="L.T4D" DefaultValue="D"/><bt:String id="G.T4" DefaultValue="Thử 4 nút"/><bt:String id="L.T5A" DefaultValue="A"/><bt:String id="L.T5B" DefaultValue="B"/><bt:String id="L.T5C" DefaultValue="C"/><bt:String id="L.T5D" DefaultValue="D"/><bt:String id="L.T5Bo" DefaultValue="Bỏ"/><bt:String id="G.T5" DefaultValue="Thử 5 nút"/><bt:String id="Tab.Label" DefaultValue="Thử 1"/><bt:String id="GetStarted.Title" DefaultValue="QL_Format đã sẵn sàng"/></bt:ShortStrings>
+      <bt:LongStrings><bt:String id="T.T4A" DefaultValue="Thử"/><bt:String id="T.T4B" DefaultValue="Thử"/><bt:String id="T.T4C" DefaultValue="Thử"/><bt:String id="T.T4D" DefaultValue="Thử"/><bt:String id="T.T5A" DefaultValue="Thử"/><bt:String id="T.T5B" DefaultValue="Thử"/><bt:String id="T.T5C" DefaultValue="Thử"/><bt:String id="T.T5D" DefaultValue="Thử"/><bt:String id="T.T5Bo" DefaultValue="Thử"/><bt:String id="GetStarted.Description" DefaultValue="Mở thẻ QL_Format trên thanh Ribbon để định dạng và xuất đề."/></bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
