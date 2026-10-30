@@ -3583,7 +3583,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
 /* QL_Format — các lệnh trên thẻ Ribbon (chạy tại con nháy, không cần mở khung) */
 (function () {
   'use strict';
-  const VER = 'v2026.10.30.3';
+  const VER = 'v2026.10.30.4';
   const BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
   const TPRE = { 1: 'TN', 2: 'DS', 3: 'TLN' };
   const PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' };
@@ -3892,9 +3892,23 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       const k = texts.findIndex((t, i) => i > 0 && SOL_RE.test(t));
       if (k > 0) { (ps[k + 1] || ps[k]).getRange('End').select(); await ctx.sync(); return; }
       let last = 0; texts.forEach((t, i) => { if (t.trim()) last = i; });
-      const h = ps[last].insertParagraph('Hướng dẫn giải', 'After'); h.font.bold = true; h.font.underline = 'None'; h.font.highlightColor = null;
-      const p = h.insertParagraph('', 'After'); p.font.bold = false;
-      p.getRange('End').select();
+      // hết phần cấu trúc của câu: phương án A–D, ý a)–d), dòng "Đáp án/Đáp số:"
+      const OPT_IN = /(^|[\t\u00a0 ]{2,}|\t)[A-D]\s*[\.\)]\s/;
+      let se = 0; texts.forEach((t, i) => { if (i > 0 && (ANS_LINE.test(t) || OPT_U.test(t) || OPT_L.test(t) || OPT_IN.test(t))) se = i; });
+      let sol = -1; if (se > 0) for (let i = se + 1; i <= last; i++) if (texts[i].trim()) { sol = i; break; }
+      ps[0].load('font/name,font/size,font/color'); await ctx.sync();
+      const fmt = (x, bold) => { x.font.name = ps[0].font.name; x.font.size = ps[0].font.size; x.font.italic = false; x.font.bold = bold; x.font.underline = 'None'; x.font.highlightColor = null; x.font.color = '#000000'; x.alignment = 'Left'; };
+      if (sol > 0) {
+        // câu đã có lời giải (chưa có dòng tiêu đề): chèn "Hướng dẫn giải" ngay trước lời giải
+        const h = ps[sol].insertParagraph('Hướng dẫn giải', 'Before'); fmt(h, true);
+        ps[sol].getRange('Start').select();
+      } else {
+        // chèn trước đoạn kế tiếp (không chèn "sau" đoạn có công thức để chữ không bị lọt vào vùng Equation)
+        const nx = c.all.items[rg.s + last + 1];
+        const h = nx ? nx.insertParagraph('Hướng dẫn giải', 'Before') : ps[last].insertParagraph('Hướng dẫn giải', 'After'); fmt(h, true);
+        const p = h.insertParagraph('', 'After'); fmt(p, false);
+        p.getRange('End').select();
+      }
       await ctx.sync();
     });
   }
