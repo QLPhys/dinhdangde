@@ -1484,6 +1484,7 @@ function parseRaw(body, qkeys, popt) {
       const rest = sm.kind === 'ans' ? toks : trim(toks.slice(lead + sm.len));
       if (ents[ei].tail && sm.kind === 'ans' && mode !== 'sol' && cur.part === 1 && Object.keys(cur.opts).length < 4) { cur.sol.push(rest); continue; }
       mode = 'sol';
+      if (sm.kind === 'sol' && /^[\(\[\s]*h[ưu][ớo]ng\s*d[ẫa]n\s*ch[ấa]m/i.test(txt)) cur.solLabel = 'Hướng dẫn chấm';
       if (hasContent(rest)) cur.sol.push(rest);
       continue;
     }
@@ -1864,7 +1865,7 @@ function stemParas(q, num) {
   return out;
 }
 
-function solHeader() { return makeP([lit('Hướng dẫn giải', { bold: true, color: RED })], STYLE === 'm1' ? { jc: 'center', keepNext: true, indLeft: IND, before: 0 } : { jc: 'left', keepNext: true }); }
+function solHeader(label) { return makeP([lit(label || 'Hướng dẫn giải', { bold: true, color: RED })], STYLE === 'm1' ? { jc: 'center', keepNext: true, indLeft: IND, before: 0 } : { jc: 'left', keepNext: true }); }
 
 function buildSolParasTF(q) {
   const out = [solHeader()];
@@ -1986,7 +1987,7 @@ function styleSolBlock(elems) {
 }
 function buildSolParas(q) {
   if (q.part === 2 && Object.keys(stmtTruth(q)).length) return buildSolParasTF(q);
-  const out = [solHeader()];
+  const out = [solHeader(q.part === 4 ? q.solLabel : null)];
   for (let toks of q.sol) {
     toks = trim(toks);
     if (!hasContent(toks)) continue;
@@ -2135,7 +2136,7 @@ function buildBody(qs, showAnswer, headerElems) {
       if (part === 1) body.push(...buildOptionParas(q, showAnswer));
       else if (part === 2) body.push(...buildStmtParas(q, showAnswer));
       let qs2 = q, ansT = q.ansText;
-      if (STYLE === 'm1' && q.part === 3 && !ansT) {   // dòng "Đáp án: 170" đang nằm đầu lời giải -> đưa lên trước "Hướng dẫn giải"
+      if (q.part === 3 && !ansT) {   // dòng "Đáp án: 170" / "Đáp số: 0,4" đang nằm đầu lời giải -> tách thành dòng Đáp án trước "Hướng dẫn giải"
         const k = q.sol.findIndex((t) => hasContent(trim(t)));
         const m = k >= 0 && !hasDrawing(q.sol[k]) ? /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*(.{1,30}?)\s*\.?\s*$/i.exec(textOf(trim(q.sol[k]))) : null;
         if (m && !/[\uFFFC]/.test(m[1])) { ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
@@ -3583,7 +3584,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
 /* QL_Format — các lệnh trên thẻ Ribbon (chạy tại con nháy, không cần mở khung) */
 (function () {
   'use strict';
-  const VER = 'v2026.10.30.4';
+  const VER = 'v2026.10.31';
   const BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
   const TPRE = { 1: 'TN', 2: 'DS', 3: 'TLN' };
   const PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' };

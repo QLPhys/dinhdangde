@@ -857,7 +857,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.30.4</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.10.31</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -2395,6 +2395,7 @@ function parseRaw(body, qkeys, popt) {
       const rest = sm.kind === 'ans' ? toks : trim(toks.slice(lead + sm.len));
       if (ents[ei].tail && sm.kind === 'ans' && mode !== 'sol' && cur.part === 1 && Object.keys(cur.opts).length < 4) { cur.sol.push(rest); continue; }
       mode = 'sol';
+      if (sm.kind === 'sol' && /^[\(\[\s]*h[ưu][ớo]ng\s*d[ẫa]n\s*ch[ấa]m/i.test(txt)) cur.solLabel = 'Hướng dẫn chấm';
       if (hasContent(rest)) cur.sol.push(rest);
       continue;
     }
@@ -2775,7 +2776,7 @@ function stemParas(q, num) {
   return out;
 }
 
-function solHeader() { return makeP([lit('Hướng dẫn giải', { bold: true, color: RED })], STYLE === 'm1' ? { jc: 'center', keepNext: true, indLeft: IND, before: 0 } : { jc: 'left', keepNext: true }); }
+function solHeader(label) { return makeP([lit(label || 'Hướng dẫn giải', { bold: true, color: RED })], STYLE === 'm1' ? { jc: 'center', keepNext: true, indLeft: IND, before: 0 } : { jc: 'left', keepNext: true }); }
 
 function buildSolParasTF(q) {
   const out = [solHeader()];
@@ -2897,7 +2898,7 @@ function styleSolBlock(elems) {
 }
 function buildSolParas(q) {
   if (q.part === 2 && Object.keys(stmtTruth(q)).length) return buildSolParasTF(q);
-  const out = [solHeader()];
+  const out = [solHeader(q.part === 4 ? q.solLabel : null)];
   for (let toks of q.sol) {
     toks = trim(toks);
     if (!hasContent(toks)) continue;
@@ -3046,7 +3047,7 @@ function buildBody(qs, showAnswer, headerElems) {
       if (part === 1) body.push(...buildOptionParas(q, showAnswer));
       else if (part === 2) body.push(...buildStmtParas(q, showAnswer));
       let qs2 = q, ansT = q.ansText;
-      if (STYLE === 'm1' && q.part === 3 && !ansT) {   // dòng "Đáp án: 170" đang nằm đầu lời giải -> đưa lên trước "Hướng dẫn giải"
+      if (q.part === 3 && !ansT) {   // dòng "Đáp án: 170" / "Đáp số: 0,4" đang nằm đầu lời giải -> tách thành dòng Đáp án trước "Hướng dẫn giải"
         const k = q.sol.findIndex((t) => hasContent(trim(t)));
         const m = k >= 0 && !hasDrawing(q.sol[k]) ? /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*(.{1,30}?)\s*\.?\s*$/i.exec(textOf(trim(q.sol[k]))) : null;
         if (m && !/[\uFFFC]/.test(m[1])) { ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
@@ -5643,7 +5644,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.10.30.4 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.10.31 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
