@@ -3584,7 +3584,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
 /* QL_Format — các lệnh trên thẻ Ribbon (chạy tại con nháy, không cần mở khung) */
 (function () {
   'use strict';
-  const VER = 'v2026.10.31';
+  const VER = 'v2026.10.31.2';
   const BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
   const TPRE = { 1: 'TN', 2: 'DS', 3: 'TLN' };
   const PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' };
@@ -3897,16 +3897,34 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       const OPT_IN = /(^|[\t\u00a0 ]{2,}|\t)[A-D]\s*[\.\)]\s/;
       let se = 0; texts.forEach((t, i) => { if (i > 0 && (ANS_LINE.test(t) || OPT_U.test(t) || OPT_L.test(t) || OPT_IN.test(t))) se = i; });
       let sol = -1; if (se > 0) for (let i = se + 1; i <= last; i++) if (texts[i].trim()) { sol = i; break; }
-      ps[0].load('font/name,font/size,font/color'); await ctx.sync();
-      const fmt = (x, bold) => { x.font.name = ps[0].font.name; x.font.size = ps[0].font.size; x.font.italic = false; x.font.bold = bold; x.font.underline = 'None'; x.font.highlightColor = null; x.font.color = '#000000'; x.alignment = 'Left'; };
+      let here = -1;
+      if (se === 0) {
+        // câu không có phương án / dòng đáp số (tự luận, trả lời ngắn chưa có đáp án)
+        const cur = c.i0 - rg.s;
+        if (cur > 0) here = cur;   // con nháy đặt ở đầu lời giải: chèn "Hướng dẫn giải" ngay tại đó
+        else {
+          // con nháy ở dòng "Câu N": đoán lời giải bắt đầu ngay sau đoạn đề
+          const CUE = /^\s*(?:ta\s+có|ta\s+thấy|ta\s+được|áp\s+dụng|theo|gọi|vì|do|từ|suy\s+ra|nhiệt\s+lượng|công\s+thức|đổi|tóm\s+tắt)\b/i;
+          const i1 = texts.findIndex((t, i) => i > 0 && t.trim());
+          if (i1 > 0 && i1 <= last && /[\.\?:\)]\s*$/.test(texts[0]) && (CUE.test(texts[i1]) || (texts[i1].match(/=/g) || []).length >= 2)) sol = i1;
+        }
+      }
+      ps[0].load('font/name'); await ctx.sync();
+      const fmt = (x, bold) => { x.font.name = ps[0].font.name; x.font.size = 12; x.font.italic = false; x.font.bold = bold; x.font.underline = 'None'; x.font.highlightColor = null; x.font.color = '#000000'; x.alignment = 'Left'; };
+      const head = (x) => { fmt(x, true); x.font.color = '#FF0000'; };
+      if (here > 0) {
+        if (!texts[here].trim()) { const h = ps[here].insertText('Hướng dẫn giải', 'Start'); ps[here].font.italic = false; head(ps[here]); const p = ps[here].insertParagraph('', 'After'); fmt(p, false); p.getRange('End').select(); }
+        else { const h = ps[here].insertParagraph('Hướng dẫn giải', 'Before'); head(h); ps[here].getRange('Start').select(); }
+        await ctx.sync(); return;
+      }
       if (sol > 0) {
         // câu đã có lời giải (chưa có dòng tiêu đề): chèn "Hướng dẫn giải" ngay trước lời giải
-        const h = ps[sol].insertParagraph('Hướng dẫn giải', 'Before'); fmt(h, true);
+        const h = ps[sol].insertParagraph('Hướng dẫn giải', 'Before'); head(h);
         ps[sol].getRange('Start').select();
       } else {
         // chèn trước đoạn kế tiếp (không chèn "sau" đoạn có công thức để chữ không bị lọt vào vùng Equation)
         const nx = c.all.items[rg.s + last + 1];
-        const h = nx ? nx.insertParagraph('Hướng dẫn giải', 'Before') : ps[last].insertParagraph('Hướng dẫn giải', 'After'); fmt(h, true);
+        const h = nx ? nx.insertParagraph('Hướng dẫn giải', 'Before') : ps[last].insertParagraph('Hướng dẫn giải', 'After'); head(h);
         const p = h.insertParagraph('', 'After'); fmt(p, false);
         p.getRange('End').select();
       }
