@@ -3584,7 +3584,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
 /* QL_Format — các lệnh trên thẻ Ribbon (chạy tại con nháy, không cần mở khung) */
 (function () {
   'use strict';
-  const VER = 'v2026.10.31.3';
+  const VER = 'v2026.11.01';
   const BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
   const TPRE = { 1: 'TN', 2: 'DS', 3: 'TLN' };
   const PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' };
@@ -3906,17 +3906,23 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       const head = (x) => { fmt(x, true); x.font.color = '#FF0000'; };
       if (atCursor) {
         const cur = c.i0 - rg.s;
+        const off = cur >= 0 && texts[cur].trim() ? await cursorOffset(ctx, c) : 0;
+        const lead = cur >= 0 ? texts[cur].length - texts[cur].replace(/^\s+/, '').length : 0;
         if (cur > 0 && !texts[cur].trim()) {
           // con nháy ở dòng trống: dòng đó thành "Hướng dẫn giải", con nháy xuống dòng mới bên dưới
           ps[cur].insertText('Hướng dẫn giải', 'Start'); head(ps[cur]);
           const p = ps[cur].insertParagraph('', 'After'); fmt(p, false); p.getRange('End').select();
-        } else if (cur > 0) {
+        } else if (cur > 0 && off <= lead) {
+          // con nháy ở đầu dòng: "Hướng dẫn giải" đứng ngay trước dòng đó
           const h = ps[cur].insertParagraph('Hướng dẫn giải', 'Before'); head(h); ps[cur].getRange('Start').select();
         } else {
-          // con nháy ở đoạn "Câu N": đặt ngay dưới đoạn đó (chèn trước đoạn kế tiếp để không lọt vào công thức)
-          const nx = c.all.items[rg.s + 1];
-          const h = nx ? nx.insertParagraph('Hướng dẫn giải', 'Before') : ps[0].insertParagraph('Hướng dẫn giải', 'After'); head(h);
-          const p = h.insertParagraph('', 'After'); fmt(p, false); p.getRange('End').select();
+          // con nháy ở giữa/cuối dòng (kể cả dòng "Câu N"): "Hướng dẫn giải" đứng ngay sau dòng đó
+          // (chèn trước đoạn kế tiếp để chữ không lọt vào công thức ở cuối dòng)
+          const at = Math.max(cur, 0), nx = c.all.items[rg.s + at + 1];
+          const h = nx ? nx.insertParagraph('Hướng dẫn giải', 'Before') : ps[at].insertParagraph('Hướng dẫn giải', 'After'); head(h);
+          // dưới đó còn dòng của câu (lời giải hoặc dòng trống): con nháy về đầu dòng đó; hết câu thì thêm dòng trống để gõ
+          if (nx && rg.s + at + 1 <= rg.e && at + 1 <= last + 1 && (at + 1 <= last || !c.texts[rg.s + at + 1].trim())) nx.getRange('Start').select();
+          else { const p = h.insertParagraph('', 'After'); fmt(p, false); p.getRange('End').select(); }
         }
         await ctx.sync(); return;
       }
