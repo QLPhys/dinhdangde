@@ -34,11 +34,11 @@ kbd{border:1px solid #c5ccd8;border-bottom-width:2px;border-radius:4px;padding:0
       document.getElementById('n').onclick = () => send({ no: 1 });
       document.getElementById('y').focus();
     } else if (m === 'ans') {
-      const rd = P.get('rd'), sg = P.get('sg');
+      const rd = P.get('rd'), sg = P.get('sg'), nb = +(P.get('bx') || 0);
       W.innerHTML = '<div class="mut">' + esc(P.get('q')) + '</div>'
         + '<div class="row"><b>Đáp án:</b><input id="v" inputmode="decimal" autocomplete="off" value="' + esc(P.get('v') || '') + '"><button class="pri" id="ok" type="button">Ghi vào đề</button><button id="no" type="button">Thôi</button></div>'
         + (sg ? '<div class="row"><button id="sg" type="button">Gợi ý từ lời giải: ' + esc(sg) + '</button></div>' : '')
-        + '<div class="mut">' + (rd !== null && rd !== '' ? 'Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + '.' : '') + '</div><div class="note" id="nt"></div>';
+        + '<div class="mut">' + (rd !== null && rd !== '' ? 'Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + '. ' : '') + (nb ? 'Câu có bảng ' + nb + ' ô: mỗi ký tự (kể cả dấu "-" và ",") ghi vào một ô.' : '') + '</div><div class="note" id="nt"></div>';
       const inp = document.getElementById('v'); inp.focus(); inp.select();
       let warned = '';
       const go = () => {
@@ -47,7 +47,8 @@ kbd{border:1px solid #c5ccd8;border-bottom-width:2px;border-radius:4px;padding:0
         if (!v) { nt.textContent = 'Chưa nhập đáp số.'; return; }
         if (!/^-?\d+(,\d+)?$/.test(v)) { nt.textContent = 'Đáp số chỉ gồm chữ số, dấu "-" và một dấu phẩy thập phân.'; return; }
         const notes = [];
-        if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu 2025 chỉ có 4 ô.');
+        if (nb && v.length > nb) notes.push('Đáp số dài ' + v.length + ' ký tự nhưng bảng chỉ có ' + nb + ' ô: sẽ thêm ' + (v.length - nb) + ' ô vào bảng.');
+        else if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu 2025 chỉ có 4 ô.');
         const dec = v.includes(',') ? v.split(',')[1].length : 0;
         if (rd !== null && rd !== '' && dec !== +rd) notes.push('Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
         if (notes.length && warned !== v) { warned = v; nt.textContent = notes.join(' ') + ' Bấm "Ghi vào đề" lần nữa để vẫn ghi.'; document.getElementById('ok').textContent = 'Vẫn ghi'; return; }

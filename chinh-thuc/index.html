@@ -345,7 +345,7 @@ body { font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, R
 #qlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 0 14px; align-items: start; }
 #qlist > .phead, #qlist > .empty { grid-column: 1 / -1; }
 .drop { padding: 26px; } .group, .paper { max-width: 100%; }
-@media (min-width: 1000px) { #fields .group, #keepG { max-width: 760px; } .step .lead { max-width: 90ch; } }
+@media (min-width: 1000px) { #fields .group, #keepG, #hsBoxG { max-width: 760px; } .step .lead { max-width: 90ch; } }
 
 
 /* ---------- BỘ ĐỀ IN (nhiều đề) ---------- */
@@ -478,6 +478,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
 .sidep.drawer { width: min(340px, calc(100vw - 24px)); right: 12px; top: 12px; }
 .backbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 92px); z-index: 41; display: flex; gap: 8px; padding: 6px; border-radius: 99px; background: var(--glass-b); border: 1px solid var(--stroke); box-shadow: var(--shadow); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); max-width: calc(100% - 20px); }
 .backbar .mini { font-size: 13.5px; padding: 7px 14px; } .backbar .mini.pri { background: var(--blue); color: var(--on-ink); }
+.backbar.inside { position: static; transform: none; margin: 8px 8px 2px; padding: 0; gap: 6px; flex-direction: column; border-radius: 0; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; max-width: none; } .backbar.inside .mini { width: 100%; padding: 9px 12px; border-radius: 12px; text-align: center; } .backbar[hidden] { display: none; }
 .qfix { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: var(--amber-bg); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13.5px; }
 .qfix > span { color: var(--amber-ink); font-weight: 600; } .qfix .tfg { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; color: var(--ink); white-space: nowrap; } .qfix .mini { min-width: 38px; }
 .qfix input.qa3 { font: inherit; width: 110px; padding: 5px 10px; border-radius: 10px; border: 1px solid var(--hair); background: var(--glass); color: var(--ink); }
@@ -764,6 +765,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
         </div>
         <p class="hint" id="hint"></p>
         <div class="group" id="keepG" style="margin-top:12px"><div class="row"><span class="rl" id="keepL">Giữ lại thẻ nguồn<small>Giữ nhãn như [TTN], [NB - …] ngay sau chữ "Câu N." (cả hai bản)</small></span><input type="checkbox" class="sw" id="keepTag" role="switch" aria-labelledby="keepL" checked></div></div>
+        <div class="group" id="hsBoxG" style="margin-top:12px"><div class="row"><span class="rl" id="hsBoxL">Ô điền đáp án cho HS<small>Bản HS: chèn bảng "Đáp án: □□□□" dưới mỗi câu trả lời ngắn (mỗi ô một ký tự, kể cả dấu "-" và ",")</small></span><input type="checkbox" class="sw" id="hsBox" role="switch" aria-labelledby="hsBoxL" checked></div></div>
         <div class="group" id="pnG" style="margin-top:10px"><div class="row"><span class="rl" id="pnL">Tự đánh số trang<small>Số trang ở chân trang của cả hai bản (đề gốc đã có số trang thì giữ nguyên)</small></span><select id="pnFmt" aria-label="Kiểu số trang"><option value="xy">Trang 1/5</option><option value="n">1</option><option value="xyma">Trang 1/5 – Mã đề</option></select><input type="checkbox" class="sw" id="pageNum" role="switch" aria-labelledby="pnL" checked></div></div>
         <div class="group" id="thG" style="margin-top:10px" hidden><div class="row"><span class="rl" id="thL">Giữ phần lý thuyết<small id="thSub"></small></span><input type="checkbox" class="sw" id="keepTheory" role="switch" aria-labelledby="thL" checked></div></div>
         <div id="fields" hidden>
@@ -817,7 +819,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
   </section>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <aside class="sidep" id="sideP" aria-label="Bảng điều khiển" hidden>
-    <div class="sh"><b id="ctrlT">Bảng điều khiển</b><span class="stp" id="ctrlStep"></span><button class="x" id="sideX" type="button" aria-label="Đóng" hidden>×</button></div>
+    <div class="sh"><b id="ctrlT">Bảng điều khiển</b><span class="stp" id="ctrlStep"></span><button class="x" id="sideX" type="button" aria-label="Đóng" hidden>×</button></div><div id="sideTop"></div>
     <div class="sb" id="ctrlBody">
       <section class="cs" data-s="0">
         <div id="cuBox" hidden>
@@ -865,7 +867,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -3020,6 +3022,7 @@ function runsOrig(toks) {
 }
 // màu / kiểu chữ thống nhất cho khối lời giải ở bản GV (kiểu Hiện tại); kiểu Ngân hàng đề giữ nguyên
 let SOLSTYLE = '';
+let HSBOX = true;   // bản HS: chèn bảng "Đáp án: □□□□" dưới mỗi câu trả lời ngắn
 const SOL_STYLES = {
   // thầy chốt (29/10): lời giải chữ đen, bỏ nghiêng, cả khối "Hướng dẫn giải" trên nền xanh lá nhạt
   std: { color: '000000', fill: 'D8ECCF' },
@@ -3236,6 +3239,33 @@ function unKeep(el) {
   const pp = Array.from(el.children).find((x) => isW(x, 'pPr'));
   if (pp) Array.from(pp.children).filter((x) => isW(x, 'keepNext')).forEach((x) => pp.removeChild(x));
 }
+// bảng ô điền đáp án cho HS (câu trả lời ngắn): "Đáp án:" + 4 ô vuông 0,8 cm, mỗi ô một ký tự (kể cả dấu "-" và ",")
+function ansBoxTbl() {
+  const B = 454, LW = 1250, LINE1 = { val: 'single', sz: 8, space: 0, color: '000000' };
+  const t = mk('tbl'), pr = mk('tblPr');
+  pr.appendChild(mk('tblW', { w: LW + 4 * B, type: 'dxa' }));
+  pr.appendChild(mk('tblInd', { w: 0, type: 'dxa' }));
+  pr.appendChild(mk('tblLayout', { type: 'fixed' }));
+  t.appendChild(pr);
+  const g = mk('tblGrid'); [LW, B, B, B, B].forEach((w) => g.appendChild(mk('gridCol', { w }))); t.appendChild(g);
+  const tr = mk('tr'), trPr = mk('trPr');
+  trPr.appendChild(mk('cantSplit')); trPr.appendChild(mk('trHeight', { val: B, hRule: 'exact' }));
+  tr.appendChild(trPr);
+  [LW, B, B, B, B].forEach((w, i) => {
+    const tc = mk('tc'), tp = mk('tcPr');
+    tp.appendChild(mk('tcW', { w, type: 'dxa' }));
+    const bd = mk('tcBorders');
+    for (const side of ['top', 'left', 'bottom', 'right']) bd.appendChild(i ? mk(side, LINE1) : mk(side, { val: 'nil' }));
+    tp.appendChild(bd);
+    if (!i) { const mar = mk('tcMar'); mar.appendChild(mk('left', { w: 0, type: 'dxa' })); tp.appendChild(mar); }
+    tp.appendChild(mk('vAlign', { val: 'center' }));
+    tc.appendChild(tp);
+    tc.appendChild(makeP(i ? [] : [lit('Đáp án:', { bold: true })], { jc: i ? 'center' : 'left', line: 240 }));
+    tr.appendChild(tc);
+  });
+  t.appendChild(tr);
+  return t;
+}
 function buildBody(qs, showAnswer, headerElems) {
   const body = [].concat(headerElems);
   const emitted = new Set();
@@ -3261,6 +3291,11 @@ function buildBody(qs, showAnswer, headerElems) {
         const k = q.sol.findIndex((t) => hasContent(trim(t)));
         const m = k >= 0 && !hasDrawing(q.sol[k]) ? /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*(.{1,30}?)\s*\.?\s*$/i.exec(textOf(trim(q.sol[k]))) : null;
         if (m && !/[\uFFFC]/.test(m[1])) { ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
+      }
+      if (!showAnswer && q.part === 3 && HSBOX && STYLE !== 'm1') {
+        const lp = body[body.length - 1];
+        if (lp && isW(lp, 'p')) { const pp = Array.from(lp.children).find((x) => isW(x, 'pPr')); if (pp && !Array.from(pp.children).some((x) => isW(x, 'keepNext'))) { const st = Array.from(pp.children).find((x) => isW(x, 'pStyle')); pp.insertBefore(mk('keepNext'), st ? st.nextSibling : pp.firstChild); } }
+        body.push(ansBoxTbl(), makeP([], { line: 240, after: 0, before: 0 }));
       }
       if (showAnswer && q.part === 3 && ansT) body.push(STYLE === 'm1' ? makeP([lit('Đáp án: ' + ansT, { bold: true, color: BLUE })], { keepNext: true, before: 120 }) : makeP([lit('Đáp án: ', { bold: true, color: BLUE }), lit(ansT, { bold: true })], { keepNext: true }));
       if (showAnswer && (qs2.sol.some((t) => hasContent(trim(t))) || (q.part === 2 && Object.keys(stmtTruth(q)).length))) body.push(...styleSolBlock(buildSolParas(qs2)));
@@ -4103,6 +4138,7 @@ async function generate(opt, ids, extra) {
     if (dropP4) extra.only = ['GV'];
   }
   KEEP_TAG = !!opt.keepTag;
+  HSBOX = opt.hsBox !== false;
   SOLSTYLE = opt.solStyle === 'none' ? '' : (opt.solStyle && SOL_STYLES[opt.solStyle] ? opt.solStyle : 'std');
   if (!opt.tende) opt.tende = S.title || 'ĐỀ';
   const titleMode = extra.titleMode || opt.titleMode;
@@ -5230,7 +5266,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
     }, skin === 'modern' ? 420 : 30));
   }
-  $('notesList').addEventListener('click', (e) => { const b = e.target.closest('[data-goto]'); if (b) { fromReport = true; lastGo = +b.dataset.goto; goOrder = Array.from($('notesList').querySelectorAll('[data-goto]'), (x) => +x.dataset.goto); focusQ(+b.dataset.goto); setTimeout(sideSync, 50); } });
+  $('notesList').addEventListener('click', (e) => { const b = e.target.closest('[data-goto]'); if (b) { fromReport = true; lastGo = +b.dataset.goto; goOrder = Array.from($('notesList').querySelectorAll('[data-goto]'), (x) => +x.dataset.goto); focusQ(+b.dataset.goto); setTimeout(sideSync, 50); setTimeout(() => { const bb = $('backBar'); if (bb.classList.contains('inside')) { bb.classList.remove('flash'); void bb.offsetWidth; bb.classList.add('flash'); setTimeout(() => bb.classList.remove('flash'), 1900); } }, 700); } });
   // "Về báo cáo": cuộn tới đúng dòng vừa bấm "Đến câu này" (câu đã sửa xong thì tới dòng kế tiếp), tô sáng dòng đó
   var goOrder = [];
   function backToRow(id) {
@@ -5320,9 +5356,15 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     $('sideX').hidden = wide;
     $('sideFab').hidden = !on2 || wide || drawerOpen;
     $('backBar').hidden = !(on2 && fromReport);
+    // màn hình rộng: "Về báo cáo" + "Câu cần xem kế tiếp" nằm trong Bảng điều khiển, không che nội dung đề
+    const bb = $('backBar');
+    if (wide) { if (bb.parentNode !== $('sideTop')) $('sideTop').prepend(bb); bb.style.bottom = ''; }
+    else if (bb.parentNode !== document.body) document.body.appendChild(bb);
+    bb.classList.toggle('inside', wide);
     const dk = $('dock'), off = (parseFloat(getComputedStyle(dk).bottom) || 12) + dk.offsetHeight + 10;
     $('sideFab').style.bottom = off + 'px'; $('backBar').style.bottom = off + 'px'; $('rwBar').style.bottom = off + 'px';
     if (!$('sideFab').hidden && !$('backBar').hidden) $('backBar').style.bottom = (off + 52) + 'px';
+    if (wide) bb.style.bottom = '';
     if (wide) { placeSide(); ctrlStepFill(); }
     ctrlRaw();
     fit();
@@ -5544,7 +5586,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   function watchPlace() {
     const b = $('watchBar'), P = $('sideP'); if (!b) return;
     const inSide = P && !P.hidden && document.body.classList.contains('side-wide');
-    if (inSide) { const h = P.querySelector('.sh'); if (b.parentNode !== P || b.previousElementSibling !== h) h.after(b); }
+    if (inSide) { if (b.parentNode !== $('sideTop')) $('sideTop').appendChild(b); }
     else if (b.parentNode !== document.body) document.body.appendChild(b);
     b.classList.toggle('fl', !inSide);
   }
@@ -5613,7 +5655,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   const mode = () => document.querySelector('input[name=tm]:checked').value;
   function refreshPreview() {
     const m1 = isM1();
-    $('m1Box').hidden = !m1; $('seg').hidden = m1; $('hint').hidden = m1; $('keepG').hidden = m1;
+    $('m1Box').hidden = !m1; $('seg').hidden = m1; $('hint').hidden = m1; $('keepG').hidden = m1; $('hsBoxG').hidden = m1;
     $('h3t').textContent = m1 ? '3. Mã chuyên đề' : '3. Tiêu đề đề thi';
     $('h3l').textContent = m1 ? 'Kiểm tra mã chuyên đề ghi ở đầu đề (mặc định lấy từ tên file) và chọn có đánh số trang hay không.' : 'Chọn cách trình bày phần đầu của đề.';
     if (!$('go').classList.contains('busy')) $('go').textContent = m1 ? 'Tạo bản Giáo viên' : 'Tạo hai bản';
@@ -5659,7 +5701,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
 
   /* ================= tạo + tải ================= */
   function curOpt() {
-    return { style: isM1() ? 'm1' : 'cur', p4: $('p4Keep').checked ? 'keep' : 'drop', ma1: $('ma1').value.trim() || toMaCD(rawName), titleMode: mode(), tende: $('tende').value.trim(), loai: $('loai').value.trim() || 'ĐỀ THI THAM KHẢO', mon: $('mon').value.trim() || 'VẬT LÍ', lop: $('lop').value.trim(), thoigian: $('tg').value.trim(), ma: $('ma').value.trim() || '001', keepTag: $('keepTag').checked, keepTheory: !!theory && $('keepTheory').checked, pageNum: $('pageNum').checked ? $('pnFmt').value : 'off' };
+    return { style: isM1() ? 'm1' : 'cur', p4: $('p4Keep').checked ? 'keep' : 'drop', ma1: $('ma1').value.trim() || toMaCD(rawName), titleMode: mode(), tende: $('tende').value.trim(), loai: $('loai').value.trim() || 'ĐỀ THI THAM KHẢO', mon: $('mon').value.trim() || 'VẬT LÍ', lop: $('lop').value.trim(), thoigian: $('tg').value.trim(), ma: $('ma').value.trim() || '001', keepTag: $('keepTag').checked, hsBox: $('hsBox').checked, keepTheory: !!theory && $('keepTheory').checked, pageNum: $('pageNum').checked ? $('pnFmt').value : 'off' };
   }
   function save(blob, name) {
     if (window.__saveHook && window.__saveHook(blob, name)) return;   // chạy trong Word (add-in): mở thành tài liệu Word mới
@@ -5860,6 +5902,8 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   $('keepTheory').addEventListener('change', () => pref('keepTheory', $('keepTheory').checked ? '1' : '0'));
   $('keepTag').checked = pref('keepTag') !== '0';
   $('keepTag').addEventListener('change', () => pref('keepTag', $('keepTag').checked ? '1' : '0'));
+  $('hsBox').checked = pref('hsBox') !== '0';
+  $('hsBox').addEventListener('change', () => pref('hsBox', $('hsBox').checked ? '1' : '0'));
   function applyFm() {
     document.querySelector('input[name=fm][value=' + fm + ']').checked = true;
     $('segFm').style.setProperty('--i', fm === 'm1' ? 1 : 0);
@@ -5879,7 +5923,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.2 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.3 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
