@@ -234,7 +234,7 @@ details.notes[open] summary::after { transform: rotate(90deg); } details.notes u
 @keyframes pop { 40% { transform: scale(1.18) rotate(-4deg); } 100% { transform: none; } }
 @keyframes pop-in { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: none; } }
 @media (max-width: 560px) { .bar .lbl { display: none; } .dl, .edit .two, .dlg .two { grid-template-columns: 1fr; } .opts { grid-template-columns: 1fr; } .row label { flex-basis: 44%; } .hero h1 { font-size: 24px; } .acts { margin-left: 0; width: 100%; } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+@media (prefers-reduced-motion: reduce) { :root:not([data-motion="on"]) *, :root:not([data-motion="on"]) *::before, :root:not([data-motion="on"]) *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 
 /* ================= THƯƠNG HIỆU QL PHYSICS: đen, trắng, một chấm đỏ ================= */
@@ -528,7 +528,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
 [data-trans="stack"] .step { transform: translate3d(100%, 0, 0); box-shadow: -20px 0 40px -20px rgba(0,0,0,.4); } [data-trans="stack"] .step.past { transform: scale(.94) translate3d(-6%, 0, 0); opacity: 0; } [data-trans="stack"] .step.on { transform: none; }
 [data-trans="rise"] .step { transform: translate3d(0, 70px, 0) scale(.96); transition: transform .75s cubic-bezier(.34,1.56,.64,1), opacity .4s ease, visibility 0s .75s; } [data-trans="rise"] .step.past { transform: translate3d(0, -30px, 0) scale(.98); } [data-trans="rise"] .step.on { transform: none; transition-delay: 0s; }
 [data-trans="tilt"] .stage { perspective: 1600px; } [data-trans="tilt"] .step { transform-origin: 50% 100%; transform: rotateX(-24deg) translate3d(0, 40px, 0); } [data-trans="tilt"] .step.past { transform-origin: 50% 0; transform: rotateX(24deg) translate3d(0, -30px, 0); } [data-trans="tilt"] .step.on { transform: none; }
-@media (prefers-reduced-motion: reduce) { .step { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { :root:not([data-motion="on"]) .step { transition: none !important; } }
 
 /* ================= GIAO DIỆN CỔ ĐIỂN: không đồ họa, không hiệu ứng ================= */
 [data-skin="classic"] body { background: var(--plain); font-family: "Segoe UI", Arial, sans-serif; }
@@ -775,7 +775,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
         <div class="group" id="keepG" style="margin-top:12px"><div class="row"><span class="rl" id="keepL">Giữ lại thẻ nguồn<small>Giữ nhãn như [TTN], [NB - …] ngay sau chữ "Câu N." (cả hai bản)</small></span><input type="checkbox" class="sw" id="keepTag" role="switch" aria-labelledby="keepL" checked></div></div>
         <div class="group" id="hsBoxG" style="margin-top:12px"><div class="row"><span class="rl" id="hsBoxL">Ô điền đáp án cho HS<small>Bản HS: chèn bảng "Đáp án: □□□□" dưới mỗi câu trả lời ngắn (mỗi ô một ký tự, kể cả dấu "-" và ",")</small></span><input type="checkbox" class="sw" id="hsBox" role="switch" aria-labelledby="hsBoxL" checked></div></div>
         <div class="group" id="pnG" style="margin-top:10px"><div class="row"><span class="rl" id="pnL">Tự đánh số trang<small>Số trang ở chân trang của cả hai bản (đề gốc đã có số trang thì giữ nguyên)</small></span><select id="pnFmt" aria-label="Kiểu số trang"><option value="xy">Trang 1/5</option><option value="n">1</option><option value="xyma">Trang 1/5 – Mã đề</option></select><input type="checkbox" class="sw" id="pageNum" role="switch" aria-labelledby="pnL" checked></div></div>
-        <div class="group" id="thG" style="margin-top:10px" hidden><div class="row"><span class="rl" id="thL">Giữ phần lý thuyết<small id="thSub"></small></span><input type="checkbox" class="sw" id="keepTheory" role="switch" aria-labelledby="thL" checked></div></div>
+        <div class="group" id="thG" style="margin-top:10px" hidden><div class="row"><span class="rl" id="theoryL">Giữ phần lý thuyết<small id="thSub"></small></span><input type="checkbox" class="sw" id="keepTheory" role="switch" aria-labelledby="theoryL" checked></div></div>
         <div id="fields" hidden>
           <div class="group" style="margin-top:10px">
             <div class="row wide"><label for="tende">Tên đề</label><input id="tende" type="text" placeholder="Ví dụ: BÀI TẬP DAO ĐỘNG ĐIỀU HÒA"></div>
@@ -873,7 +873,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.4-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.4-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4767,6 +4767,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   }
   function applyPrefs() {
     root.dataset.skin = skin; root.dataset.theme = theme; root.dataset.trans = trans; $('selTrans').value = trans;
+    root.dataset.motion = pref('trans') ? 'on' : 'auto';   // máy tắt hiệu ứng động (Windows): chỉ chạy hiệu ứng khi người dùng đã tự chọn kiểu chuyển bước
     segSet('segSkin', 'skin', skin, skin === 'modern' ? 0 : 1);
     segSet('segTheme', 'theme', theme, ['auto', 'light', 'dark'].indexOf(theme));
     steps.forEach((s, k) => { s.inert = skin === 'modern' && k !== cur; });
@@ -5932,7 +5933,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.4-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.4-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
