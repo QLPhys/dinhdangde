@@ -447,6 +447,10 @@ input.cun { width: 52px; font: inherit; font-size: 14px; text-align: center; pad
 .sidep .csum { font-size: 13px; color: var(--ink); padding: 2px 8px 6px; display: grid; gap: 3px; } .sidep .csum span { color: var(--ink2); }
 .sidep .cbig { margin: 4px 8px 6px; width: auto; }
 .sidep .cbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 8px 4px; }
+.sidep .cfoot { flex: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 10px; border-top: 1px solid var(--hair); } .sidep .cfoot[hidden], .sidep.drawer .cfoot { display: none; }
+/* màn hình rộng: mỗi nút chỉ ở một chỗ. Thanh dưới = điều hướng + nút chính; Bảng điều khiển = thao tác phụ; phần giữa = nội dung */
+body.side-wide .dock .rst, body.side-wide #cuOpen, body.side-wide .step[data-i="3"] #dl { display: none !important; }
+.step[data-i="3"] > .btns, .step[data-i="3"] #ow { display: none !important; }   /* "Làm đề khác", "Ghi đè" đã có ở thanh dưới / Bảng điều khiển */
 .sidep .cs > .mini { align-self: flex-start; margin: 2px 8px; }
 .sidep details.disp { display: block; margin-top: 10px; border-top: 1px solid var(--hair); padding-top: 4px; }
 .sidep details.disp > summary { cursor: pointer; font-size: 13px; color: var(--ink2); padding: 7px 8px; list-style: none; } .sidep details.disp > summary::-webkit-details-marker { display: none; } .sidep details.disp > summary::before { content: '⚙ '; }
@@ -845,19 +849,16 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
       <section class="cs" data-s="2">
         <div class="gh">Lựa chọn hiện tại</div>
         <div class="csum" id="sum3"></div>
-        <button class="btn pri cbig" id="px3" type="button">Tạo hai bản</button>
       </section>
       <section class="cs" data-s="3">
         <div id="slotLoc"></div>
-        <div class="gh">Tải về</div>
+        <div class="gh">Tải riêng từng bản</div>
         <div class="cbtns"><button class="mini" id="pxGV" type="button">Bản Giáo viên</button><button class="mini" id="pxHS" type="button">Bản Học sinh</button></div>
-        <button class="btn pri cbig" id="pxAll" type="button">Tải cả hai bản</button>
-        <button class="mini" id="pxOw" type="button">💾 Ghi đè file gốc…</button>
         <div id="sum4" class="csum"></div>
-        <button class="mini" id="pxAgain" type="button">↺ Làm đề khác</button>
       </section>
       <details class="cs disp" id="dispD"><summary>Hiển thị (giao diện, nền, chuyển bước)</summary><div id="slotBar"></div></details>
     </div>
+    <div class="cfoot" id="ctrlFoot"><button class="mini" id="pfOw" type="button">💾 Ghi đè file gốc…</button><button class="mini" id="pfAgain" type="button">↺ Làm đề khác</button></div>
   </aside>
   <div class="backbar rwbar" id="rwBar" hidden><span id="rwBarTx"></span><button class="mini stp" type="button" data-cun="-1" aria-label="Bớt một câu">–</button><input id="rwBarN" class="cun" type="number" min="1" max="12" value="2" aria-label="Số câu dùng chung dữ kiện"><button class="mini stp" type="button" data-cun="1" aria-label="Thêm một câu">+</button><span>câu</span><button class="mini pri" id="rwBarMark" type="button">Đánh dấu chùm</button><button class="mini" id="rwBarUn" type="button">Bỏ đánh dấu</button></div>
   <button class="sidefab" id="sideFab" type="button" hidden aria-controls="sideP">⚠ 0</button>
@@ -867,7 +868,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.3-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.3-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4809,6 +4810,9 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     ow.disabled = !canOw || $('go').classList.contains('busy');
     ow.title = canOw ? 'Thay file gốc "' + fileHandle.name + '" bằng bản Giáo viên đã chỉnh (có tải bản sao lưu trước). Không bấm = không ghi đè.' : 'Chỉ dùng được trên Chrome/Edge và khi chọn file bằng nút "Bấm để chọn file" ở bước 1.';
     $('dkReset').hidden = !rawBuf; $('dkReset').disabled = $('go').classList.contains('busy') || $('quickBtn').classList.contains('busy');
+    // màn hình rộng: hai nút này nằm ở cuối Bảng điều khiển (thanh dưới chỉ còn Quay lại · Bước · nút chính)
+    const pfo = $('pfOw'), pfa = $('pfAgain');
+    if (pfo) { pfo.hidden = ow.hidden; pfo.disabled = ow.disabled; pfo.title = ow.title; pfa.hidden = $('dkReset').hidden; pfa.disabled = $('dkReset').disabled; $('ctrlFoot').hidden = pfo.hidden && pfa.hidden; }
   }
   $('dkNext').addEventListener('click', () => { const t = $(DK[cur].n); if (t && !t.disabled) t.click(); });
   $('dkBack').addEventListener('click', () => { const b = steps[cur].querySelector('.btn.back'); if (b && cur > 0) b.click(); });
@@ -5426,19 +5430,13 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
         + (isM1() ? '<div><span>Mã chuyên đề:</span> ' + esc($('ma1').value.trim() || '(tự lấy từ tên file)') + '</div>' : '<div><span>Tiêu đề:</span> ' + (mode() === 'keep' ? 'Giữ tiêu đề gốc' : 'Theo đề mẫu · mã đề ' + esc($('ma').value.trim() || '001')) + '</div>')
         + '<div><span>Số trang:</span> ' + esc(pn) + '</div>' + '<div><span>Thẻ nguồn [..]:</span> ' + (kt ? 'giữ' : 'bỏ') + '</div>'
         + '<div><span>Số câu:</span> ' + keptIds().length + '</div>';
-      $('px3').textContent = $('go').textContent; $('px3').disabled = $('go').disabled;
     } else if (cur === 3) {
-      $('pxHS').hidden = $('dlHS').hidden; $('pxAll').textContent = $('dlAll').textContent;
-      $('pxOw').disabled = $('owBtn').disabled;
+      $('pxHS').hidden = $('dlHS').hidden;
       const ns = $('notes').hidden ? 'Không có mục nào cần xem lại.' : $('notesSum').textContent;
-      $('sum4').innerHTML = '<div>' + esc(ns) + '</div>' + ($('notes').hidden ? '' : '<button class="mini" type="button" id="pxNotes" style="justify-self:start">Xem báo cáo ↓</button>');
+      $('sum4').innerHTML = '<div>' + esc(ns) + '</div>';
     }
   }
-  $('px3').addEventListener('click', () => $('go').click());
   $('pxGV').addEventListener('click', () => $('dlGV').click()); $('pxHS').addEventListener('click', () => $('dlHS').click());
-  $('pxAll').addEventListener('click', () => $('dlAll').click()); $('pxOw').addEventListener('click', () => $('owBtn').click());
-  $('pxAgain').addEventListener('click', () => $('again').click());
-  $('sum4').addEventListener('click', (e) => { if (e.target.closest('#pxNotes')) { $('notes').open = true; $('notes').scrollIntoView({ block: 'center', behavior: 'smooth' }); } });
   steps[2].addEventListener('input', () => { if (cur === 2 && isWide()) ctrlStepFill(); }); steps[2].addEventListener('change', () => { if (cur === 2 && isWide()) ctrlStepFill(); });
   if ('MutationObserver' in window) { const mo2 = new MutationObserver(() => { if (isWide()) ctrlStepFill(); }); ['go', 'owBtn', 'notesSum'].forEach((id) => mo2.observe($(id), { attributes: true, childList: true, characterData: true, subtree: true })); }
   // câu đang xem trên màn hình -> tô đậm mục tương ứng trong khung
@@ -5850,7 +5848,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     $('dlgOw').showModal();
   }
   $('owBtn').addEventListener('click', openOw);
-  $('dkOw').addEventListener('click', openOw);
+  $('dkOw').addEventListener('click', openOw); $('pfOw').addEventListener('click', openOw);
   $('dlgOw').querySelector('form').addEventListener('submit', async (e) => {
     if (!e.submitter || e.submitter.value !== 'ok') return;
     try {
@@ -5895,7 +5893,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   }
   $('dlgReset').querySelector('form').addEventListener('submit', (e) => { if (e.submitter && e.submitter.value === 'ok') resetAll(); });
   $('again').addEventListener('click', askReset);
-  $('dkReset').addEventListener('click', askReset);
+  $('dkReset').addEventListener('click', askReset); $('pfAgain').addEventListener('click', askReset);
 
   $('pageNum').checked = pref('pageNum') !== '0'; if (['xy', 'n', 'xyma'].includes(pref('pnFmt'))) $('pnFmt').value = pref('pnFmt'); syncPn();
   $('keepTheory').checked = pref('keepTheory') !== '0';
@@ -5923,7 +5921,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.3-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.3-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
