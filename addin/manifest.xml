@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
   <Id>7780a865-70ea-4ad2-acde-0195b67d37fe</Id>
-  <Version>1.5.0.0</Version>
+  <Version>1.6.0.0</Version>
   <ProviderName>QL Physics</ProviderName>
   <DefaultLocale>vi-VN</DefaultLocale>
   <DisplayName DefaultValue="QL_Format – Định dạng đề thi"/>
@@ -17,9 +17,10 @@
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Hosts>
       <Host xsi:type="Document">
+        <Runtimes><Runtime resid="Taskpane.Url" lifetime="long"/></Runtimes>
         <DesktopFormFactor>
           <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="GetStarted.LearnMoreUrl"/></GetStarted>
-          <FunctionFile resid="Commands.Url"/>
+          <FunctionFile resid="Taskpane.Url"/>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <CustomTab id="QLFormat.Tab">
               <Group id="QLF.gDapAn"><Label resid="G.DapAn"/><Icon><bt:Image size="16" resid="i.dung.16"/><bt:Image size="32" resid="i.dung.32"/><bt:Image size="80" resid="i.dung.80"/></Icon><Control xsi:type="Button" id="QLF.Dung"><Label resid="L.Dung"/><Supertip><Title resid="L.Dung"/><Description resid="T.Dung"/></Supertip><Icon><bt:Image size="16" resid="i.dung.16"/><bt:Image size="32" resid="i.dung.32"/><bt:Image size="80" resid="i.dung.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdDung</FunctionName></Action></Control><Control xsi:type="Button" id="QLF.Sai"><Label resid="L.Sai"/><Supertip><Title resid="L.Sai"/><Description resid="T.Sai"/></Supertip><Icon><bt:Image size="16" resid="i.sai.16"/><bt:Image size="32" resid="i.sai.32"/><bt:Image size="80" resid="i.sai.80"/></Icon><Action xsi:type="ExecuteFunction"><FunctionName>cmdSai</FunctionName></Action></Control></Group>
