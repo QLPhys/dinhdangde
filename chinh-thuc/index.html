@@ -873,7 +873,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.02.6</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.03</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -1969,6 +1969,15 @@ function leadScore(txt, nextStem) {
   if (dw === 0 && un < 2) sc = Math.min(sc, 3);   // không có dấu hiệu dữ kiện (số liệu, "biết", "bỏ qua"...) thì không gợi ý
   return sc;
 }
+// đoạn lời giải nhắc lại đề của chính câu đó ("Người phụ nữ trong hình đã vi phạm… là …"): là lời giải, không phải dữ kiện chùm
+function restatesStem(q, txt) {
+  const W = (t) => String(t || '').toLowerCase().normalize('NFC').split(OBJ).join(' ').replace(/[^0-9a-zà-ỹđ\s]/gi, ' ').split(/\s+/).filter((w) => w.length > 1);
+  const st = W(q.stem.map((t) => textOf(t)).join(' ')), pa = W(txt);
+  if (st.length < 5 || pa.length < 5) return false;
+  if (pa.slice(0, 6).join(' ') === st.slice(0, 6).join(' ')) return true;
+  const S0 = new Set(st), hit = pa.filter((w) => S0.has(w)).length;
+  return hit / Math.min(pa.length, st.length) >= 0.6;
+}
 // nhìn trước: đoạn ei là đoạn cuối trước một "Câu N" (có thể kèm hình/bảng đứng giữa)?
 function leadAhead(ents, ei, cur, qkeys) {
   let count = 1; const idxs = [ei];
@@ -2560,7 +2569,7 @@ function parseRaw(body, qkeys, popt) {
     if (!cur) continue;
     if ((cur.part === 1 || cur.part === 3) && (mode === 'sol' || (mode === 'opts' && cur.part === 1 && Object.keys(cur.opts).length >= 4)) && txt && !hasDrawing(toks) && !pendSg) {
       const la = leadAhead(ents, ei, cur, qkeys);
-      if (la) {
+      if (la && !(mode === 'sol' && (!cur.sol.some((t) => hasContent(trim(t))) || restatesStem(cur, txt)))) {
         const sc = leadScore(textOf(toks), stripNextStem(la.nextTxt));
         if (sc >= 5) { pendSg = { score: sc, count: la.count, prev: cur, idxs: la.idxs }; if (mode === 'opts') mode = 'sol'; }
       }
@@ -3749,7 +3758,7 @@ function viewOf(q) {
   v.tf = q.part === 2 ? stmtTruth(q) : null;
   if (q.cluster) {
     const c = q.cluster, tx = (t) => textOf(trim(t)).split(OBJ).join(' ▣ ').replace(/\s+/g, ' ').trim();
-    v.cluster = { first: c.members[0] === q, n: c.members.length, refs: c.refs.slice(), ids: c.members.map((m) => m.id), implicit: !!c.implicit, text: [c.intro].concat(c.body).map(tx).filter(Boolean).join(' ¶ ').slice(0, 600) };
+    v.cluster = { first: c.members[0] === q, n: c.members.length, refs: c.refs.slice(), ids: c.members.map((m) => m.id), implicit: !!c.implicit, kind: c.manual ? 'man' : c.tagged ? 'tag' : c.members.some((m) => m.sugg && m.sugg.cluster === c) ? 'sugg' : 'auto', text: [c.intro].concat(c.body).map(tx).filter(Boolean).join(' ¶ ').slice(0, 600) };
   }
   if (q.sugg) {
     const tx2 = (t) => textOf(trim(t)).split(OBJ).join(' ▣ ').replace(/\s+/g, ' ').trim();
@@ -3944,7 +3953,7 @@ function rawList(body, parsed, qs) {
     if (c && !seen.has(c) && c.eis) {
       seen.add(c);
       const kind = c.manual ? 'man' : c.tagged ? 'tag' : 'auto';
-      c.eis.forEach((ei, k) => { const i = iOf(ei); if (i >= 0) role[i] = { k: kind, lead: k === 0, n: c.count || c.refs.length || c.members.length, got: c.members.length }; });
+      c.eis.forEach((ei, k) => { const i = iOf(ei); if (i >= 0) role[i] = { k: kind, lead: k === 0, n: c.count || c.refs.length || c.members.length, got: c.members.length, ids: c.members.map((m) => m.id) }; });
     }
     if (q.sugg && !q.sugg.cluster) (q.sugg.idxs || []).forEach((ei) => { const i = iOf(ei); if (i >= 0 && !role[i]) role[i] = { k: 'sugg' }; });
   }
@@ -4517,6 +4526,15 @@ function applySugg(id, n) {
   touched.forEach((m) => finalizeQ(m));
   return Array.from(touched).map((m) => viewOf(m));
 }
+function noSugg(id) {
+  const q = need(id), sg = q.sugg;
+  if (!sg) return [viewOf(q)];
+  const touched = new Set([q, sg.prev]);
+  undoSugg(q).forEach((m) => touched.add(m));
+  q.sugg = null;
+  touched.forEach((m) => finalizeQ(m));
+  return Array.from(touched).map((m) => viewOf(m));
+}
 function tagState(ids) {
   const miss = [];
   for (const id of ids) { const q = S && S.reg.get(id); if (q && q.part >= 1 && q.part <= 3 && !q.tagLv) miss.push(id); }
@@ -4741,7 +4759,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, setTag, setTags, tagState };
+window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState };
 })();
 
 </script>
@@ -4971,13 +4989,14 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     if (v.sugg && !v.sugg.n) {
       h += '<div class="clhint sg"><b>Gợi ý: có thể đây là chùm câu hỏi</b> · đoạn dữ kiện sau đang nằm trong lời giải của câu liền trước: <span>' + esc(v.sugg.text) + '</span>'
         + '<div class="sgrow"><label>Dùng chung cho <select class="sgn" aria-label="Số câu trong chùm"><option>2</option><option>3</option><option>4</option><option>5</option></select> câu, tính từ câu này</label>'
-        + '<button class="mini on" data-act="sg-ok" type="button">Nhận làm câu dẫn của chùm</button></div></div>';
+        + '<button class="mini on" data-act="sg-ok" type="button">Nhận làm câu dẫn của chùm</button><button class="mini" data-act="sg-no" type="button" title="Đoạn này là lời giải của câu trước: giữ trong lời giải, bản HS không in">Không phải chùm</button></div></div>';
     } else if (v.cluster) {
       const allOff = v.cluster.ids.every((x) => dropped.has(x));
-      h += '<div class="clhint"><b>Chùm câu hỏi</b>' + (v.cluster.implicit ? ' (do bạn xác nhận)' : '') + ' · dữ kiện dùng chung cho ' + v.cluster.n + ' câu' + (v.cluster.first ? ': <span>' + esc(v.cluster.text) + '</span>' : ' (câu dẫn nằm ở câu đầu của chùm)');
+      h += '<div class="clhint"><b>Chùm câu hỏi</b>' + ({ sugg: ' (do bạn xác nhận)', man: ' (thầy/cô đánh dấu)', tag: ' (nhãn [CHUM])', auto: ' (công cụ tự nhận)' }[v.cluster.kind] || '') + ' · dữ kiện dùng chung cho ' + v.cluster.n + ' câu' + (v.cluster.first ? ': <span>' + esc(v.cluster.text) + '</span>' : ' (câu dẫn nằm ở câu đầu của chùm)');
       if (v.cluster.first) {
         h += '<div class="sgrow">' + (allOff ? '<button class="mini" data-act="cl-keep" type="button">Giữ lại cả chùm</button>' : '<button class="mini red" data-act="cl-drop" type="button">Bỏ cả chùm</button>');
-        if (v.cluster.implicit && v.sugg) h += '<button class="mini" data-act="sg-undo" type="button">Hủy chùm này</button>';
+        if (v.cluster.kind === 'sugg' && v.sugg) h += '<button class="mini" data-act="sg-undo" type="button">Không phải chùm</button>';
+        else h += '<button class="mini" data-act="cl-no" type="button" title="Công cụ nhận nhầm: bỏ chùm, đọc lại đề">Không phải chùm</button>';
         h += '</div>';
       }
       h += '</div>';
@@ -5164,6 +5183,11 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       dropped.add(id); renderReview();
     }
     else if (act === 'cl-drop' || act === 'cl-keep') { const vv = views.get(id); (vv && vv.cluster ? vv.cluster.ids : [id]).forEach((x) => (act === 'cl-drop' ? dropped.add(x) : dropped.delete(x))); renderReview(); }
+    else if (act === 'sg-no') {
+      try { window.DeThi.noSugg(id).forEach((nv) => views.set(nv.id, nv)); renderReview(); }
+      catch (err) { alert('Không áp dụng được: ' + (err && err.message ? err.message : err)); }
+    }
+    else if (act === 'cl-no') unCluster(id);
     else if (act === 'sg-ok' || act === 'sg-undo') {
       const sel = card ? card.querySelector('.sgn') : null;
       try { window.DeThi.cluster(id, act === 'sg-ok' ? +(sel ? sel.value : 2) : 0).forEach((nv) => views.set(nv.id, nv)); renderReview(); }
@@ -5922,7 +5946,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.02.6 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.03 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
@@ -5989,6 +6013,17 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     rawRows.filter((x) => x.i >= a && x.i <= b && x.role && x.role.lead && (x.role.k === 'auto' || x.role.k === 'tag')).forEach((x) => cluOff.push(x.i));
     rwA = rwB = -1; rwReload();
   });
+  // thẻ câu ở Bước 2: "Không phải chùm" với chùm công cụ tự nhận / [CHUM] / thầy cô đánh dấu -> tắt chùm đó và đọc lại đề
+  async function unCluster(id) {
+    const row = rawRows.findIndex((x) => x && x.role && x.role.lead && (x.role.ids || []).includes(id));
+    if (row < 0) { alert('Không tìm thấy câu dẫn của chùm này. Mở "Xem đề thô" ở Bước 1, chọn đoạn dữ kiện rồi bấm "Bỏ đánh dấu".'); return; }
+    const touched = dropped.size || swapped.size || Array.from(views.values()).some((v) => v.edited || v.added);
+    if (touched && !confirm('Bỏ chùm này thì công cụ đọc lại đề: các chỉnh sửa, câu đã bỏ/đổi ở Bước 2 sẽ mất. Tiếp tục?')) return;
+    const k = rawRows[row].role.k;
+    if (k === 'man') cluMarks = cluMarks.filter((m) => row < m.i || row > m.j);
+    else if (!cluOff.includes(row)) cluOff.push(row);
+    await rwReload();
+  }
   $('rwUn').addEventListener('click', () => {
     if (rwA < 0) return;
     const a = Math.min(rwA, rwB), b = Math.max(rwA, rwB);
