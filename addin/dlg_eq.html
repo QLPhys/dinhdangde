@@ -24,13 +24,17 @@ textarea{font:13.5px Consolas,monospace;width:100%;min-height:210px;border:1px s
 .it{display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:start;border-bottom:1px solid #edf0f5;padding:6px 0}
 .it input{width:16px;height:16px;margin-top:3px} .it .src{font:12px Consolas,monospace;color:var(--mut);word-break:break-word} .it .pv{font:16px 'Times New Roman',serif;margin-top:2px} .it .pv math{font-size:1.05em}
 .it button{min-height:28px;padding:2px 10px;font-size:12.5px} .hl{background:#fff36b}
-body.sym .w{padding:6px 7px;gap:5px} body.sym{font-size:12.5px}
-body.sym .tabs{gap:2px;flex-wrap:nowrap} body.sym .tabs button{min-height:0;height:26px;min-width:26px;padding:0 5px;border-radius:6px;font:14px 'Cambria Math','Segoe UI',serif;border-color:transparent;background:#f1f4f9}
-body.sym .tabs button.on{background:var(--blue);color:#fff} body.sym #x{background:transparent;font-size:13px}
-body.sym .sb{gap:5px} body.sym .gr{gap:3px} body.sym .gr button{width:28px;height:28px;font-size:16px;border-radius:6px}
-body.sym .row{gap:4px} body.sym .row input{flex:1;width:auto;font-size:14px;padding:3px 6px} body.sym .row button{min-height:26px;padding:2px 8px;font-size:12px}
-body.sym button.lk{border:0;background:none;color:var(--blue);padding:0 2px;min-height:0;text-decoration:underline} body.sym .st{min-height:15px;font-size:11.5px}
-body.sym textarea{min-height:90px;font-size:12px} body.sym .mut{font-size:11.5px}
+body.sym .w{padding:5px 6px;gap:4px} body.sym{font-size:12px}
+body.sym .tabs{gap:3px;flex-wrap:nowrap;align-items:center} body.sym .tabs button{min-height:0;height:22px;padding:0 6px;border-radius:5px;font-size:11.5px;border-color:transparent;background:#f1f4f9;white-space:nowrap}
+body.sym .tabs button.on{background:var(--blue);color:#fff;font-weight:600} body.sym #x{background:transparent;font-size:12px;padding:0 4px}
+body.sym .my{font-size:11.5px;font-weight:700;color:#b26a00;white-space:nowrap}
+body.sym .sb{gap:3px} body.sym .gr{gap:2px} body.sym .gr+.gr{border-top:1px solid #eef1f6;padding-top:3px}
+body.sym .gr button{width:24px;height:24px;font-size:15px;border-radius:5px}
+body.sym .gr.mine{min-height:24px;background:#fff8e6;border-radius:6px;padding:2px} body.sym .gr.mine button{border-color:#f0d9a8}
+body.sym .gr button.pin{background:#ffe9b3;border-color:#e0a800}
+body.sym .tip{font-size:11px;color:#8a4b00;background:#fff4d6;border-radius:5px;padding:2px 6px}
+body.sym .row{gap:4px} body.sym .row button{min-height:24px;padding:2px 8px;font-size:12px}
+body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;font-size:12px} body.sym .mut{font-size:11px}
 </style></head>
 <body><div class="w" id="w"></div>
 <script>
@@ -83,46 +87,42 @@ body.sym textarea{min-height:90px;font-size:12px} body.sym .mut{font-size:11.5px
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } if (e.key === 'Escape') send({ cancel: 1 }); });
       const sb = document.getElementById('sg'); if (sb) sb.onclick = () => { inp.value = sg; inp.focus(); };
     } else if (m === 'sym') {
-      // bảng ký hiệu NHỎ GỌN: một hàng thẻ nhóm + một lưới ký tự; bấm là chèn tại con nháy, bảng vẫn mở
+      // bảng ký hiệu nhỏ gọn, hiện hết các nhóm; hàng "★ Của tôi" lưu lại cho các lần sau; bấm là chèn tại con nháy, bảng vẫn mở
       let U = {}; try { U = JSON.parse(P.get('u') || '{}') || {}; } catch (e) { U = {}; }
       try { const L = JSON.parse(localStorage.getItem('qlf.sym') || 'null'); if (L && typeof L === 'object') U = Object.assign({}, U, L); } catch (e) { /* bỏ qua */ }
       let pins = typeof U.pins === 'string' ? U.pins : '', sc = typeof U.sc === 'string' ? U.sc : '';
-      let rec = ''; try { rec = localStorage.getItem('qlf.symRec') || ''; } catch (e) { rec = ''; }
-      const G = [['α', 'Hy Lạp', 'αβγδεζηθκλμνξπρστφψωϕ'], ['Δ', 'Hy Lạp hoa', 'ΔΦΩΣΠΛΓΘΨ'], ['±', 'Phép toán', '±×·÷≈≠≤≥∞√∝⊥∥∠∑∫∂∇'], ['→', 'Mũi tên', '→⇒⇔←↑↓⇌↗'], ['x²', 'Mũ, chỉ số', '⁰¹²³⁴⁻⁺₀₁₂₃₄'], ['°', 'Đơn vị', '°℃ΩμÅ‰%']];
+      const G = [['Hy Lạp', 'αβγδεζηθκλμνξπρστφψωϕ'], ['Hy Lạp hoa', 'ΔΦΩΣΠΛΓΘΨ'], ['Phép toán', '±×·÷≈≠≤≥∞√∝⊥∥∠∑∫∂∇'], ['Mũi tên', '→⇒⇔←↑↓⇌↗'], ['Mũ, chỉ số', '⁰¹²³⁴⁻⁺₀₁₂₃₄'], ['Đơn vị', '°℃ΩμÅ‰%']];
       const save = (rs) => { const v = { pins, sc: rs ? null : sc }; try { localStorage.setItem('qlf.sym', JSON.stringify(v)); } catch (e) { /* bỏ qua */ } send({ save: v }); };
-      let tab = '★'; try { tab = localStorage.getItem('qlf.symTab') || '★'; } catch (e) { /* bỏ qua */ }
-      let edit = false;
+      let view = 'k', edit = false;
       document.body.classList.add('sym');
+      const B = (c) => '<button type="button" data-c="' + esc(c) + '" class="' + (edit && pins.includes(c) ? 'pin' : '') + '" title="' + (edit ? (pins.includes(c) ? 'Bỏ khỏi' : 'Thêm vào') + ' Của tôi' : 'Chèn ' + esc(c)) + '">' + esc(c) + '</button>';
       const draw = () => {
-        const btns = (str) => '<div class="gr">' + Array.from(str).map((c) => '<button type="button" data-c="' + esc(c) + '" title="Chèn ' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>';
-        const tb = (k, title) => '<button type="button" data-t="' + esc(k) + '" title="' + esc(title) + '" class="' + (tab === k ? 'on' : '') + '">' + esc(k) + '</button>';
-        let h = '<div class="tabs">' + tb('★', 'Hay dùng: của tôi + vừa chèn') + G.map((g) => tb(g[0], g[1])).join('') + tb('⚙', 'Gõ tắt (lamda → λ…)') + '<span style="flex:1"></span><button type="button" id="x" title="Đóng (Esc)">✕</button></div><div class="sb">';
-        if (tab === '★') {
-          const all = Array.from(new Set(Array.from(pins + rec))).join('');
-          h += all ? btns(all) : '<div class="mut">Các ký hiệu vừa chèn sẽ hiện ở đây.</div>';
-          h += edit ? '<div class="row"><input id="pv" value="' + esc(pins) + '" placeholder="ký hiệu của tôi, vd. λΩ℃"><button type="button" id="ps">Lưu</button></div>'
-            : '<div class="row"><button type="button" class="lk" id="pe">Sửa ký hiệu của tôi</button>' + (rec ? '<button type="button" class="lk" id="rc">Xóa “vừa chèn”</button>' : '') + '</div>';
-        } else if (tab === '⚙') {
-          h += '<div class="mut">Mỗi dòng: <b>gõ tắt → ký hiệu</b>. Bấm <b>Equation</b> để đổi: trong công thức gõ <kbd>pi</kbd>, <kbd>lamda</kbd>; ngoài công thức gõ <kbd>\\pi</kbd>.</div>'
+        let h;
+        if (view === 'g') {
+          h = '<div class="tabs"><button type="button" id="bk" title="Về bảng ký hiệu">← Ký hiệu</button><span style="flex:1"></span><button type="button" id="x" title="Đóng (Esc)">✕</button></div><div class="sb">'
+            + '<div class="mut">Mỗi dòng: <b>gõ tắt → ký hiệu</b>. Bấm <b>Equation</b> để đổi: trong công thức gõ <kbd>pi</kbd>, <kbd>lamda</kbd>; ngoài công thức gõ <kbd>\\pi</kbd>.</div>'
             + '<textarea id="sc" spellcheck="false">' + esc(sc) + '</textarea><div class="row"><button class="pri" type="button" id="ss">Lưu</button><button type="button" id="sd">Mặc định</button></div>';
         } else {
-          const g = G.find((x) => x[0] === tab) || G[0]; h += btns(g[2]);
+          h = '<div class="tabs"><span class="my">★ Của tôi</span><button type="button" id="ed" class="' + (edit ? 'on' : '') + '" title="Chọn ký hiệu hay dùng để lưu cho các lần sau">' + (edit ? 'Xong' : '✎ Chọn') + '</button><span style="flex:1"></span><button type="button" id="gt" title="Gõ tắt: lamda → λ, pi → π…">⚙ Gõ tắt</button><button type="button" id="x" title="Đóng (Esc)">✕</button></div><div class="sb">'
+            + (edit ? '<div class="tip">Bấm các ký hiệu bên dưới để thêm / bỏ khỏi “Của tôi”, rồi bấm <b>Xong</b>.</div>' : '')
+            + '<div class="gr mine">' + (pins ? Array.from(pins).map(B).join('') : '<span class="mut">Chưa có — bấm ✎ Chọn để lưu ký hiệu hay dùng.</span>') + '</div>'
+            + G.map(([t, str]) => '<div class="gr" title="' + esc(t) + '">' + Array.from(str).map(B).join('') + '</div>').join('');
         }
         h += '<div class="st" id="st"></div></div>';
         W.innerHTML = h;
-        W.querySelectorAll('[data-t]').forEach((b) => { b.onclick = () => { tab = b.dataset.t; edit = false; try { localStorage.setItem('qlf.symTab', tab); } catch (e) { /* bỏ qua */ } draw(); }; });
+        const st = (t) => { const e = document.getElementById('st'); if (e) e.textContent = t; };
         W.querySelectorAll('[data-c]').forEach((b) => { b.onclick = () => {
-          const c = b.dataset.c; send({ ins: c });
-          rec = (c + rec.replace(new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '')).slice(0, 12); try { localStorage.setItem('qlf.symRec', rec); } catch (e) { /* bỏ qua */ }
-          document.getElementById('st').textContent = 'Đã chèn ' + c;
+          const c = b.dataset.c;
+          if (edit) { pins = pins.includes(c) ? Array.from(pins).filter((x) => x !== c).join('') : pins + c; save(); draw(); st(pins.includes(c) ? 'Đã thêm ' + c : 'Đã bỏ ' + c); return; }
+          send({ ins: c }); st('Đã chèn ' + c);
         }; });
-        document.getElementById('x').onclick = () => send({ close: 1 });
         const on = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
-        on('pe', () => { edit = true; draw(); const v = document.getElementById('pv'); v.focus(); });
-        on('rc', () => { rec = ''; try { localStorage.removeItem('qlf.symRec'); } catch (e) { /* bỏ qua */ } draw(); });
-        on('ps', () => { pins = Array.from(new Set(Array.from(document.getElementById('pv').value.replace(/\s+/g, '')))).join(''); save(); edit = false; draw(); document.getElementById('st').textContent = 'Đã lưu.'; });
-        on('ss', () => { sc = document.getElementById('sc').value.replace(/\r/g, '').trim(); save(); document.getElementById('st').textContent = 'Đã lưu gõ tắt.'; });
-        on('sd', () => { save(true); document.getElementById('st').textContent = 'Đã khôi phục mặc định (mở lại bảng để xem).'; });
+        on('x', () => send({ close: 1 }));
+        on('ed', () => { edit = !edit; draw(); if (!edit) st('Đã lưu “Của tôi” cho các lần sau.'); });
+        on('gt', () => { view = 'g'; edit = false; draw(); });
+        on('bk', () => { view = 'k'; draw(); });
+        on('ss', () => { sc = document.getElementById('sc').value.replace(/\r/g, '').trim(); save(); st('Đã lưu gõ tắt.'); });
+        on('sd', () => { save(true); st('Đã khôi phục mặc định (mở lại bảng để xem).'); });
       };
       draw();
     } else if (m === 'scan') {
