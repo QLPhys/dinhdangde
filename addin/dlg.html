@@ -34,6 +34,12 @@ body.sym .gr.mine{min-height:24px;background:#fff8e6;border-radius:6px;padding:2
 body.sym .gr button.pin{background:#ffe9b3;border-color:#e0a800}
 body.sym .tip{font-size:11px;color:#8a4b00;background:#fff4d6;border-radius:5px;padding:2px 6px}
 body.sym .row{gap:4px} body.sym .row button{min-height:24px;padding:2px 8px;font-size:12px}
+body.cx .w{padding:8px 9px;gap:6px} body.cx{font-size:13px} body.cx .cxtop button{min-height:26px;padding:2px 9px;font-size:12px} body.cx #x{border-color:transparent}
+body.cx .tabs{gap:3px;flex-wrap:wrap} body.cx .tabs button{min-height:24px;padding:1px 9px;font-size:12px}
+.cxi{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;border-bottom:1px solid #edf0f5;padding:6px 2px}
+.cxi .cxh{font-weight:600;font-size:12.5px} .cxi .cxw{font-size:12px;color:var(--warn)} .cxi button{min-height:26px;padding:1px 10px;font-size:12px}
+.cxi.ph .cxh{color:#8a4b00} .cxi.seen{opacity:.6} .cxi.seen .cxh{color:var(--ok)}
+.cxo summary{cursor:pointer;font-size:12.5px;color:var(--mut);padding:6px 0} .cxo .cxw{color:var(--mut)}
 body.sym .gr.snp button{width:auto;padding:0 6px;font:11.5px 'Segoe UI',sans-serif;color:#5b2a86;background:#f6f0fb;border-color:#e1d2ef}
 body.sym .snr{display:grid;grid-template-columns:86px 1fr 22px;gap:3px;align-items:center;border-bottom:1px solid #eef1f6;padding-bottom:3px}
 body.sym .snr input{font:12px Consolas,monospace;padding:2px 4px;border:1px solid var(--line);border-radius:4px;width:100%;min-width:0}
@@ -191,6 +197,53 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
         });
       } catch (e) { /* bỏ qua */ }
       send({ ready: 1 });
+    } else if (m === 'cx') {
+      // câu cần xem: thống kê đủ các câu có cảnh báo, bấm "Đến" để tới câu, bảng vẫn mở; xử lý xong bấm Rà lại / Đóng
+      document.body.classList.add('cx');
+      W.innerHTML = '<div class="t">Đang rà đề…</div>';
+      let items = [], opt = [], PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' }, fp = 0, msg = '';
+      const seen = new Set();
+      const key = (x) => x.p + '|' + x.k + '|' + (x.ph ? 'ph' : '') + (x.o ? 'o' : '');
+      const row = (x, i, grp) => {
+        const lab = x.ph ? (x.n > 1 ? 'Câu ' + x.k + ' → Câu ' + x.k2 : 'Câu ' + x.k) + ' · chưa có tiêu đề phần' : PN[x.p] + ' – Câu ' + x.k;
+        return '<div class="cxi' + (seen.has(key(x)) ? ' seen' : '') + (x.ph ? ' ph' : '') + '"><div><div class="cxh">' + (seen.has(key(x)) ? '✓ ' : '') + esc(lab) + '</div>' + x.w.map((w) => '<div class="cxw">• ' + esc(w) + '</div>').join('') + '</div><button type="button" data-g="' + grp + i + '">Đến</button></div>';
+      };
+      const draw = () => {
+        const parts = [0, 1, 2, 3, 4].filter((p) => !p || items.some((x) => x.p === p) || opt.some((x) => x.p === p));
+        const vis = items.filter((x) => !fp || x.p === fp), visO = opt.filter((x) => !fp || x.p === fp);
+        let h = '<div class="row cxtop"><b>' + items.length + ' mục cần xem</b><span style="flex:1"></span><button type="button" id="rf" title="Đọc lại đề sau khi sửa">⟳ Rà lại</button><button type="button" id="x" title="Đóng (Esc)">✕</button></div>';
+        if (parts.length > 2) h += '<div class="tabs">' + parts.map((p) => '<button type="button" data-p="' + p + '" class="' + (fp === p ? 'on' : '') + '">' + (p ? PN[p].replace('Phần ', '') : 'Tất cả') + '</button>').join('') + '</div>';
+        h += '<div class="sb">';
+        if (!items.length) h += '<div class="t k-ok" style="color:var(--ok);font-weight:600">✓ Không còn câu cần xem.</div>';
+        h += vis.map((x) => row(x, items.indexOf(x), 'i')).join('');
+        if (visO.length) h += '<details class="cxo"><summary>Không bắt buộc · ' + visO.length + ' câu chưa có hướng dẫn giải</summary>' + visO.map((x) => row(x, opt.indexOf(x), 'o')).join('') + '</details>';
+        h += '</div><div class="st" id="st">' + esc(msg) + '</div>';
+        W.innerHTML = h;
+        W.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const g = b.dataset.g, x = g[0] === 'i' ? items[+g.slice(1)] : opt[+g.slice(1)]; if (!x) return; seen.add(key(x)); send({ go: x.s }); msg = 'Đang ở ' + (x.ph ? 'Câu ' + x.k : PN[x.p] + ' – Câu ' + x.k) + '. Sửa xong bấm ⟳ Rà lại.'; const op = W.querySelector('details.cxo'); const wasOpen = op && op.open; draw(); if (wasOpen) W.querySelector('details.cxo').open = true; }; });
+        W.querySelectorAll('[data-p]').forEach((b) => { b.onclick = () => { fp = +b.dataset.p; draw(); }; });
+        document.getElementById('x').onclick = () => send({ close: 1 });
+        document.getElementById('rf').onclick = () => { msg = 'Đang rà lại…'; draw(); send({ refresh: 1 }); };
+      };
+      try {
+        Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, (a) => {
+          let v = null; try { v = JSON.parse(a.message); } catch (e) { return; }
+          if (v.items) { items = v.items; opt = v.opt || []; if (v.pn) PN = v.pn; msg = msg === 'Đang rà lại…' ? 'Đã rà lại ' + new Date().toLocaleTimeString('vi-VN') + '.' : ''; draw(); }
+        });
+      } catch (e) { /* bỏ qua */ }
+      send({ ready: 1 });
+    } else if (m === 'part') {
+      // đề chưa có tiêu đề phần: chọn phần cho từng nhóm câu trước khi xuất
+      let R = []; try { R = JSON.parse(P.get('r') || '[]'); } catch (e) { R = []; }
+      const PNM = { 1: 'Phần I – Nhiều lựa chọn', 2: 'Phần II – Đúng/Sai', 3: 'Phần III – Trả lời ngắn', 4: 'Phần IV – Tự luận' };
+      W.innerHTML = '<div class="t"><b>Đề chưa có tiêu đề phần</b></div><div class="mut">Các câu dưới đây không nằm dưới dòng "PHẦN I/II/III/IV" nào, công cụ đang đoán phần. Chọn đúng phần cho từng nhóm (đổi một nhóm thì các nhóm sau đổi theo), công cụ sẽ chèn dòng tiêu đề phần vào đề.</div><div class="sb">'
+        + R.map((x, k) => '<div class="it" style="grid-template-columns:1fr auto"><div><b>' + esc(x[0]) + '</b><div class="mut">' + esc(x[2]) + (x[2] ? '…' : '') + '</div></div><select data-k="' + k + '" style="font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line);border-radius:6px">' + [1, 2, 3, 4].map((p) => '<option value="' + p + '"' + (p === x[1] ? ' selected' : '') + '>' + PNM[p] + '</option>').join('') + '</select></div>').join('')
+        + '</div><div class="row"><button class="pri" id="ok" type="button">Chèn tiêu đề phần</button><button id="sk" type="button">Xuất luôn (theo đoán)</button><button id="np" type="button" title="Đánh số Câu 1 đến hết theo thứ tự đề gốc, không có dòng tiêu đề phần">Không chia phần</button><button id="no" type="button">Thôi</button></div>';
+      const sels = Array.from(W.querySelectorAll('select'));
+      sels.forEach((x) => { x.onchange = () => { const k = +x.dataset.k; sels.forEach((y) => { if (+y.dataset.k > k && +y.value < +x.value) y.value = x.value; }); }; });
+      document.getElementById('ok').onclick = () => send({ parts: sels.map((x) => +x.value) });
+      document.getElementById('sk').onclick = () => send({ skip: 1 });
+      document.getElementById('np').onclick = () => send({ noparts: 1 });
+      document.getElementById('no').onclick = () => send({ cancel: 1 });
     } else if (m === 'web') {
       const U = 'https://qlphys.github.io/dinhdangde/chinh-thuc/';
       W.innerHTML = '<div class="t">Mở công cụ định dạng đề (bản chính thức) trên trình duyệt.</div><div class="row"><button class="pri" id="go" type="button">Mở công cụ web</button><button id="no" type="button">Đóng</button></div><div class="mut">' + U + '</div>';
@@ -207,6 +260,6 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
     }
   }
   if (window.Office && Office.onReady) Office.onReady(render); else render();
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' ? { close: 1 } : { cancel: 1 }); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' || m === 'cx' ? { close: 1 } : { cancel: 1 }); });
 })();
 </script></body></html>

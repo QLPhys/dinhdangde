@@ -744,7 +744,8 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
         </div>
         <div class="clhint sg" id="partHint" hidden><b>Đề chưa có tiêu đề phần</b> <span id="partTxt"></span>
           <div id="partRuns" class="prun"></div>
-          <div class="sgrow"><button class="mini" id="partApply" type="button">Áp dụng phần đã chọn</button><button class="mini" id="partOk" type="button">Đúng như vậy</button></div></div>
+          <div class="sgrow"><button class="mini" id="partApply" type="button">Áp dụng phần đã chọn</button><button class="mini" id="partOk" type="button">Đúng như vậy</button><button class="mini" id="partNone" type="button" title="Không chia Phần I–IV: đánh số Câu 1 đến hết theo thứ tự đề gốc">Không chia phần (Câu 1 → hết)</button></div></div>
+        <div class="clhint" id="noPartsNote" hidden><b>Không chia phần</b> <span>Bản xuất đánh số Câu 1 đến hết theo thứ tự đề gốc, không có dòng tiêu đề phần.</span> <button class="mini" id="noPartsUndo" type="button">Chia phần lại</button></div>
         <div class="clhint sg" id="essayHint" hidden><b>Có phải đề tự luận?</b> <span id="essayTxt"></span>
           <div class="sgrow"><button class="mini" id="essayYes" type="button">Đúng, chuyển sang Phần IV (tự luận)</button><button class="mini" id="essayNo" type="button">Không, giữ ở Phần III</button></div></div>
         <div class="tagpanel" id="tagPanel" hidden></div>
@@ -877,7 +878,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08.1-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08.2-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -3209,6 +3210,7 @@ function runsOrig(toks) {
 }
 // màu / kiểu chữ thống nhất cho khối lời giải ở bản GV (kiểu Hiện tại); kiểu Ngân hàng đề giữ nguyên
 let SOLSTYLE = '';
+let NOPARTS = false;   // xuất không chia phần (đánh số liên tục)
 let HSBOX = true;   // bản HS: chèn bảng "Đáp án: □□□□" dưới mỗi câu trả lời ngắn
 const SOL_STYLES = {
   // thầy chốt (29/10): lời giải chữ đen, bỏ nghiêng, cả khối "Hướng dẫn giải" trên nền xanh lá nhạt
@@ -3456,12 +3458,14 @@ function ansBoxTbl() {
 function buildBody(qs, showAnswer, headerElems) {
   const body = [].concat(headerElems);
   const emitted = new Set();
-  for (const part of [1, 2, 3, 4]) {
-    const pq = qs.filter((q) => q.part === part);
+  // không chia phần: một dãy câu theo thứ tự đề gốc, đánh số 1 → hết, không có dòng tiêu đề phần
+  const groups = NOPARTS && STYLE !== 'm1' ? [{ part: 0, pq: qs.slice() }] : [1, 2, 3, 4].map((p) => ({ part: p, pq: qs.filter((q) => q.part === p) }));
+  for (const { part: gp, pq } of groups) {
     if (!pq.length) continue;
-    body.push(partTitle(part, pq.length));
+    if (gp) body.push(partTitle(gp, pq.length));
     const newNo = new Map(); pq.forEach((q, i) => newNo.set(q, i + 1));
     pq.forEach((q, i) => {
+      const part = q.part;
       if (q.cluster && !emitted.has(q.cluster)) {
         emitted.add(q.cluster);
         const map = {};
@@ -4328,6 +4332,7 @@ async function generate(opt, ids, extra) {
   }
   KEEP_TAG = !!opt.keepTag;
   HSBOX = opt.hsBox !== false;
+  NOPARTS = !!opt.noParts;
   SOLSTYLE = opt.solStyle === 'none' ? '' : (opt.solStyle && SOL_STYLES[opt.solStyle] ? opt.solStyle : 'std');
   if (!opt.tende) opt.tende = S.title || 'ĐỀ';
   const titleMode = extra.titleMode || opt.titleMode;
@@ -4527,7 +4532,7 @@ async function quick(arrayBuffer, opt) {
     const em = qs.filter((q) => q.essayMaybe).length; if (em) notes.push(em + ' câu có vẻ là tự luận (lời giải nhiều dòng) nhưng đề không có tiêu đề phần: đang xếp vào Phần III (trả lời ngắn). Muốn xếp vào Phần IV, hãy dùng "Tiếp tục".'); }
   // số câu mới theo từng phần
   const cnt = {}, newNo = new Map();
-  for (const q of qs) { cnt[q.part] = (cnt[q.part] || 0) + 1; newNo.set(q, cnt[q.part]); }
+  for (const q of qs) { const pk = opt.noParts ? 0 : q.part; cnt[pk] = (cnt[pk] || 0) + 1; newNo.set(q, cnt[pk]); }
   const items = kids(body).filter((c) => !isW(c, 'sectPr'));
   const idxOf = new Map(); kids(body).forEach((c, i) => idxOf.set(c, i));
   const elIdx = (e) => { const el = e.lay || e.srcTbl || e.el; return idxOf.has(el) ? idxOf.get(el) : -1; };
@@ -5086,7 +5091,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     setStatus('status1', 'Đang đọc file...', '');
     f.arrayBuffer().then(async (b) => {
       try {
-        cluMarks = []; cluOff = []; rwA = rwB = -1; partAtOpt = null; partOk = false;
+        cluMarks = []; cluOff = []; rwA = rwB = -1; partAtOpt = null; partOk = false; noParts = false; showNoParts();
         const r = await window.DeThi.load(b);
         rawBuf = b; renderRaw(r.raw); out = null; setTimeout(() => { if (typeof syncDock === 'function') syncDock(); }, 0);
         order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
@@ -5324,7 +5329,11 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     $('partRuns').querySelectorAll('select').forEach((x) => { if (+x.dataset.k > k && +x.value < +t.value) x.value = t.value; });
   });
   function flashPart() { const P = $('partHint'); if (P.hidden) return; P.scrollIntoView({ block: 'center', behavior: skin === 'modern' ? 'smooth' : 'auto' }); P.classList.remove('flash2'); void P.offsetWidth; P.classList.add('flash2'); }
-  $('partOk').addEventListener('click', () => { partOk = true; updPartHint(); });
+  let noParts = false;
+  const showNoParts = () => { $('noPartsNote').hidden = !noParts; };
+  $('partOk').addEventListener('click', () => { partOk = true; noParts = false; showNoParts(); updPartHint(); });
+  $('partNone').addEventListener('click', () => { partOk = true; noParts = true; showNoParts(); updPartHint(); out = null; refreshPreview(); });
+  $('noPartsUndo').addEventListener('click', () => { noParts = false; partOk = false; showNoParts(); updPartHint(); out = null; refreshPreview(); });
   $('partApply').addEventListener('click', async () => {
     if (!rawBuf) return;
     const runs = partRuns(), sel = Array.from($('partRuns').querySelectorAll('select'));
@@ -5332,7 +5341,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     try {
       const keepDrop = baseIds.map((id, i) => (dropped.has(id) ? i : -1)).filter((i) => i >= 0);
       const r = await window.DeThi.load(rawBuf, { clu: cluOpt(), partAt: pa });
-      partAtOpt = pa; partOk = true; renderRaw(r.raw);
+      partAtOpt = pa; partOk = true; noParts = false; showNoParts(); renderRaw(r.raw);
       const same = r.order.length === baseIds.length;
       baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
       if (same) keepDrop.forEach((i) => dropped.add(baseIds[i]));
@@ -5956,7 +5965,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
 
   /* ================= tạo + tải ================= */
   function curOpt() {
-    return { style: isM1() ? 'm1' : 'cur', p4: $('p4Keep').checked ? 'keep' : 'drop', ma1: $('ma1').value.trim() || toMaCD(rawName), titleMode: mode(), tende: $('tende').value.trim(), loai: $('loai').value.trim() || 'ĐỀ THI THAM KHẢO', mon: $('mon').value.trim() || 'VẬT LÍ', lop: $('lop').value.trim(), thoigian: $('tg').value.trim(), ma: $('ma').value.trim() || '001', keepTag: $('keepTag').checked, hsBox: $('hsBox').checked, keepTheory: !!theory && $('keepTheory').checked, pageNum: $('pageNum').checked ? $('pnFmt').value : 'off' };
+    return { style: isM1() ? 'm1' : 'cur', p4: $('p4Keep').checked ? 'keep' : 'drop', ma1: $('ma1').value.trim() || toMaCD(rawName), titleMode: mode(), tende: $('tende').value.trim(), loai: $('loai').value.trim() || 'ĐỀ THI THAM KHẢO', mon: $('mon').value.trim() || 'VẬT LÍ', lop: $('lop').value.trim(), thoigian: $('tg').value.trim(), ma: $('ma').value.trim() || '001', keepTag: $('keepTag').checked, hsBox: $('hsBox').checked, keepTheory: !!theory && $('keepTheory').checked, noParts: noParts, pageNum: $('pageNum').checked ? $('pnFmt').value : 'off' };
   }
   function save(blob, name) {
     if (window.__saveHook && window.__saveHook(blob, name)) return;   // chạy trong Word (add-in): mở thành tài liệu Word mới
@@ -6018,7 +6027,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     setStatus('status1', '', '');
     await new Promise((r) => setTimeout(r, 60));
     try {
-      const r = await window.DeThi.quick(rawBuf, { pageNum: $('pageNum').checked ? $('pnFmt').value : 'off', clu: cluOpt(), partAt: partAtOpt });
+      const r = await window.DeThi.quick(rawBuf, { pageNum: $('pageNum').checked ? $('pnFmt').value : 'off', clu: cluOpt(), partAt: partAtOpt, noParts: noParts });
       out = { gv: r.GV, hs: r.HS, count: r.count, notes: r.notes }; wasQuick = true;
       const [a, b, c, d4] = r.count;
       $('sum').textContent = 'Tạo nhanh: đề có ' + (a + b + c + (d4 || 0)) + ' câu, đã đánh số lại từng phần từ Câu 1, giữ nguyên định dạng và tiêu đề của đề gốc.';
@@ -6179,7 +6188,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08.1-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08.2-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }

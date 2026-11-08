@@ -1,5 +1,5 @@
 // QL_Format: nhớ tạm các file của add-in trên máy để Word mở lệnh nhanh (dùng bản đã nhớ ngay, cập nhật ngầm từ mạng)
-const CACHE = 'qlf-2026.11.08';
+const CACHE = 'qlf-2026.11.08.2';
 const FILES = ['taskpane.html', 'commands.html', 'dlg.html', 'jszip.min.js'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => Promise.all(FILES.map((f) => fetch(f, { cache: 'no-cache' }).then((r) => (r.ok ? c.put(new URL(f, self.location).href, r) : null)).catch(() => null)))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('qlf-') && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
