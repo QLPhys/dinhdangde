@@ -873,7 +873,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08.1-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -1912,6 +1912,16 @@ const KEYHEAD_RE = /^[\s\(\[]*(?:B[ẢA]NG\s+)?(?:Đ[ÁA]P\s*[ÁA]N|H[ƯU][ỚO]
 
 // phần lý thuyết ở đầu đề: "LÝ THUYẾT", "I – TÓM TẮT LÝ THUYẾT", "KIẾN THỨC TRỌNG TÂM"...
 const THEORY_RE = /^(?:PH[ẦA]N\s*)?(?:(?:[IVX]{1,4}|\d{1,2}|[A-D])\s*[\.\)\-–—:]\s*)?(?:PH[ẦA]N\s*)?(?:T[ÓO]M\s*T[ẮA]T\s*)?(?:(?:L[ÝYÍI]\s*THUY[ẾE]T|KI[ẾE]N\s*TH[ỨU]C|L[ÝYÍI]\s*THUY[ẾE]T\s*C[ẦA]N\s*(?:NH[ỚO]|N[ẮA]M)|C[ƠO]\s*S[ỞO]\s*L[ÝYÍI]\s*THUY[ẾE]T|N[ỘO]I\s*DUNG\s*(?:CH[ÍI]NH|C[ẦA]N\s*NH[ỚO]|TR[ỌO]NG\s*T[ÂA]M)|C[ÔO]NG\s*TH[ỨU]C\s*(?:C[ẦA]N\s*NH[ỚO]|QUAN\s*TR[ỌO]NG|TR[ỌO]NG\s*T[ÂA]M)|T[ÓO]M\s*T[ẮA]T)(?:\s*(?:TR[ỌO]NG\s*T[ÂA]M|C[ẦA]N\s*(?:NH[ỚO]|N[ẮA]M|THI[ẾE]T)|C[ƠO]\s*B[ẢA]N|CH[ÍI]NH|B[ÀA]I\s*H[ỌO]C|N[ỘO]I\s*DUNG|L[ÝYÍI]\s*THUY[ẾE]T))*)[\s:\.\-–—]*$/;
+// bỏ chữ "[LT]" / "[BT]" ở đầu đoạn (ký hiệu người soạn đặt)
+function stripLtMark(el) {
+  for (const t of Array.from(el.getElementsByTagNameNS(NS.w, 't'))) {
+    const v = t.textContent || '';
+    if (!v.trim()) continue;
+    t.textContent = v.replace(/^\s*\[\s*(?:LT|BT)\s*\]\s*/i, '');
+    if (!/^\s*\[/.test(v) && t.textContent === v) break;
+    if (t.textContent !== v) break;
+  }
+}
 function hasObjEl(e) { return ['drawing', 'pict', 'object', 'oMath'].some((n) => e.getElementsByTagNameNS('*', n).length > 0); }
 function theoryHead(txt) {
   const t = (txt || '').trim();
@@ -2226,6 +2236,10 @@ function parseRaw(body, qkeys, popt) {
     let pre = 0;
     if (lab && tk.some((t) => t.kind === 'n' || t.ch.trim())) { tk = Array.from(lab).map((c) => new Tok('c', c)).concat([new Tok('c', ' ')], tk); pre = Array.from(lab).length + 1; }
     { const ms = /^(\s*)\*+\s*(?=[A-Da-d]\s*[\.\)])/.exec(textOf(tk)); if (ms) { const k0 = ms[1].length; tk = tk.slice(0, k0).concat(tk.slice(ms[0].length)); if (tk[k0]) tk[k0].star = true; } }
+    // ký hiệu do người soạn đặt: "[LT]" mở phần lý thuyết, "[BT]" mở phần bài tập (bỏ khỏi chữ)
+    let ltMark = null;
+    { const mm = /^(\s*)\[\s*(LT|BT)\s*\]\s*/i.exec(textOf(tk)); if (mm) { ltMark = mm[2].toUpperCase(); tk = tk.slice(0, mm[1].length).concat(tk.slice(mm[0].length)); } }
+    if (ltMark) { ents.push({ el, toks: tk, lay, ltMark }); return; }
     // "Phần I. Trắc nghiệmCâu 1: [NB]": tiêu đề phần và câu đầu viết liền một dòng -> tách làm hai đoạn
     if (!boxed) {
       const tx = textOf(tk), mq = /C[âa]u\s*\d{1,3}\s*[:.\)]/.exec(tx);
@@ -2304,13 +2318,44 @@ function parseRaw(body, qkeys, popt) {
   let pc = null, pcAct = null, pendSg = null;     // chùm câu hỏi đang mở / đang gán / gợi ý chờ gắn
   const theoryEls = []; let theoryHead0 = '', thStart = -1, preEnd = ents.length;
   if (!popt.noTitle) {
+    const qStartAt = (e) => { if (!e.toks) return false; const t = textOf(e.toks).trim(); return !!t && (QSTART_RE.test(t) || paraHasNumQ(e.el, qkeys)); };
+    // bài tập ôn lý thuyết (điền khuyết, nối câu): giữ chung với phần lý thuyết, không thành câu hỏi
+    const qEnd = (i) => { let j = i + 1; while (j < ents.length) { const e = ents[j]; if (e.ltMark || qStartAt(e) || (e.toks && headingPart(textOf(e.toks).trim().toUpperCase(), textOf(e.toks).trim()) !== null)) break; j++; } return j; };
+    const isTheoryEx = (i) => {
+      const j = qEnd(i); let tx = '';
+      for (let k = i; k < j && k < i + 30; k++) { const e = ents[k]; tx += ' ' + (e.toks ? textOf(e.toks) : (e.el.textContent || '')); }
+      if (/đi[ềe]n\s*(?:khuy[ếe]t|v[àa]o\s*ch[ỗo]\s*tr[ốo]ng|t[ừu])/i.test(tx)) return true;
+      if ((tx.match(/(?:…|\.{4,}){2,}/g) || []).length >= 2) return true;
+      return /n[ốo]i\s/i.test(tx.slice(0, 400)) && /c[ộo]t\s*A/i.test(tx) && /c[ộo]t\s*B/i.test(tx);
+    };
+    const thExAt = [];   // vị trí các bài ôn lý thuyết
     for (let i = 0; i < ents.length; i++) {
       const e = ents[i];
-      if (e.toks) { const t = textOf(e.toks).trim(); if (t && (QSTART_RE.test(t) || headingPart(t.toUpperCase(), t) !== null)) { preEnd = i; break; } }
-      else if (isW(e.el, 'tbl') && tblHasQuestions(e.el)) { preEnd = i; break; }
+      if (e.ltMark === 'BT') { preEnd = i; break; }
+      if (e.ltMark === 'LT' && thStart < 0) { thStart = i; theoryHead0 = textOf(e.toks).trim() || '[LT]'; }
+      if (e.toks) {
+        const t = textOf(e.toks).trim();
+        if (qStartAt(e) && isTheoryEx(i)) { thExAt.push(i); i = qEnd(i) - 1; continue; }
+        if (t && (QSTART_RE.test(t) || headingPart(t.toUpperCase(), t) !== null || paraHasNumQ(e.el, qkeys))) { preEnd = i; break; }
+      } else if (isW(e.el, 'tbl') && tblHasQuestions(e.el)) { preEnd = i; break; }
     }
-    for (let i = 0; i < preEnd; i++) { const e = ents[i]; if (e.toks && theoryHead(textOf(e.toks))) { thStart = i; theoryHead0 = textOf(e.toks).trim(); break; } }
+    // tiêu đề lý thuyết: dòng chữ, hoặc chữ trong hình/hộp văn bản ("I. Tóm tắt lý thuyết" vẽ trong khung)
+    const lines = (e) => { const t = e.toks ? textOf(e.toks).replace(/\uFFFC/g, '').trim() : ''; if (t) return [t]; return isW(e.el, 'p') && e.el.getElementsByTagNameNS(NS.w, 'txbxContent').length ? boxLines(e.el) : []; };
+    if (thStart < 0) for (let i = 0; i < preEnd; i++) { const h = lines(ents[i]).find((t) => theoryHead(t)); if (h) { thStart = i; theoryHead0 = h; break; } }
+    // không có tiêu đề: nội dung kiểu lý thuyết nằm giữa tên bài và câu hỏi đầu tiên (gạch đầu dòng, "Trong đó", công thức, định nghĩa)
+    if (thStart < 0 && preEnd < ents.length) {
+      const HDR = /^(?:S[ỞO]\s|TR[ƯU][ỜO]NG|Đ[ỀE]\s|KI[ỂE]M\s*TRA|TH[ỜO]I\s*GIAN|H[ỌO]\s*(?:V[ÀA]\s*)?T[ÊE]N|S[ỐO]\s*B[ÁA]O|M[ÃA]\s*Đ[ỀE]|L[ỚO]P|N[ĂA]M\s*H[ỌO]C|M[ÔO]N)|TH[ỜO]I\s*GIAN\s*L[ÀA]M\s*B[ÀA]I|\(Đ[ỀE]\s*(?:G[ỒO]M|C[ÓO])/i;
+      const LIKE = (t, e) => /^[-+•–]\s/.test(t) || /^trong\s*đ[óo]/i.test(t) || /^(?:đ[ơo]n\s*v[ịi]|v[ớo]i)\b/i.test(t) || (t.length > 40 && /\s(?:l[àa]|được\s*gọi\s*là|được\s*định\s*nghĩa)\s/.test(t) && !/\?\s*$/.test(t)) || (e.toks && hasDrawing(e.toks) && /\uFFFC/.test(textOf(e.toks)) && !t.replace(/[\s\uFFFC]/g, ''));
+      let first = -1, lastHdr = -1, nLike = 0;
+      for (let i = 0; i < preEnd; i++) { const e = ents[i], t = lines(e).join(' '); if (!t && !(e.toks && hasContent(e.toks))) continue; if (first < 0) { first = i; continue; } if (HDR.test(t)) { lastHdr = i; nLike = 0; continue; } if (LIKE(t, e)) nLike++; }
+      if (first >= 0 && nLike >= 2) {
+        for (let i = Math.max(first, lastHdr) + 1; i < preEnd; i++) { const e = ents[i]; if (lines(e).join('') || (e.toks && hasContent(e.toks))) { thStart = i; theoryHead0 = lines(e).join(' ').slice(0, 70); break; } }
+      }
+    }
+    if (thStart < 0 && thExAt.length && thExAt[0] < preEnd) { thStart = thExAt[0]; theoryHead0 = 'Bài tập ôn lý thuyết'; }
   }
+  // phần lời giải của bài ôn lý thuyết: chỉ ở bản GV
+  const theorySol = new Set(), theoryMark = new Set(); let thSolOn = false;
   const R = popt.roles || null;
   let RK = null, snap = null, keyFrom = -1;
   const rk = (k, extra) => { RK = Object.assign({ k, q: cur }, extra || {}); };
@@ -2346,7 +2391,13 @@ function parseRaw(body, qkeys, popt) {
       }
     }
     if (thStart >= 0 && ei >= thStart && ei < preEnd) {
-      if (!theoryEls.includes(el)) theoryEls.push(el);
+      const tel = ents[ei].lay || ents[ei].srcTbl || el;
+      if (!theoryEls.includes(tel)) theoryEls.push(tel);
+      const tt = ents[ei].toks ? textOf(ents[ei].toks).trim() : '';
+      if (ents[ei].toks && (QSTART_RE.test(tt) || paraHasNumQ(el, qkeys) || headingPart(tt.toUpperCase(), tt) !== null || theoryHead(tt))) thSolOn = false;
+      else if (ents[ei].toks && solMarker(tt)) thSolOn = true;
+      if (thSolOn) theorySol.add(tel);
+      if (ents[ei].ltMark) theoryMark.add(tel);
       first = false;
       rk('keep');
       continue;
@@ -2801,7 +2852,7 @@ function parseRaw(body, qkeys, popt) {
     } else if (isW(e, 'tbl')) { if (tblHasQuestions(e)) break; preEls.push(e); }
     else break;
   }
-  return { titleEl, titleTxt, qs, theoryEls, theoryHead: theoryHead0, ents, noHead: NOHEAD, preEls, heads, solFrom };
+  return { titleEl, titleTxt, qs, theoryEls, theorySol, theoryMark, theoryHead: theoryHead0, ents, noHead: NOHEAD, preEls, heads, solFrom };
 }
 
 // đáp án đánh dấu bằng dấu *, chữ đỏ, in đậm (chỉ dùng khi không có gạch chân / tô nền)
@@ -3967,7 +4018,8 @@ async function load(arrayBuffer, lopt) {
     sectClone: sect ? sect.cloneNode(true) : null,
     titleClone: parsed.titleEl ? parsed.titleEl.cloneNode(true) : null,
     titleBlock: (parsed.preEls || []).map((e) => e.cloneNode(true)),
-    theory: parsed.theoryEls.map((e) => e.cloneNode(true)),
+    theory: parsed.theoryEls.map((e) => { const c = e.cloneNode(true); if (parsed.theoryMark && parsed.theoryMark.has(e)) stripLtMark(c); return c; }),
+    theorySol: parsed.theoryEls.map((e) => !!(parsed.theorySol && parsed.theorySol.has(e))),
     seq: qs.slice(),
   };
   const thTxt = parsed.theoryEls.map((e) => (e.textContent || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
@@ -4277,7 +4329,8 @@ async function generate(opt, ids, extra) {
   for (const who of extra.only || ['GV', 'HS']) {
     const show = who === 'GV';
     const header = M1 ? [makeP([lit('Mã chuyên đề: ' + (opt.ma1 || 'DE_THI') + ' ', { bold: true, color: RED })], { jc: 'center', before: 48, after: 96, line: 240 })] : titleMode === 'keep' ? (opt.fresh && S.titleBlock && S.titleBlock.length ? S.titleBlock.map((e) => e.cloneNode(true)) : S.titleClone ? [S.titleClone.cloneNode(true)] : []) : buildHeader(opt, pagesGuess);
-    const thEls = opt.keepTheory && S.theory && S.theory.length ? S.theory.map((e) => e.cloneNode(true)) : [];
+    // bản HS: bỏ lời giải của các bài ôn lý thuyết (điền khuyết, nối câu)
+    const thEls = opt.keepTheory && S.theory && S.theory.length ? S.theory.filter((e, i) => show || !(S.theorySol && S.theorySol[i])).map((e) => e.cloneNode(true)) : [];
     const elems = buildBody(qs, show, header.concat(thEls));
     while (body.firstChild) body.removeChild(body.firstChild);
     for (const e of elems) body.appendChild(e);
@@ -6060,7 +6113,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08.1-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
