@@ -506,11 +506,12 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
 .tagpanel { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; font-size: 13.5px; color: var(--ink2); background: color-mix(in srgb, var(--amber, #c98a00) 13%, transparent); border-left: 4px solid var(--amber, #c98a00); }
 .tagpanel.ok { background: color-mix(in srgb, var(--ok, #0a7d32) 12%, transparent); border-left-color: var(--ok, #0a7d32); }
 .tagpanel b { color: var(--ink); } .tagpanel .tpr { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 7px; } .tagpanel .tpr > span { font-size: 12.5px; margin-right: 2px; }
-.tagpanel.flash2 { animation: flash 1.8s ease; }
+.tagpanel.flash2, .clhint.flash2 { animation: flash 1.8s ease; }
 .tagrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; padding: 6px 8px; border-radius: 10px; background: color-mix(in srgb, var(--ink3) 12%, transparent); font-size: 13px; }
 .tagrow.miss { background: color-mix(in srgb, var(--amber, #c98a00) 16%, transparent); }
 .tagrow .tgl { font-weight: 700; color: var(--ink2); margin-right: 2px; } .tagrow .tgw { color: var(--amber-ink, #8a5a00); font-weight: 600; margin-left: 4px; } .tagrow .tgs { color: var(--ink3); margin-left: 4px; font-size: 12px; }
 .clhint .sgrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; } .clhint .sgrow label { font-size: 12.5px; color: var(--ink2); margin: 0; font-weight: 500; } .clhint .sgrow select { width: auto; display: inline-block; padding: 3px 8px; font-size: 13px; } .clhint.sg { border-left-color: var(--amber, #c98a00); background: color-mix(in srgb, var(--amber, #c98a00) 12%, transparent); } .clhint.sg b { color: var(--amber-ink, #8a5a00); }
+.prun { display: grid; gap: 4px; margin-top: 6px; } .prun .pr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .prun .pr span { color: var(--ink); } .prun .pr small { color: var(--ink2); } .prun select { width: auto; display: inline-block; padding: 3px 8px; font-size: 13px; }
 .clhint { margin: 2px 0 8px; padding: 7px 10px; border-radius: 10px; font-size: 13px; color: var(--ink2); background: color-mix(in srgb, var(--blue) 9%, transparent); border-left: 3px solid var(--blue); } .clhint b { color: var(--blue); } .clhint span { color: var(--ink); }
 /* ---------- thẻ phần lý thuyết ---------- */
 .thcard { grid-column: 1 / -1; margin: 0 0 12px; padding: 12px 14px; border-radius: 16px; background: color-mix(in srgb, var(--blue) 10%, var(--glass-in)); border: 1px solid color-mix(in srgb, var(--blue) 35%, transparent); }
@@ -741,6 +742,9 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
             <button class="mini" id="reloadBtn" type="button" title="Đọc lại file gốc sau khi sửa trong Word">⟳ Nạp lại file gốc</button>
           </div>
         </div>
+        <div class="clhint sg" id="partHint" hidden><b>Đề chưa có tiêu đề phần</b> <span id="partTxt"></span>
+          <div id="partRuns" class="prun"></div>
+          <div class="sgrow"><button class="mini" id="partApply" type="button">Áp dụng phần đã chọn</button><button class="mini" id="partOk" type="button">Đúng như vậy</button></div></div>
         <div class="clhint sg" id="essayHint" hidden><b>Có phải đề tự luận?</b> <span id="essayTxt"></span>
           <div class="sgrow"><button class="mini" id="essayYes" type="button">Đúng, chuyển sang Phần IV (tự luận)</button><button class="mini" id="essayNo" type="button">Không, giữ ở Phần III</button></div></div>
         <div class="tagpanel" id="tagPanel" hidden></div>
@@ -873,7 +877,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08.1-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08.1-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -2275,7 +2279,8 @@ function parseRaw(body, qkeys, popt) {
     pushPara(el, null);
   }
   USE_NUMQ = !ents.some((e) => e.toks && QSTART_RE.test(textOf(e.toks)));
-  const NOHEAD = !popt.part && !ents.some((e) => { if (!e.toks) return false; const t = textOf(e.toks).trim(); return t && headingPart(t.toUpperCase(), t) !== null; });
+  const PA = popt.partAt && popt.partAt.length ? new Map(popt.partAt.map((x) => [x[0], x[1]])) : null;   // phần do người dùng chọn: {vị trí câu đầu nhóm -> phần}
+  const NOHEAD = !popt.part && !PA && !ents.some((e) => { if (!e.toks) return false; const t = textOf(e.toks).trim(); return t && headingPart(t.toUpperCase(), t) !== null; });
   const guessPart = (ei0) => {
     let blk = [];
     for (let j = ei0; j < ents.length; j++) {
@@ -2298,6 +2303,8 @@ function parseRaw(body, qkeys, popt) {
     const pt = NOHEAD ? guessPart(ei0) : part;
     const q = new Q(pt);
     q.srcEi = ei0;
+    // đề không có tiêu đề phần (hoặc câu đứng trước tiêu đề phần đầu tiên): phần chỉ là đoán, cần người dùng xác nhận
+    if (!popt.part && !PA && (NOHEAD || !heads.length)) q.partGuess = true;
     if (NOHEAD && pt === 4) q.guess4 = true;
     if (NOHEAD && pt === 4) q.warn.push('Đề không có tiêu đề phần: tự nhận đây là câu tự luận (có ghi điểm hoặc các ý a), b) dạng yêu cầu).');
     return q;
@@ -2374,6 +2381,7 @@ function parseRaw(body, qkeys, popt) {
   const addKey = (pairs) => { for (const [n, L] of pairs) if (!(n in keyMap)) keyMap[n] = L; };
   for (let ei = 0; ei < ents.length; ei++) {
     fin(); snap = { ei, cur }; RK = null;
+    if (PA && PA.has(ei)) { part = PA.get(ei); cur = null; mode = 'stem'; }
     const el = ents[ei].el;
     const eIdx = itemIdx.has(ents[ei].lay || ents[ei].srcTbl || el) ? itemIdx.get(ents[ei].lay || ents[ei].srcTbl || el) : -1;
     if (CLm.length && eIdx >= 0) {
@@ -3912,7 +3920,7 @@ const isAutoWarn = (w) => /(đã (sửa|sắp xếp|bỏ|chuyển|thêm|được
 function viewOf(q) {
   const cp = (arr) => arr.filter(hasContent).map((t) => toksToText(q, t));
   const v = {
-    id: q.id, part: q.part, src: q.src, warn: q.warn.filter((w) => !isAutoWarn(w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
+    id: q.id, part: q.part, src: q.src, ei: q.srcEi, partGuess: !!q.partGuess, warn: q.warn.filter((w) => !isAutoWarn(w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
     edited: !!q.edited, added: !!q.added, replacedFrom: q.replacedFrom || null, canRevert: !!q.orig,
     ans: q.ans, ansText: q.ansText, stem: cp(q.stem), sol: cp(q.sol), opts: null, stmts: null,
     tagLv: q.tagLv || null, tagPre: TAG_PRE[q.part] || null, tagSrc: q.tag || '',
@@ -4003,7 +4011,7 @@ async function load(arrayBuffer, lopt) {
   const wpi = wordParaIndex(body);
   pickCopy(body);
   const copyNote = COPYNOTE;
-  const parsed = parseRaw(body, questionNumKeys(numDoc), { num: makeNumbering(numDoc, stylesDoc), part: lopt.forcePart || 0, clu: lopt.clu || null });
+  const parsed = parseRaw(body, questionNumKeys(numDoc), { num: makeNumbering(numDoc, stylesDoc), part: lopt.forcePart || 0, clu: lopt.clu || null, partAt: lopt.partAt || null });
   const qs = parsed.qs;
   if (!qs.length) throw new Error('Không nhận ra câu hỏi nào. Đề cần có dạng "Câu 1: ..." hoặc câu tự đánh số.');
   const sect = Array.from(body.children).filter((c) => isW(c, 'sectPr')).pop() || null;
@@ -4506,7 +4514,7 @@ async function quick(arrayBuffer, opt) {
   const numLab = makeNumbering(numDoc, stylesDoc);
   const roles = [];
   pickCopy(body);
-  const parsed = parseRaw(body, questionNumKeys(numDoc), { num: numLab, roles, clu: opt.clu || null });
+  const parsed = parseRaw(body, questionNumKeys(numDoc), { num: numLab, roles, clu: opt.clu || null, partAt: opt.partAt || null });
   const qs = parsed.qs, ents = parsed.ents;
   if (!qs.length) throw new Error('Không nhận ra câu hỏi nào. Đề cần có dạng "Câu 1: ..." hoặc câu tự đánh số.');
   const notes = [];
@@ -5060,6 +5068,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     if (!rawBuf) return;
     try {
       const keepDrop = baseIds.map((id, i) => (dropped.has(id) ? i : -1)).filter((i) => i >= 0);
+      partAtOpt = null; partOk = true;
       const r = await window.DeThi.load(rawBuf, { forcePart: 4, clu: cluOpt() }); renderRaw(r.raw);
       const same = r.order.length === baseIds.length;
       baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
@@ -5077,7 +5086,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     setStatus('status1', 'Đang đọc file...', '');
     f.arrayBuffer().then(async (b) => {
       try {
-        cluMarks = []; cluOff = []; rwA = rwB = -1;
+        cluMarks = []; cluOff = []; rwA = rwB = -1; partAtOpt = null; partOk = false;
         const r = await window.DeThi.load(b);
         rawBuf = b; renderRaw(r.raw); out = null; setTimeout(() => { if (typeof syncDock === 'function') syncDock(); }, 0);
         order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
@@ -5280,8 +5289,61 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       drafts.set(id, d);
     });
   }
+  /* ---------- đề chưa có tiêu đề phần: người dùng xác nhận / chọn phần cho từng nhóm câu trước khi xuất ---------- */
+  let partAtOpt = null, partOk = false;
+  const PNAME = { 1: 'Phần I – Nhiều lựa chọn', 2: 'Phần II – Đúng/Sai', 3: 'Phần III – Trả lời ngắn', 4: 'Phần IV – Tự luận' };
+  function partRuns() {
+    const runs = [];
+    baseIds.forEach((id) => {
+      const v = views.get(id); if (!v || !v.partGuess) return;
+      const last = runs[runs.length - 1];
+      if (last && last.part === v.part && last.end === baseIds.indexOf(id) - 1) { last.ids.push(id); last.end++; }
+      else runs.push({ part: v.part, ids: [id], end: baseIds.indexOf(id) });
+    });
+    return runs;
+  }
+  const partNeed = () => !partOk && partRuns().length > 0;
+  function updPartHint() {
+    const runs = partOk ? [] : partRuns(), P = $('partHint');
+    P.hidden = !runs.length;
+    if (!runs.length) return;
+    $('essayHint').hidden = true;
+    const n = runs.reduce((a, r) => a + r.ids.length, 0);
+    $('partTxt').textContent = n + ' câu không nằm dưới dòng "PHẦN I/II/III/IV" nào, công cụ đang đoán phần. Thầy/cô chọn đúng phần cho từng nhóm (hoặc bấm "Đúng như vậy") trước khi xuất.';
+    $('partRuns').innerHTML = runs.map((r, k) => {
+      const a = views.get(r.ids[0]), b = views.get(r.ids[r.ids.length - 1]);
+      const lab = r.ids.length > 1 ? esc(a.src) + ' → ' + esc(b.src) + ' <small>(' + r.ids.length + ' câu)</small>' : esc(a.src);
+      const ex = String((a.stem || [])[0] || '').replace(/⟦[^⟧]*⟧/g, '[công thức]').replace(/\s+/g, ' ').slice(0, 60);
+      return '<div class="pr"><span>' + lab + '</span><select data-k="' + k + '">' + [1, 2, 3, 4].map((p) => '<option value="' + p + '"' + (p === r.part ? ' selected' : '') + '>' + PNAME[p] + '</option>').join('') + '</select><small>' + esc(ex) + (ex ? '…' : '') + '</small></div>';
+    }).join('');
+  }
+  // các phần nối tiếp nhau: đổi một nhóm thì các nhóm sau đổi theo (vẫn chỉnh riêng được)
+  $('partRuns').addEventListener('change', (e) => {
+    const t = e.target; if (!t || t.tagName !== 'SELECT') return;
+    const k = +t.dataset.k;
+    $('partRuns').querySelectorAll('select').forEach((x) => { if (+x.dataset.k > k && +x.value < +t.value) x.value = t.value; });
+  });
+  function flashPart() { const P = $('partHint'); if (P.hidden) return; P.scrollIntoView({ block: 'center', behavior: skin === 'modern' ? 'smooth' : 'auto' }); P.classList.remove('flash2'); void P.offsetWidth; P.classList.add('flash2'); }
+  $('partOk').addEventListener('click', () => { partOk = true; updPartHint(); });
+  $('partApply').addEventListener('click', async () => {
+    if (!rawBuf) return;
+    const runs = partRuns(), sel = Array.from($('partRuns').querySelectorAll('select'));
+    const pa = runs.map((r, k) => [views.get(r.ids[0]).ei, +(sel[k] ? sel[k].value : r.part)]);
+    try {
+      const keepDrop = baseIds.map((id, i) => (dropped.has(id) ? i : -1)).filter((i) => i >= 0);
+      const r = await window.DeThi.load(rawBuf, { clu: cluOpt(), partAt: pa });
+      partAtOpt = pa; partOk = true; renderRaw(r.raw);
+      const same = r.order.length === baseIds.length;
+      baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
+      if (same) keepDrop.forEach((i) => dropped.add(baseIds[i]));
+      openForms.clear(); drafts.clear(); filter = 'all'; out = null; setEssay(null);
+      renderReview(); refreshPreview();
+      $('dropT2').textContent = 'Nhận ra ' + r.order.length + ' câu hỏi (đã xếp phần theo lựa chọn) · bấm để đổi file khác';
+    } catch (e) { alert('Không áp dụng được: ' + (e && e.message ? e.message : e)); }
+  });
   function renderReview() {
     saveDrafts();
+    updPartHint();
     const list = $('qlist');
     let html = '', any = false;
     if (theory) html += '<div class="thcard"><b>Phần lý thuyết</b> · ' + esc(theory.head) + ' <span>(' + theory.n + ' đoạn/bảng/hình)</span>' + (theory.preview ? '<p>' + esc(theory.preview) + '…</p>' : '') + '<em>Được giữ nguyên ở cả hai bản; bật/tắt ở bước 3.</em></div>';
@@ -5395,7 +5457,10 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     catch (err) { alert('Không lưu được: ' + (err && err.message ? err.message : err)); }
   });
   $('b2').addEventListener('click', () => go(0));
-  $('n2').addEventListener('click', () => { if (keptIds().length) { saveDrafts(); refreshPreview(); go(2); } });
+  $('n2').addEventListener('click', () => {
+    if (partNeed()) { flashPart(); return; }
+    if (keptIds().length) { saveDrafts(); refreshPreview(); go(2); }
+  });
 
   /* ---------- hộp thoại đổi / thêm câu ---------- */
   const dlg = $('dlgQ');
@@ -5825,7 +5890,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     const keepDrop = baseIds.map((id, i) => (dropped.has(id) ? i : -1)).filter((i) => i >= 0);
     const tIdx = wordTarget != null ? baseIds.indexOf(wordTarget) : -1;
     const buf = await f.arrayBuffer();
-    cluMarks = []; cluOff = []; rwA = rwB = -1;
+    cluMarks = []; cluOff = []; rwA = rwB = -1; partAtOpt = null; partOk = false;
     const r = await window.DeThi.load(buf);
     renderRaw(r.raw);
     rawBuf = buf; out = null;
@@ -5938,6 +6003,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   let wasQuick = false;
   $('quickBtn').addEventListener('click', async () => {
     if (!rawBuf) return;
+    if (partNeed()) { go(1); setTimeout(flashPart, 700); return; }
     if (isM1()) {
       const miss = tagMiss();
       if (miss.length) {
@@ -5952,7 +6018,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     setStatus('status1', '', '');
     await new Promise((r) => setTimeout(r, 60));
     try {
-      const r = await window.DeThi.quick(rawBuf, { pageNum: $('pageNum').checked ? $('pnFmt').value : 'off', clu: cluOpt() });
+      const r = await window.DeThi.quick(rawBuf, { pageNum: $('pageNum').checked ? $('pnFmt').value : 'off', clu: cluOpt(), partAt: partAtOpt });
       out = { gv: r.GV, hs: r.HS, count: r.count, notes: r.notes }; wasQuick = true;
       const [a, b, c, d4] = r.count;
       $('sum').textContent = 'Tạo nhanh: đề có ' + (a + b + c + (d4 || 0)) + ' câu, đã đánh số lại từng phần từ Câu 1, giữ nguyên định dạng và tiêu đề của đề gốc.';
@@ -6113,7 +6179,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08.1-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08.1-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
@@ -6161,7 +6227,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     if (!rawBuf) return;
     const L = $('rawList'), st = L.scrollTop;
     try {
-      const r = await window.DeThi.load(rawBuf, { clu: cluOpt() });
+      const r = await window.DeThi.load(rawBuf, { clu: cluOpt(), partAt: partAtOpt });
       out = null;
       order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
       openForms.clear(); drafts.clear(); filter = 'all';
