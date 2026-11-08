@@ -873,7 +873,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.03.2-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.08-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -2560,7 +2560,7 @@ function parseRaw(body, qkeys, popt) {
       if (cur.part === 2 && !Object.keys(cur.stmts).length && mode !== 'sol' && sm.kind === 'sol' && sm.len >= txt.length) { cur.warn.push('Có dòng "Hướng dẫn giải" nằm giữa đề: đã bỏ dòng thừa'); rk('sol'); continue; }
       const rest = sm.kind === 'ans' ? toks : trim(toks.slice(lead + sm.len));
       if (ents[ei].tail && sm.kind === 'ans' && mode !== 'sol' && cur.part === 1 && Object.keys(cur.opts).length < 4) { cur.sol.push(rest); continue; }
-      mode = 'sol';
+      mode = 'sol'; cur.solMark = true;
       if (sm.kind === 'sol' && /^[\(\[\s]*h[ưu][ớo]ng\s*d[ẫa]n\s*ch[ấa]m/i.test(txt)) cur.solLabel = 'Hướng dẫn chấm';
       if (hasContent(rest)) cur.sol.push(rest);
       continue;
@@ -2590,6 +2590,30 @@ function parseRaw(body, qkeys, popt) {
       continue;
     }
     if (!cur) continue;
+    // đã đủ A–D mà lại gặp bộ phương án "A. … B. …" thứ hai: đề gốc thiếu dòng "Câu …" và câu dẫn của câu kế tiếp
+    if (cur.part === 1 && !cur.anyOrder && 'ABCD'.split('').every((L) => L in cur.opts)) {
+      const s0 = txt.replace(/\uFFFC/g, '').trim();
+      const solEmpty = mode === 'sol' && !cur.solMark && cur.sol.every((t) => !textOf(t).replace(/\uFFFC/g, '').trim());
+      if ((mode === 'opts' || solEmpty) && /^A\s*[\.\)]/.test(s0)) {
+        const nxB = () => { for (let j = ei + 1; j < ents.length; j++) { const e = ents[j]; if (!e.toks) return false; const t = textOf(e.toks).replace(/\uFFFC/g, '').trim(); if (t) return /^B\s*[\.\)]/.test(t); } return false; };
+        if (/(?:^|[\s\t.])B\s*[\.\)]/.test(s0.slice(2)) || nxB()) {
+          const prev = cur;
+          let carry = [];
+          if (mode === 'sol') { carry = prev.sol.splice(0); if (prev.autoSol) { prev.autoSol = null; prev.warn = prev.warn.filter((w) => !/^Không có dòng "Hướng dẫn giải"/.test(w)); } }
+          else if (prev.dTail && prev.dTail.length) {
+            prev.opts.D = prev.opts.D.slice(0, prev.dTail[0].len);
+            carry = prev.dTail.map((x) => x.toks);
+            prev.warn = prev.warn.filter((w) => w !== 'Đáp án D nối thêm dòng tiếp theo');
+          }
+          prev.dTail = null;
+          cur = newQ(ei); cur.src = 'câu không có dòng "Câu"'; cur.noStem = true; qs.push(cur);
+          carry.forEach((t) => { if (hasContent(t)) cur.stem.push(t); });
+          cur.warn.push('Đề gốc thiếu dòng "Câu …" và câu dẫn: sau ' + prev.src + ' có thêm một bộ phương án A–D ("' + s0.slice(0, 40) + '…"). Đã tách thành câu riêng, cần bổ sung câu dẫn.');
+          prev.warn.push('Sau phương án D có thêm bộ phương án A–D thứ hai: đã tách thành câu riêng (đề gốc thiếu câu dẫn).');
+          mode = 'stem'; expOpt = 0; expStmt = 0; blankSeen = false;
+        }
+      }
+    }
     if ((cur.part === 1 || cur.part === 3) && (mode === 'sol' || (mode === 'opts' && cur.part === 1 && Object.keys(cur.opts).length >= 4)) && txt && !hasDrawing(toks) && !pendSg) {
       const la = leadAhead(ents, ei, cur, qkeys);
       if (la && !(mode === 'sol' && (!cur.sol.some((t) => hasContent(trim(t))) || restatesStem(cur, txt)))) {
@@ -2667,6 +2691,7 @@ function parseRaw(body, qkeys, popt) {
         else {
           const last = String.fromCharCode(65 + expOpt - 1);
           if (last in cur.opts) {
+            if (last === 'D') (cur.dTail = cur.dTail || []).push({ len: cur.opts.D.length, toks });
             cur.opts[last] = cur.opts[last].concat([new Tok('c', ' ')], trim(toks));
             cur.warn.push('Đáp án ' + last + ' nối thêm dòng tiếp theo');
           }
@@ -2954,6 +2979,7 @@ function stemParas(q, num) {
     let r;
     if (q.srcNote && STYLE !== 'm1' && hasContent(q.srcNote)) r = [lit('Câu ' + num, { bold: true, color: BLUE }), lit(' ')].concat(runsFrom(q.srcNote), [lit((q.srcPunct || '.') + ' ')], tagDone ? [] : tagRuns(q));
     else r = labelRuns(num).concat(tagDone ? [] : tagRuns(q));
+    if (q.noStem && !tagDone) r = r.concat([lit('[Đề gốc thiếu câu dẫn – cần bổ sung]', { italic: true, color: RED })]);
     tagDone = true; return r;
   };
   for (let toks of q.stem) {
@@ -6004,7 +6030,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.03.2-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.08-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
