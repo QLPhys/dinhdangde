@@ -17,7 +17,7 @@ tasklist /fi "imagename eq WINWORD.EXE" 2>nul | find /i "WINWORD.EXE" >nul && (
   echo Word dang mo. Hay DONG HET Word roi bam phim bat ky de tiep tuc...
   pause >nul
 )
-if exist "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" rmdir /s /q "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" 2>nul
+rem KHONG xoa bo nho tam Wef cua Word: xoa se lam mat QL_Format da them tu thu muc dung chung
 reg add "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "QLPhysThuEQ" /t REG_SZ /d "%D%\manifest_eq.xml" /f >nul
 echo.
 echo DA CAI XONG BAN THU.
