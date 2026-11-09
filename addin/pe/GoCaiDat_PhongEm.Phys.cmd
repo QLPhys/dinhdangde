@@ -1,16 +1,28 @@
 @echo off
-rem Go add-in "PhongEm.Phys - Dinh dang de thi" khoi Word tren may nay
-set "GUID={8B2F4D6A-1C3E-4A5B-9D7F-0E1A2B3C4D5E}"
+rem Go add-in "PhongEm.Phys - Dinh dang de thi" khoi Word tren may nay.
+rem Chi xoa file cua PhongEm.Phys trong thu muc chung %PUBLIC%\WordAddins; add-in khac (neu co) van giu nguyen.
+setlocal
+set "C=%PUBLIC%\WordAddins"
+:chodong
 tasklist /fi "imagename eq WINWORD.EXE" 2>nul | find /i "WINWORD.EXE" >nul && (
-  echo Word dang mo. Hay DONG HET Word roi bam phim bat ky de tiep tuc...
+  echo Word dang mo. Hay LUU tai lieu va DONG HET Word, roi bam phim bat ky de tiep tuc...
   pause >nul
+  goto chodong
 )
-reg delete "HKCU\Software\Microsoft\Office\16.0\WEF\TrustedCatalogs\%GUID%" /f >nul 2>&1
+if exist "%C%\PhongEm.Phys.xml" del /q "%C%\PhongEm.Phys.xml"
 reg delete "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "PhongEmPhys" /f >nul 2>&1
-echo Dang go thu muc dung chung (Windows co the hoi quyen quan tri - chon YES)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBTAG0AYgBTAGgAYQByAGUAIAAtAE4AYQBtAGUAIAAnAFAAaABvAG4AZwBFAG0AUABoAHkAcwBBAGQAZABpAG4AJwAgAC0ARQByAHIAbwByAEEAYwB0AGkAbwBuACAAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAgAHwAIABSAGUAbQBvAHYAZQAtAFMAbQBiAFMAaABhAHIAZQAgAC0ARgBvAHIAYwBlACAALQBFAHIAcgBvAHIAQQBjAHQAaQBvAG4AIABTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlAAoA' } catch { }"
-if exist "%PUBLIC%\PhongEmPhys\Addin" rmdir /s /q "%PUBLIC%\PhongEmPhys\Addin"
 if exist "%LOCALAPPDATA%\PhongEmPhys\Addin" rmdir /s /q "%LOCALAPPDATA%\PhongEmPhys\Addin"
-rem KHONG xoa bo nho tam Wef cua Word: xoa se lam mat ca cac add-in khac da them tu thu muc dung chung
+set "ADM=0"
+if exist "%PUBLIC%\PhongEmPhys\Addin" set "ADM=1"
+if exist "%C%\" if not exist "%C%\*.xml" set "ADM=1"
+if "%ADM%"=="1" (
+  echo Dang go thu muc dung chung - Windows co the hoi quyen quan tri, chon YES...
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -EncodedCommand JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAnAAoAJABjACAAPQAgAEoAbwBpAG4ALQBQAGEAdABoACAAJABlAG4AdgA6AFAAVQBCAEwASQBDACAAJwBXAG8AcgBkAEEAZABkAGkAbgBzACcACgBHAGUAdAAtAFMAbQBiAFMAaABhAHIAZQAgAC0ATgBhAG0AZQAgACcAUABoAG8AbgBnAEUAbQBQAGgAeQBzAEEAZABkAGkAbgAnACAAfAAgAFIAZQBtAG8AdgBlAC0AUwBtAGIAUwBoAGEAcgBlACAALQBGAG8AcgBjAGUACgBpAGYAIAAoAC0AbgBvAHQAIAAoAEcAZQB0AC0AQwBoAGkAbABkAEkAdABlAG0AIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAYwAgAC0ARgBpAGwAdABlAHIAIAAnACoALgB4AG0AbAAnACkAKQAgAHsAIABHAGUAdAAtAFMAbQBiAFMAaABhAHIAZQAgAC0ATgBhAG0AZQAgACcAVwBvAHIAZABBAGQAZABpAG4AcwAnACAAfAAgAFIAZQBtAG8AdgBlAC0AUwBtAGIAUwBoAGEAcgBlACAALQBGAG8AcgBjAGUAIAB9AAoA' } catch { }"
+)
+powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAnAAoAJABrACAAPQAgACcASABLAEMAVQA6AFwAUwBvAGYAdAB3AGEAcgBlAFwATQBpAGMAcgBvAHMAbwBmAHQAXABPAGYAZgBpAGMAZQBcADEANgAuADAAXABXAEUARgBcAFQAcgB1AHMAdABlAGQAQwBhAHQAYQBsAG8AZwBzACcACgAkAGMAIAA9ACAASgBvAGkAbgAtAFAAYQB0AGgAIAAkAGUAbgB2ADoAUABVAEIATABJAEMAIAAnAFcAbwByAGQAQQBkAGQAaQBuAHMAJwAKACQAdQBuAGMAIAA9ACAAJwBcAFwAJwAgACsAIAAkAGUAbgB2ADoAQwBPAE0AUABVAFQARQBSAE4AQQBNAEUAIAArACAAJwBcAFcAbwByAGQAQQBkAGQAaQBuAHMAJwAKACQAZQBtAHAAdAB5ACAAPQAgAC0AbgBvAHQAIAAoAEcAZQB0AC0AQwBoAGkAbABkAEkAdABlAG0AIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAYwAgAC0ARgBpAGwAdABlAHIAIAAnACoALgB4AG0AbAAnACkACgBmAG8AcgBlAGEAYwBoACAAKAAkAGUAIABpAG4AIABAACgARwBlAHQALQBDAGgAaQBsAGQASQB0AGUAbQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABrACkAKQAgAHsACgAgACAAJAB1ACAAPQAgACgAWwBzAHQAcgBpAG4AZwBdACgARwBlAHQALQBJAHQAZQBtAFAAcgBvAHAAZQByAHQAeQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABlAC4AUABTAFAAYQB0AGgAKQAuAFUAcgBsACkALgBUAHIAaQBtAEUAbgBkACgAJwBcACcAKQAKACAAIAAkAGkAZAAgAD0AIAAkAGUALgBQAFMAQwBoAGkAbABkAE4AYQBtAGUACgAgACAAaQBmACAAKAAoACQAZQBtAHAAdAB5ACAALQBhAG4AZAAgACgAJAB1ACAALQBlAHEAIAAkAHUAbgBjACkAKQAgAC0AbwByACAAKAAkAGkAZAAgAC0AZQBxACAAJwB7ADgAQgAyAEYANABEADYAQQAtADEAQwAzAEUALQA0AEEANQBCAC0AOQBEADcARgAtADAARQAxAEEAMgBCADMAQwA0AEQANQBFAH0AJwApACAALQBvAHIAIAAoACQAdQAgAC0AbABpAGsAZQAgACcAXABcACoAXABQAGgAbwBuAGcARQBtAFAAaAB5AHMAQQBkAGQAaQBuACcAKQApACAAewAgAFIAZQBtAG8AdgBlAC0ASQB0AGUAbQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABlAC4AUABTAFAAYQB0AGgAIAAtAFIAZQBjAHUAcgBzAGUAIAAtAEYAbwByAGMAZQAgAH0ACgB9AAoA
+if exist "%PUBLIC%\PhongEmPhys\Addin" rmdir /s /q "%PUBLIC%\PhongEmPhys\Addin"
+rmdir "%PUBLIC%\PhongEmPhys" >nul 2>&1
+if exist "%C%\" if not exist "%C%\*.xml" rmdir /s /q "%C%"
 echo Da go add-in PhongEm.Phys. Mo lai Word, the PhongEm.Phys se khong con.
+echo  (Neu van thay: Insert ^> My Add-ins ^> SHARED FOLDER, bam chuot phai vao PhongEm.Phys ^> Remove.)
 pause
