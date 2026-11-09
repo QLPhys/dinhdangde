@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhongEm.Phys</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+:root{--ink:#1b2433;--mut:#5b6575;--blue:#0a6cff;--ok:#1f7a3a;--warn:#8a4b00;--err:#a3261f;--line:#cfd8e6}
+*{box-sizing:border-box} html,body{margin:0;height:100%;background:#fff;color:var(--ink);font:14px/1.45 'Segoe UI',system-ui,sans-serif}
+.w{padding:14px 16px;display:flex;flex-direction:column;gap:10px;height:100%}
+.t{font-size:14.5px} .k-ok .t{color:var(--ok);font-weight:600} .k-warn .t{color:var(--warn)} .k-err .t{color:var(--err)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font:inherit;border-radius:8px;border:1px solid var(--line);background:#fff;padding:7px 14px;cursor:pointer;min-height:36px}
+button.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+input{font:inherit;font-size:16px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;width:150px}
+.mut{color:var(--mut);font-size:12.5px} .note{font-size:12.5px;color:var(--warn)} .note:empty,.mut:empty{display:none}
+pre{white-space:pre-wrap;background:#f5f7fb;border-radius:8px;padding:8px;font-size:12px;margin:0;max-height:120px;overflow:auto}
+table{border-collapse:collapse;font-size:12.5px} td{padding:2px 8px 2px 0}
+kbd{border:1px solid #c5ccd8;border-bottom-width:2px;border-radius:4px;padding:0 5px;font:12px Consolas,monospace;background:#f7f8fa}
+.tabs{display:flex;gap:6px} .tabs button{min-height:30px;padding:4px 12px} .tabs button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.gh{font-size:12px;font-weight:700;color:var(--mut);margin:2px 0 -4px;text-transform:uppercase;letter-spacing:.03em}
+.gr{display:flex;flex-wrap:wrap;gap:4px} .gr button{min-height:0;width:34px;height:34px;padding:0;font:18px 'Cambria Math','Times New Roman',serif;border-radius:7px}
+.gr button:hover{background:#eef4ff;border-color:var(--blue)} .gr button:active{transform:scale(.94)}
+textarea{font:13.5px Consolas,monospace;width:100%;min-height:210px;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+.sb{overflow:auto;flex:1;display:flex;flex-direction:column;gap:10px;padding-right:2px} .st{font-size:12.5px;color:var(--ok);min-height:18px}
+.it{display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:start;border-bottom:1px solid #edf0f5;padding:6px 0}
+.it input{width:16px;height:16px;margin-top:3px} .it .src{font:12px Consolas,monospace;color:var(--mut);word-break:break-word} .it .pv{font:16px 'Times New Roman',serif;margin-top:2px} .it .pv math{font-size:1.05em}
+.it button{min-height:28px;padding:2px 10px;font-size:12.5px} .hl{background:#fff36b}
+body.sym .w{padding:5px 6px;gap:4px} body.sym{font-size:12px}
+body.sym .tabs{gap:3px;flex-wrap:nowrap;align-items:center} body.sym .tabs button{min-height:0;height:22px;padding:0 6px;border-radius:5px;font-size:11.5px;border-color:transparent;background:#f1f4f9;white-space:nowrap}
+body.sym .tabs button.on{background:var(--blue);color:#fff;font-weight:600} body.sym #x{background:transparent;font-size:12px;padding:0 4px}
+body.sym .my{font-size:11.5px;font-weight:700;color:#b26a00;white-space:nowrap}
+body.sym .sb{gap:3px} body.sym .gr{gap:2px} body.sym .gr+.gr{border-top:1px solid #eef1f6;padding-top:3px}
+body.sym .gr button{width:24px;height:24px;font-size:15px;border-radius:5px}
+body.sym .gr.mine{min-height:24px;background:#fff8e6;border-radius:6px;padding:2px} body.sym .gr.mine button{border-color:#f0d9a8}
+body.sym .gr button.pin{background:#ffe9b3;border-color:#e0a800}
+body.sym .tip{font-size:11px;color:#8a4b00;background:#fff4d6;border-radius:5px;padding:2px 6px}
+body.sym .row{gap:4px} body.sym .row button{min-height:24px;padding:2px 8px;font-size:12px}
+body.cx .w{padding:8px 9px;gap:6px} body.cx{font-size:13px} body.cx .cxtop button{min-height:26px;padding:2px 9px;font-size:12px} body.cx #x{border-color:transparent}
+body.cx .tabs{gap:3px;flex-wrap:wrap} body.cx .tabs button{min-height:24px;padding:1px 9px;font-size:12px}
+.cxi{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;border-bottom:1px solid #edf0f5;padding:6px 2px}
+.cxi .cxh{font-weight:600;font-size:12.5px} .cxi .cxw{font-size:12px;color:var(--warn)} .cxi button{min-height:26px;padding:1px 10px;font-size:12px}
+.cxi.ph .cxh{color:#8a4b00} .cxi.seen{opacity:.6} .cxi.seen .cxh{color:var(--ok)}
+.cxo summary{cursor:pointer;font-size:12.5px;color:var(--mut);padding:6px 0} .cxo .cxw{color:var(--mut)}
+body.sym .gr.snp button{width:auto;padding:0 6px;font:11.5px 'Segoe UI',sans-serif;color:#5b2a86;background:#f6f0fb;border-color:#e1d2ef}
+body.sym .snr{display:grid;grid-template-columns:86px 1fr 22px;gap:3px;align-items:center;border-bottom:1px solid #eef1f6;padding-bottom:3px}
+body.sym .snr input{font:12px Consolas,monospace;padding:2px 4px;border:1px solid var(--line);border-radius:4px;width:100%;min-width:0}
+body.sym .snr .sdel{min-height:0;height:22px;padding:0;font-size:11px;border-color:transparent}
+body.sym .spv{grid-column:1/4;font:15px 'Cambria Math','Times New Roman',serif;min-height:0;color:#1b2433}
+body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;font-size:12px} body.sym .mut{font-size:11px}
+</style></head>
+<body><div class="w" id="w"></div>
+<script>var EqConv=function(){"use strict";const t="",e="",n="",s="",r="",i="",o="",a="",c=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");let m=new Map,l=[],u=null,f=!1,h=!1;const p={alpha:"α",beta:"β",gamma:"γ",delta:"δ",epsilon:"ε",varepsilon:"ε",zeta:"ζ",eta:"η",theta:"θ",vartheta:"ϑ",iota:"ι",kappa:"κ",lambda:"λ",lamda:"λ",mu:"μ",nu:"ν",xi:"ξ",pi:"π",rho:"ρ",sigma:"σ",tau:"τ",upsilon:"υ",phi:"φ",varphi:"φ",chi:"χ",psi:"ψ",omega:"ω",Gamma:"Γ",Delta:"Δ",Theta:"Θ",Lambda:"Λ",Xi:"Ξ",Pi:"Π",Sigma:"Σ",Phi:"Φ",Psi:"Ψ",Omega:"Ω"},g={cdot:"·",times:"×",div:"÷",pm:"±",mp:"∓",approx:"≈",simeq:"≃",sim:"∼",le:"≤",leq:"≤",ge:"≥",geq:"≥",ne:"≠",neq:"≠",infty:"∞",to:"→",rightarrow:"→",leftarrow:"←",Rightarrow:"⇒",Leftrightarrow:"⇔",leftrightarrow:"↔",iff:"⇔",implies:"⇒",propto:"∝",perp:"⊥",parallel:"∥",angle:"∠",circ:"°",degree:"°",partial:"∂",nabla:"∇",sum:"∑",int:"∫",prod:"∏",ldots:"…",dots:"…",cdots:"⋯",prime:"′",ell:"ℓ",hbar:"ℏ",AA:"Å",ohm:"Ω","%":"%","{":"{","}":"}",",":" ",";":" ",":":" ","!":"",quad:" ",qquad:" "," ":" "},d=["sin","cos","tan","cot","arcsin","arccos","arctan","sinh","cosh","tanh","ln","log","lg","exp","max","min","lim"];function v(t,e){for(;" "===t[e];)e++;if("{"===t[e]){let n=0,s=e;for(;s<t.length;s++)if("{"===t[s])n++;else if("}"===t[s]&&(n--,!n))break;return[t.slice(e+1,s),s+1]}if("\\"===t[e]){const n=/^\\([A-Za-z]+|.)/.exec(t.slice(e));return[n[0],e+n[0].length]}return[t[e]||"",e+1]}function b(t){if(!/[\\{}$]/.test(t))return t;let e="",n=0;const s=t=>r+b(t)+i;for(;n<t.length;){const r=t[n];if("$"===r){n++;continue}if("{"===r){const[r,i]=v(t,n);e+=s(r),n=i;continue}if("}"===r){n++;continue}if("\\"!==r){e+=r,n++;continue}const i=/^\\([A-Za-z]+|.)/.exec(t.slice(n)),c=i[1];if(n+=i[0].length,"frac"!==c&&"dfrac"!==c&&"tfrac"!==c)if("sqrt"!==c)if(/^(text|mathrm|textrm|rm|mbox|operatorname|textit|mathit)$/.test(c)){const[s,r]=v(t,n);e+=/it$/.test(c)?b(s):o+s.replace(/\\,|\\ /g," ")+a,n=r}else if(/^(vec|overrightarrow)$/.test(c)){const[r,i]=v(t,n);e+="vec"+s(r),n=i}else if(/^(bar|overline)$/.test(c)){const[r,i]=v(t,n);e+="bar"+s(r),n=i}else if(/^(hat|widehat)$/.test(c)){const[r,i]=v(t,n);e+="hat"+s(r),n=i}else if("dot"!==c)if("left"!==c&&"right"!==c&&"big"!==c&&"Big"!==c&&"bigg"!==c&&"Bigg"!==c)if("{"!==c&&"}"!==c)if("|"!==c){if(p[c])e+=p[c];else if(d.includes(c))e+=c+" ";else if(c in g)e+=g[c];else if("mathbf"!==c&&"boldsymbol"!==c&&"mathcal"!==c&&"displaystyle"!==c&&"limits"!==c)e+=c;else if(/^math|^bold/.test(c)){const[s,r]=v(t,n);e+=b(s),n=r}}else e+="‖";else e+="{"===c?"{":"}";else"."===t[n]?n++:"\\"===t[n]&&/[{}|]/.test(t[n+1])&&(e+="|"===t[n+1]?"‖":t[n+1],n+=2);else{const[r,i]=v(t,n);e+="dot"+s(r),n=i}else{let r="";if("["===t[n]){const e=t.indexOf("]",n);r=t.slice(n+1,e),n=e+1}const[i,o]=v(t,n);e+=(r?"root"+s(r):"√")+s(i),n=o}else{const[r,i]=v(t,n),[o,a]=v(t,i);e+=s(r)+"/"+s(o),n=a}}return e}const k=["m","g","s","A","K","mol","cd","N","J","W","Pa","Hz","C","V","F","Ω","S","T","Wb","H","Bq","Gy","Sv","lm","lx","eV","L","l","Wh","rad","sr","atm","bar","cal","Ci","Da"],w=["da","Y","Z","E","P","T","G","M","k","h","d","c","m","μ","µ","u","n","p","f","a"],x=new Set(["min","h","u","mmHg","Å","ly","dB","°C","°F","°","%","‰","vòng","lít","giây","phút","giờ","ngày","năm","độ","cm³","dm³","m³","kWh","c","ppm","mph","km/h"]);for(const t of k){x.add(t);for(const e of w)x.add(e+t)}["kWh","MWh","MeV","keV","GeV","mmHg","cmHg"].forEach((t=>x.add(t)));const $=t=>x.has(t);function P(t){let e=String(t).replace(/[\uE001\uE002]/g,"");if(/^\(.*\)$/.test(e)&&(e=e.slice(1,-1)),!e)return!1;const n=e.replace(/\^\(?[-−]?\d+\)?/g,"").split(/[.·×/∕()]/).filter(Boolean);return!!n.length&&n.every((t=>$(t)))}const A=["c"],S=/[À-ÖØ-öø-ÿĂăĐđĨĩŨũƠơƯưẠ-ỹ]/,z=/^[0-9A-Za-zÀ-ÖØ-öø-ÿĂăĐđĨĩŨũƠơƯưẠ-ỹΑ-Ωα-ωϑℓℏ,.\^_()\[\]{}|‖\/+\-−×*·√=<>≈≤≥≠±∓⇒⇔↔→←∞½¼¾⅓°′∂∇∑∫∏∝⊥∥∠…⋯$\\\uE001-\uE00B]+$/,y=/^(?:[A-D][.:]|[a-d]\)|\([a-d]\))$/,E=/^(?:sin|cos|tan|tg|cot|cotg|arcsin|arccos|arctan|sinh|cosh|tanh|ln|log|lg|exp|vec|bar|hat|dot|sqrt|root|max|min|lim)/;function Z(t){return!!t&&(!!/^[.·×*\/+\-−=:⇒⇔→±≠≤≥≈]$/.test(t)||(!!/[\uE001-\uE00A$\\]/.test(t)||(u&&(t=t.replace(u,"x")),!!z.test(t)&&(!S.test(t.replace(/_(?:\([^)]*\)|[^\s=^]+)/g,""))&&!(/^[A-Za-z]{2,}$/.test(t)&&!E.test(t))))))}const q=t=>/^[.·×*\/+\-−=:]$/.test(t)?t:t.replace(/[.,;:]$/,"");const C=["arcsin","arccos","arctan","sinh","cosh","tanh","sin","cos","tan","tg","cotg","cot","ln","log","lg","exp","max","min","lim"],M={vec:"⃗",bar:"bar",hat:"̂",dot:"̇"};function j(c){const u=function(c){const u=[];let p=0,g=!1;const d=t=>{g&&(t.hl=!0),"id"===t.t&&(f&&/^[A-Za-z]$/.test(t.v)||h&&/^[α-ωϑϕ]$/.test(t.v))&&(t.up=!0),u.push(t)};for(;p<c.length;){const f=c[p];if(""===f){p++;continue}if(""===f){u.length&&"op"!==u[u.length-1].t&&!u[u.length-1].sp&&d({t:"sym",v:" ",sp:1}),p++;continue}if(f===t){g=!0,p++;continue}if(f===e){g=!1,p++;continue}if(f===o){const t=c.indexOf(a,p);d({t:"txt",v:c.slice(p+1,t<0?c.length:t).replace(/\uE00C+/g," ")}),p=t<0?c.length:t+1;continue}if(f===n){const t=c.indexOf(s,p);d({t:"unit",v:c.slice(p+1,t<0?c.length:t)}),p=t<0?c.length:t+1;continue}if(""===f||""===f){d({t:"sys",br:""===f}),p++;continue}if(""===f){d({t:"op",v:"SR"}),p++;continue}if(""===f){d({t:"op",v:"S1"}),p++;continue}if(f===r){d({t:"op",v:"{"}),p++;continue}if(f===i){d({t:"op",v:"}"}),p++;continue}if(/\s/.test(f)){p++;continue}let h;const v=c.slice(p);if(h=/^\d+(?:,\d+)?/.exec(v))d({t:"num",v:h[0]}),p+=h[0].length;else{if(l.length&&!/[A-Za-z]/.test(c[p-1]||"")){const t=l.find((t=>c.startsWith(t,p)&&!/[A-Za-z]/.test(c[p+t.length]||"")));if(t){const e=m.get(t);d(/^[α-ωΑ-Ωϑ]$/.test(e)?{t:"id",v:e}:{t:"op",v:e}),p+=t.length;continue}}if(!/[A-Za-z]/.test(c[p-1]||"")){const t=C.find((t=>c.startsWith(t,p)&&!/[A-Za-z]/.test(c[p+t.length]||"")||c.startsWith(t,p)&&/[A-Za-zα-ω(]/.test(c[p+t.length]||"")&&t.length>=2&&!/[a-z]{2}/.test(c.slice(p+t.length,p+t.length+2))));if(t){d({t:"fn",v:"tg"===t?"tan":"cotg"===t?"cot":t}),p+=t.length;continue}}if(/[A-Za-z]/.test(c[p-1]||"")&&!/[A-Za-z]/.test(c[p-2]||"")){const t=["sin","cos","tan","cot"].find((t=>c.startsWith(t,p)&&/[(α-ωϕ\s]/.test(c[p+t.length]||"")));if(t){d({t:"fn",v:t}),p+=t.length;continue}}if(!/[A-Za-z]/.test(c[p-1]||"")){if(h=/^(vec|bar|hat|dot)(?=[(\uE005])/.exec(v)){d({t:"acc",v:h[1]}),p+=h[1].length;continue}if(h=/^root(?=[\uE005(])/.exec(v)){d({t:"root"}),p+=4;continue}}if(h=/^sqrt|^√/.exec(v))d({t:"sqrt"}),p+=h[0].length;else if("½¼¾⅓".includes(f)){const t={"½":"12","¼":"14","¾":"34","⅓":"13"}[f];d({t:"num",v:t[0]}),d({t:"op",v:"/"}),d({t:"num",v:t[1]}),p++}else"|"!==f&&"‖"!==f?/[A-Za-zÀ-ỹα-ωΑ-Ωϑℓℏ]/.test(f)?(d({t:"id",v:f}),p++):"^"!==f&&"_"!==f||0!==p&&!/\s/.test(c[p-1])&&!/[=+\-−⇒→(]/.test(c[p-1])?"=+-−×*.·:/^_()<>≈≤≥≠±∓⇒⇔↔→←[]{}".includes(f)?(d({t:"op",v:f}),p++):(d({t:"sym",v:f}),p++):(d({t:"op",v:f,pre:!0}),p++):(d({t:"bar",v:f}),p++)}}return u}(c);let p=0,g=0;const d=()=>u[p],v=()=>u[p++],b=(t,e)=>t&&"op"===t.t&&(null==e||(Array.isArray(e)?e.includes(t.v):t.v===e)),k=t=>!t||"par"!==t.k||"("!==t.o&&"{"!==t.o?t:t.e;function w(){const t=v();if(!t)return{k:"t",v:""};if(b(t,"(")||b(t,"[")||b(t,"{")){const e={"(":")","[":"]","{":"}"}[t.v],n=z(e);return b(d(),e)&&v(),{k:"par",e:n,o:t.v,c:e}}if("sys"===t.t){const e=[];for(g++;;){e.push(z(["SR","S1"]));const t=v();if(!t||b(t,"S1"))break}return g--,{k:"sys",rows:e,br:t.br}}if("bar"===t.t){const e=z(null,t.v);return d()&&"bar"===d().t&&v(),{k:"par",e,o:t.v,c:t.v}}if("sqrt"===t.t){const t=$();return{k:"rad",e:k(t)}}if("root"===t.t){const t=w(),e=$();return{k:"rad",deg:k(t),e:k(e)}}if("acc"===t.t){const e=w();return{k:"acc",chr:t.v,e:k(e)}}if("fn"===t.t&&(!d()||b(d(),[")","]","}","SR","S1","=",",","<",">","≈","⇒"])))return{k:"t",v:t.v,it:!1,hl:t.hl};if("fn"===t.t){let e=null;if(b(d(),"^"))if(v(),b(d(),["-","−","+"])){e={k:"row",items:[{k:"t",v:"+"===v().v?"+":"−"},k(x())]}}else e=k(x());let n=$();return"par"===n.k&&"{"===n.o&&(n=n.e),{k:"func",name:t.v,e:n,ex:e,hl:t.hl}}return"num"===t.t?{k:"t",v:t.v,hl:t.hl}:"id"===t.t?{k:"t",v:t.v,it:!t.up&&/[A-Za-zα-ωϑℓ]/.test(t.v),hl:t.hl}:"txt"===t.t?{k:"t",v:t.v,it:!1}:"unit"===t.t?{k:"unit",v:t.v.replace(/[\uE001\uE002]/g,""),hl:t.hl||/\uE001/.test(t.v)}:{k:"t",v:t.v,hl:t.hl}}function x(){const t=d();return t&&"num"===t.t?(v(),{k:"t",v:t.v,hl:t.hl}):w()}function $(){let t=w();for(;(b(d(),"^")||b(d(),"_"))&&!d().pre||d()&&"sym"===d().t&&"′"===d().v;){if("sym"===d().t){v(),t={k:"sup",b:t,e:{k:"t",v:"′"}};continue}const e=v().v;let n;if(b(d(),["-","−","+"])){const t=v(),e=w();n={k:"row",items:[{k:"t",v:"+"===t.v?"+":"−",hl:t.hl},k(e)]}}else n=k(w());if("_"===e){const t=e=>{e&&("t"===e.k&&(e.it=!1),(e.items||[]).forEach(t),["e","b","n","d","s"].forEach((n=>e[n]&&"object"==typeof e[n]&&t(e[n]))))};t(n)}"^"===e&&"t"===n.k&&/^[oO]$/.test(n.v)?t={k:"row",items:[t,{k:"t",v:"°"}]}:t="^"===e?"sub"===t.k?{k:"subsup",b:t.b,s:t.e,e:n}:{k:"sup",b:t,e:n}:"sup"===t.k?{k:"subsup",b:t.b,s:n,e:t.e}:{k:"sub",b:t,e:n}}return t}function P(){const t=function(){if(!b(d(),"^")&&!b(d(),"_")||!d().pre)return null;const t=p;let e=null,n=null;for(let t=0;t<2&&(b(d(),"^")||b(d(),"_"));t++){const t=v().v,s=k(x());"^"===t?e=s:n=s}const s=d();if(e&&n&&s&&("id"===s.t||"txt"===s.t)){const t=w();return t.it=!1,"t"===t.k&&/^[A-Z]$/.test(t.v)&&d()&&"id"===d().t&&/^[a-z]$/.test(d().v)&&(t.v+=v().v),{k:"pre",s:n,e,b:t}}return p=t,null}();if(t)return t;const e=$();if("t"===e.k&&/^[0-9,]+$/.test(e.v)&&b(d(),[".","·","×"])&&u[p+1]&&"num"===u[p+1].t&&"10"===u[p+1].v&&b(u[p+2],"^")){const t=v(),n=$();return{k:"row",items:[e,{k:"t",v:t.v,hl:t.hl},n]}}return e}const A=()=>{const t=d();return t&&(b(t,[".","·","×","*"])||["num","id","sqrt","root","fn","acc","txt","bar"].includes(t.t)||b(t,["(","[","{"])||b(t,["^","_"]))};function S(){let t=[P()];for(;;){const e=d();if(b(e,"/")){v();const e=P(),n=1===t.length?t[0]:{k:"row",items:t};t=[{k:"frac",n:k(n),d:k(e)}]}else if(e&&"unit"===e.t)t.push(w());else{if(!A())break;if("bar"===e.t&&t.length)break;if(b(e,[".","·","×","*"])){const e=v();t.push({k:"t",v:"*"===e.v?".":e.v,hl:e.hl})}t.push(P())}}return 1===t.length?t[0]:{k:"row",items:t}}function z(t,e){const n=[];for(;d()&&(!t||!b(d(),t))&&(!e||"bar"!==d().t||d().v!==e);){const t=d();if("op"===t.t&&"=+-−:<>≈≤≥≠±∓⇒⇔↔→←".includes(t.v))v(),n.push({k:"t",v:"-"===t.v?"−":t.v,hl:t.hl});else if("op"!==t.t||"SR"!==t.v&&"S1"!==t.v)"op"===t.t&&/[)\]}]/.test(t.v)?v():"unit"!==t.t?n.push(S()):n.push(w());else{if(g)break;v()}}return{k:"row",items:n}}return z()}let W='<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/></w:rPr>',_=W;const H=()=>"<m:ctrlPr>"+W+"</m:ctrlPr>",R=(t,e,n)=>"<m:r>"+(e?"":'<m:rPr><m:sty m:val="p"/></m:rPr>')+(n?_:W)+'<m:t xml:space="preserve">'+c(t)+"</m:t></m:r>";function F(t){if(!t)return"";switch(t.k){case"t":return""===t.v?"":R(t.v,t.it,t.hl);case"row":return t.items.map(F).join("");case"unit":return function(t,e){let n=R(" ",!1,e);const s=/([^.·×/∕()^]+)(\^\(?([-−]?\d+)\)?)?|([.·×/∕()])/g;let r;for(;r=s.exec(t);){if(r[4]){n+=R(r[4],!1,e);continue}const t=R(r[1],!1,e);n+=r[2]?"<m:sSup><m:sSupPr>"+H()+"</m:sSupPr><m:e>"+t+"</m:e><m:sup>"+R(r[3].replace("-","−"),!1,e)+"</m:sup></m:sSup>":t}return n}(t.v,t.hl);case"par":if("{"===t.o)return F(t.e);return"<m:d><m:dPr>"+("("===t.o?"":'<m:begChr m:val="'+c(t.o)+'"/>')+(")"===t.c?"":'<m:endChr m:val="'+c(t.c)+'"/>')+H()+"</m:dPr><m:e>"+F(t.e)+"</m:e></m:d>";case"sys":{const e="<m:eqArr><m:eqArrPr>"+H()+"</m:eqArrPr>"+t.rows.map((t=>"<m:e>"+F(t)+"</m:e>")).join("")+"</m:eqArr>";return t.br?'<m:d><m:dPr><m:begChr m:val="{"/><m:endChr m:val=""/>'+H()+"</m:dPr><m:e>"+e+"</m:e></m:d>":e}case"frac":return"<m:f><m:fPr>"+H()+"</m:fPr><m:num>"+F(t.n)+"</m:num><m:den>"+F(t.d)+"</m:den></m:f>";case"sup":return"<m:sSup><m:sSupPr>"+H()+"</m:sSupPr><m:e>"+F(t.b)+"</m:e><m:sup>"+F(t.e)+"</m:sup></m:sSup>";case"sub":return"<m:sSub><m:sSubPr>"+H()+"</m:sSubPr><m:e>"+F(t.b)+"</m:e><m:sub>"+F(t.e)+"</m:sub></m:sSub>";case"subsup":return"<m:sSubSup><m:sSubSupPr>"+H()+"</m:sSubSupPr><m:e>"+F(t.b)+"</m:e><m:sub>"+F(t.s)+"</m:sub><m:sup>"+F(t.e)+"</m:sup></m:sSubSup>";case"pre":return"<m:sPre><m:sPrePr>"+H()+"</m:sPrePr><m:sub>"+F(t.s)+"</m:sub><m:sup>"+F(t.e)+"</m:sup><m:e>"+F(t.b)+"</m:e></m:sPre>";case"rad":return"<m:rad><m:radPr>"+(t.deg?"":'<m:degHide m:val="1"/>')+H()+"</m:radPr><m:deg>"+(t.deg?F(t.deg):"")+"</m:deg><m:e>"+F(t.e)+"</m:e></m:rad>";case"func":return"<m:func><m:funcPr>"+H()+"</m:funcPr><m:fName>"+(t.ex?"<m:sSup><m:sSupPr>"+H()+"</m:sSupPr><m:e>"+R(t.name,!1,t.hl)+"</m:e><m:sup>"+F(t.ex)+"</m:sup></m:sSup>":R(t.name,!1,t.hl))+"</m:fName><m:e>"+F(t.e)+"</m:e></m:func>";case"acc":return"bar"===t.chr?'<m:bar><m:barPr><m:pos m:val="top"/>'+H()+"</m:barPr><m:e>"+F(t.e)+"</m:e></m:bar>":'<m:acc><m:accPr><m:chr m:val="'+M[t.chr]+'"/>'+H()+"</m:accPr><m:e>"+F(t.e)+"</m:e></m:acc>"}return""}function B(t){return t=(t=b(t)).replace(/\s*([.·×])\s*/g,"$1")}function L(t){if(!t)return"";const e=(t,e)=>e?'<mrow style="background:#ff0">'+t+"</mrow>":t;switch(t.k){case"t":return e((n=t.v,s=t.it,/^[0-9,]+$/.test(n)?"<mn>"+c(n)+"</mn>":s?"<mi>"+c(n)+"</mi>":/^[A-Za-zÀ-ỹα-ωΑ-Ω°%]+$/.test(n)?'<mi mathvariant="normal">'+c(n)+"</mi>":/^[.·/()]$/.test(n)?'<mo lspace="0" rspace="0">'+c(n)+"</mo>":"<mo>"+c(n)+"</mo>"),t.hl);case"row":return"<mrow>"+t.items.map(L).join("")+"</mrow>";case"unit":return e('<mspace width="0.2em"/>'+t.v.replace(/([^.·×/∕()^]+)(\^\(?([-−]?\d+)\)?)?|([.·×/∕()])/g,((t,e,n,s,r)=>r?'<mo lspace="0" rspace="0">'+c(r)+"</mo>":n?'<msup><mi mathvariant="normal">'+c(e)+"</mi><mn>"+c(s.replace("-","−"))+"</mn></msup>":'<mi mathvariant="normal">'+c(e)+"</mi>")),t.hl);case"par":return"{"===t.o?L(t.e):"<mrow><mo>"+c(t.o)+"</mo>"+L(t.e)+"<mo>"+c(t.c)+"</mo></mrow>";case"sys":return"<mrow>"+(t.br?"<mo>{</mo>":"")+'<mtable columnalign="left">'+t.rows.map((t=>"<mtr><mtd>"+L(t)+"</mtd></mtr>")).join("")+"</mtable></mrow>";case"frac":return"<mfrac>"+L(t.n)+L(t.d)+"</mfrac>";case"sup":return"<msup>"+L(t.b)+L(t.e)+"</msup>";case"sub":return"<msub>"+L(t.b)+L(t.e)+"</msub>";case"subsup":return"<msubsup>"+L(t.b)+L(t.s)+L(t.e)+"</msubsup>";case"pre":return"<mmultiscripts>"+L(t.b)+"<mprescripts/>"+L(t.s)+L(t.e)+"</mmultiscripts>";case"rad":return t.deg?"<mroot>"+L(t.e)+L(t.deg)+"</mroot>":"<msqrt>"+L(t.e)+"</msqrt>";case"func":return"<mrow>"+(t.ex?'<msup><mi mathvariant="normal">'+t.name+"</mi>"+L(t.ex)+"</msup>":'<mi mathvariant="normal">'+t.name+"</mi>")+"<mo>&#x2061;</mo>"+L(t.e)+"</mrow>";case"acc":return'<mover accent="true">'+L(t.e)+"<mo>"+("vec"===t.chr?"→":"bar"===t.chr?"¯":"hat"===t.chr?"^":"˙")+"</mo></mover>"}var n,s;return""}function O(t,e,n){const s=t.map((t=>t.c)).join(""),r=[];let i,o=0;for(e.lastIndex=0;i=e.exec(s);){const s=n(i);if(null==s){i[0].length||e.lastIndex++;continue}for(let e=o;e<i.index;e++)r.push(t[e]);const a=t[i.index]?t[i.index].i:0;for(const t of Array.from(s))r.push({c:t,i:a});o=i.index+i[0].length,i[0].length||e.lastIndex++}for(let e=o;e<t.length;e++)r.push(t[e]);return r}return{setShort:function(t){m=t||new Map,l=Array.from(m.keys()).filter((t=>/^[A-Za-z]+$/.test(t))).sort(((t,e)=>e.length-t.length)),u=l.length?new RegExp("(?<![A-Za-z\\\\])("+l.join("|")+")(?![A-Za-z])","g"):null},setUpright:function(t,e){f=!!t,h=!!e},split:function(t){const e=[];let r="";const i=t=>{r&&e.push({text:r}),r="",e.push({math:t})},o=/\$\$([^$]+)\$\$|\$([^$]+)\$|\\\(([\s\S]+?)\\\)|\\\[([\s\S]+?)\\\]/g;let a,c=0;const l=[];for(;a=o.exec(t);)l.push({t:t.slice(c,a.index)}),l.push({f:a[0]}),c=a.index+a[0].length;l.push({t:t.slice(c)});for(const t of l){if(t.f){i(t.f);continue}const o=t.t.split(/(\s+)/),a=t=>t%2==0;let c=0;for(;c<o.length;){const t=o[c],l=0===c?!e.length&&!r.trim():/\t/.test(o[c-1]||"");if(a(c)&&t&&y.test(t)&&(l||/^\s*$/.test(r)))r+=t,c++;else if(a(c)&&t&&Z(q(t))){let t=c,e=!1,a=!1;const l=[];for(let n=c;n<o.length;n+=2){const s=o[n];if(!s)break;if(n>c&&y.test(s)&&/\t/.test(o[n-1]||""))break;const r=q(s),i=/^[=+\-−×*·:\/⇒⇔→≈≤≥≠<>±]$/.test(r)||/^[=⇒⇔→≈≤≥≠<>]/.test(r);if(a&&!i)break;if(e&&P(r)&&"c"!==r&&(A.includes(r),1)){if(l.push({j:n,unit:!0}),t=n,e=!1,a=!0,r!==s)break;continue}const f=/^[A-Z][a-z]?$/.test(r)&&n>c&&/(?:\^\(?\d+\)?_\(?\d+\)?|_\(?\d+\)?\^\(?\d+\)?)$/.test(o[n-2]||"");if(!Z(r)&&!f)break;if(l.push({j:n}),t=n,a=!1,e=/(?:[0-9)\uE002]|[α-ωΑ-Ω²³]|\^\(?[-−]?\d+\)?)$/.test(u?r.replace(u,(t=>m.get(t))):r),r!==s){const t=o[n+2];if(!(t&&!(y.test(t)&&/\t/.test(o[n+1]||""))&&(Z(q(t))||e&&P(q(t))))||/[,;:]$/.test(s)||/\.$/.test(s)&&!/^[0-9]/.test(t))break}}let f="";for(let e=c;e<=t;e++){const t=l.find((t=>t.j===e));if(t&&t.unit){const t=o[e],r=q(t);f+=n+r+s+t.slice(r.length)}else f+=o[e]||""}let h="";const p=/[.,;:]$/.exec(f);p&&(h=p[0],f=f.slice(0,-1));const g=f.replace(/[\uE001-\uE00A]/g,"");/[=^\/_\\≤≥≠≈⇒⇔<>]|[²³½¼¾⁻]/.test(g)||/\uE001/.test(f)||/[\uE003]/.test(f)&&/[=]/.test(g)?i(f):r+=f.replace(/[\uE003\uE004]/g,""),r+=h,c=t+1}else r+=t||"",c++}}return r&&e.push({text:r}),e},parse:j,prep:B,latex2lin:b,toOMath:t=>"<m:oMath>"+F(j(B(t)))+"</m:oMath>",toMathML:t=>"<math>"+L(j(B(t)))+"</math>",setFont:function(t,e){const n=e&&/^[0-9A-F]{6}$/i.test(e)?'<w:color w:val="'+e+'"/>':"",s=t?'<w:sz w:val="'+t+'"/><w:szCs w:val="'+t+'"/>':"";W='<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/>'+n+s+"</w:rPr>",_='<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/>'+n+s+'<w:highlight w:val="yellow"/></w:rPr>'},normalize:function(n,s){s=s||{};const r=Array.from(m.keys()).filter((t=>!/^[A-Za-z]+$/.test(t))).sort(((t,e)=>e.length-t.length));return r.length&&(n=O(n,new RegExp(r.map((t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))).join("|"),"g"),(t=>m.get(t[0])))),n=O(n,/\\([A-Za-z]+)(?![A-Za-z{])/g,(t=>!m.has(t[1])||p[t[1]]||t[1]in g||d.includes(t[1])?null:m.get(t[1]))),n=O(n,/(?<![\w.,])(\d+)(?:[.,](\d+))?[eE]([+-]?)(\d{1,3})(?![\w])/g,(t=>t[1]+(t[2]?","+t[2]:"")+".10^"+("-"===t[3]?"(-"+t[4]+")":t[4]))),!1!==s.guess&&(n=O(n,/(?<=[A-Za-zΩ])-([1-3])(?![\d\w])/g,(s=>{const r=n.map((t=>t.c)).join("").slice(0,s.index).split(/[\s.·/(]/).pop();return $(r)?t+"^(-"+s[1]+")"+e:null}))),!1!==s.guess&&(n=O(n,/(\d)(\s?[.·×x*]\s?)10(-|−)?([1-9]\d?)(?![\d,^])/g,(n=>n[3]||1!==n[4].length||"."!==n[2].trim()?n[1]+n[2]+"10"+t+"^"+(n[3]?"(-"+n[4]+")":n[4])+e:null))),n},linReplace:O,isUnitWord:P,isMathWord:Z,HL0:t,HL1:e}}();"undefined"!=typeof module&&(module.exports=EqConv);
+</script>
+<script>
+(function () {
+  const P = new URLSearchParams(location.search), m = P.get('m') || 'msg';
+  const W = document.getElementById('w');
+  const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const send = (o) => { try { Office.context.ui.messageParent(JSON.stringify(o)); } catch (e) { /* bỏ qua */ } };
+  function render() {
+    if (m === 'msg') {
+      W.className = 'w k-' + (P.get('k') || 'info');
+      W.innerHTML = '<div class="t">' + esc(P.get('t')) + '</div><div class="row"><button class="pri" id="ok" type="button">Đóng</button></div>';
+      document.getElementById('ok').onclick = () => send({ ok: 1 });
+    } else if (m === 'confirm') {
+      W.innerHTML = '<div class="t">' + esc(P.get('t')) + '</div><div class="row"><button class="pri" id="y" type="button">' + esc(P.get('y') || 'Đồng ý') + '</button><button id="n" type="button">' + esc(P.get('n') || 'Thôi') + '</button></div>';
+      document.getElementById('y').onclick = () => send({ yes: 1 });
+      document.getElementById('n').onclick = () => send({ no: 1 });
+      document.getElementById('y').focus();
+    } else if (m === 'ans') {
+      const rd = P.get('rd'), sg = P.get('sg'), nb = +(P.get('bx') || 0);
+      W.innerHTML = '<div class="mut">' + esc(P.get('q')) + '</div>'
+        + '<div class="row"><b>Đáp án:</b><input id="v" inputmode="decimal" autocomplete="off" value="' + esc(P.get('v') || '') + '"><button class="pri" id="ok" type="button">Ghi vào đề</button><button id="no" type="button">Thôi</button></div>'
+        + (sg ? '<div class="row"><button id="sg" type="button">Gợi ý từ lời giải: ' + esc(sg) + '</button></div>' : '')
+        + '<div class="mut">' + (rd !== null && rd !== '' ? 'Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + '. ' : '') + (nb ? 'Câu có bảng ' + nb + ' ô: mỗi ký tự (kể cả dấu "-" và ",") ghi vào một ô.' : '') + '</div><div class="note" id="nt"></div>';
+      const inp = document.getElementById('v'); inp.focus(); inp.select();
+      let warned = '';
+      const go = () => {
+        let v = inp.value.replace(/\s+/g, '').replace(/\./g, ',');
+        const nt = document.getElementById('nt');
+        if (!v) { nt.textContent = 'Chưa nhập đáp số.'; return; }
+        // số kiểu máy tính 1.6e-19 / 6,02E23 -> 1,6.10⁻¹⁹ (ghi dòng "Đáp án:"; không rải vào bảng ô)
+        const sci = /^(-?\d+(?:,\d+)?)[eE]([-+]?)(\d{1,3})$/.exec(v);
+        if (sci) {
+          const SP = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+          const t = sci[1] + '.10' + (sci[2] === '-' ? '⁻' : '') + Array.from(sci[3]).map((c) => SP[c]).join('');
+          if (warned !== v) { warned = v; nt.textContent = 'Ghi là ' + t + ' (dạng khoa học, dài hơn 4 ô của phiếu trả lời). Bấm "Ghi vào đề" lần nữa để ghi.'; document.getElementById('ok').textContent = 'Vẫn ghi'; return; }
+          send({ v: t, sci: 1 }); return;
+        }
+        if (!/^-?\d+(,\d+)?$/.test(v)) { nt.textContent = 'Đáp số chỉ gồm chữ số, dấu "-" và một dấu phẩy thập phân.'; return; }
+        const notes = [];
+        if (nb && v.length > nb) notes.push('Đáp số dài ' + v.length + ' ký tự nhưng bảng chỉ có ' + nb + ' ô: sẽ thêm ' + (v.length - nb) + ' ô vào bảng.');
+        else if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu 2025 chỉ có 4 ô.');
+        const dec = v.includes(',') ? v.split(',')[1].length : 0;
+        if (rd !== null && rd !== '' && dec !== +rd) notes.push('Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
+        if (notes.length && warned !== v) { warned = v; nt.textContent = notes.join(' ') + ' Bấm "Ghi vào đề" lần nữa để vẫn ghi.'; document.getElementById('ok').textContent = 'Vẫn ghi'; return; }
+        send({ v });
+      };
+      document.getElementById('ok').onclick = go;
+      document.getElementById('no').onclick = () => send({ cancel: 1 });
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } if (e.key === 'Escape') send({ cancel: 1 }); });
+      const sb = document.getElementById('sg'); if (sb) sb.onclick = () => { inp.value = sg; inp.focus(); };
+    } else if (m === 'sym') {
+      // bảng ký hiệu nhỏ gọn, hiện hết các nhóm; "★ Của tôi" và "ƒ Mẫu" (biểu thức gõ tắt) lưu lại cho các lần sau
+      let U = {}; try { U = JSON.parse(P.get('u') || '{}') || {}; } catch (e) { U = {}; }
+      try { const L = JSON.parse(localStorage.getItem('qlf.sym') || 'null'); if (L && typeof L === 'object') U = Object.assign({}, U, L); } catch (e) { /* bỏ qua */ }
+      let pins = typeof U.pins === 'string' ? U.pins : '', sc = typeof U.sc === 'string' ? U.sc : '';
+      const SN_DEF = [['ptdaodong', 'x = Acos(ωt + φ)'], ['ptvantoc', 'v = −ωAsin(ωt + φ)'], ['ptgiatoc', 'a = −ω^2 x'], ['hethucdl', 'A^2 = x^2 + v^2/ω^2'], ['conang', 'W = 1/2 mω^2 A^2']];
+      let sn = Array.isArray(U.sn) ? U.sn.filter((x) => Array.isArray(x)) : SN_DEF.map((x) => x.slice());
+      const G = [['Hy Lạp', 'αβγδεζηθκλμνξπρστφψωϕχ'], ['Hy Lạp hoa', 'ΔΦΩΣΠΛΓΘΨ'], ['Phép toán', '±∓×·÷≈≠≡≤≥≪≫∼∞√∝⊥∥∠∑∫∂∇∈'], ['Mũi tên', '→⇒⇔←↔↑↓⇌↗↘'], ['Mũ, chỉ số', '⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺₀₁₂₃₄₅₆₇₈₉'], ['Đơn vị, vật lí', '°℃ΩμÅ‰%ℓħ⊗⊙']];
+      const save = (rs) => { const v = { pins, sc: rs ? null : sc, sn }; try { localStorage.setItem('qlf.sym', JSON.stringify(v)); } catch (e) { /* bỏ qua */ } send({ save: v }); };
+      const KEY_OK = /^[A-Za-z][A-Za-z0-9_]{1,30}$/;
+      // xem trước biểu thức (cần EqConv nhúng sẵn; thiếu thì bỏ qua)
+      const EQ = typeof EqConv !== 'undefined' ? EqConv : null;
+      const shortMp = () => { const mp = new Map(); for (const ln of String(sc || '').split(/\n+/)) { const q = /^\s*(\S+)\s+(?:→|=)\s+(\S+)\s*$/.exec(ln) || /^\s*(\S+?)=(\S+)\s*$/.exec(ln); if (q) mp.set(q[1], q[2]); } return mp; };
+      const pv = (v) => { if (!EQ || !String(v).trim()) return ''; try { EQ.setShort(shortMp()); const L = EQ.normalize(Array.from(String(v).replace(/\$/g, '')).map((c) => ({ c, i: 0 })), {}).map((x) => x.c).join(''); return EQ.toMathML(L); } catch (e) { return ''; } };
+      let view = 'k', edit = false;
+      document.body.classList.add('sym');
+      const B = (c) => '<button type="button" data-c="' + esc(c) + '" class="' + (edit && pins.includes(c) ? 'pin' : '') + '" title="' + (edit ? (pins.includes(c) ? 'Bỏ khỏi' : 'Thêm vào') + ' Của tôi' : 'Chèn ' + esc(c)) + '">' + esc(c) + '</button>';
+      const top = (back) => '<div class="tabs">' + back + '<span style="flex:1"></span><button type="button" id="x" title="Đóng (Esc)">✕</button></div><div class="sb">';
+      const draw = () => {
+        let h;
+        if (view === 'm') {
+          h = top('<button type="button" id="bk">← Ký hiệu</button><button type="button" class="on">ƒ Biểu thức</button><button type="button" id="gt">Ký hiệu gõ tắt</button>')
+            + '<div class="mut">Đặt tên gõ tắt (chữ không dấu, không cách) cho biểu thức hay dùng. Trong Word gõ tên đó (vd. <kbd>ptdaodong</kbd>) rồi bấm <b>Equation</b>, hoặc bấm chip ƒ ở bảng ký hiệu để chèn ngay.</div>'
+            + sn.map((x, k) => '<div class="snr" data-k="' + k + '"><input class="sk" value="' + esc(x[0]) + '" placeholder="tên" spellcheck="false"><input class="sv" value="' + esc(x[1]) + '" placeholder="x = Acos(ωt + φ)" spellcheck="false"><button type="button" class="sdel" title="Xóa">✕</button><div class="spv">' + pv(x[1]) + '</div></div>').join('')
+            + '<div class="row"><button type="button" id="sa">+ Thêm</button><button class="pri" type="button" id="sv">Lưu</button><button type="button" id="sr">Mẫu mặc định</button></div>'
+            + '<div class="mut">Viết như nút Equation: <kbd>^</kbd> mũ, <kbd>_</kbd> chỉ số, <kbd>/</kbd> phân số, <kbd>sqrt( )</kbd> căn, <kbd>omega</kbd> → ω.</div>';
+        } else if (view === 'g') {
+          h = top('<button type="button" id="bk">← Ký hiệu</button><button type="button" id="gm">ƒ Biểu thức</button><button type="button" class="on">Ký hiệu gõ tắt</button>')
+            + '<div class="mut">Mỗi dòng: <b>gõ tắt → ký hiệu</b>. Bấm <b>Equation</b> để đổi: trong công thức gõ <kbd>pi</kbd>, <kbd>lamda</kbd>; ngoài công thức gõ <kbd>\\pi</kbd>.</div>'
+            + '<textarea id="sc" spellcheck="false">' + esc(sc) + '</textarea><div class="row"><button class="pri" type="button" id="ss">Lưu</button><button type="button" id="sd">Mặc định</button></div>';
+        } else {
+          h = top('<span class="my">★ Của tôi</span><button type="button" id="ed" class="' + (edit ? 'on' : '') + '" title="Chọn ký hiệu hay dùng để lưu cho các lần sau">' + (edit ? 'Xong' : '✎ Chọn') + '</button><button type="button" id="gm" title="Biểu thức gõ tắt: ptdaodong → x = Acos(ωt + φ)…">⚙ Gõ tắt</button>')
+            + (edit ? '<div class="tip">Bấm các ký hiệu bên dưới để thêm / bỏ khỏi “Của tôi”, rồi bấm <b>Xong</b>.</div>' : '')
+            + '<div class="gr mine">' + (pins ? Array.from(pins).map(B).join('') : '<span class="mut">Chưa có — bấm ✎ Chọn để lưu ký hiệu hay dùng.</span>') + '</div>'
+            + (sn.length ? '<div class="gr snp">' + sn.map((x, k) => '<button type="button" data-s="' + k + '" title="' + esc(x[1]) + '">ƒ ' + esc(x[0]) + '</button>').join('') + '</div>' : '')
+            + G.map(([t, str]) => '<div class="gr" title="' + esc(t) + '">' + Array.from(str).map(B).join('') + '</div>').join('');
+        }
+        h += '<div class="st" id="st"></div></div>';
+        W.innerHTML = h;
+        const st = (t) => { const e = document.getElementById('st'); if (e) e.textContent = t; };
+        W.querySelectorAll('[data-c]').forEach((b) => { b.onclick = () => {
+          const c = b.dataset.c;
+          if (edit) { pins = pins.includes(c) ? Array.from(pins).filter((x) => x !== c).join('') : pins + c; save(); draw(); st(pins.includes(c) ? 'Đã thêm ' + c : 'Đã bỏ ' + c); return; }
+          send({ ins: c }); st('Đã chèn ' + c);
+        }; });
+        W.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { const x = sn[+b.dataset.s]; if (x) { send({ snip: x[1] }); st('Đã chèn ' + x[0]); } }; });
+        const on = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
+        // đọc bảng biểu thức đang sửa
+        const readSn = () => Array.from(W.querySelectorAll('.snr')).map((r) => [r.querySelector('.sk').value.trim(), r.querySelector('.sv').value.trim()]);
+        W.querySelectorAll('.snr').forEach((r) => {
+          const v = r.querySelector('.sv'), p = r.querySelector('.spv');
+          v.oninput = () => { p.innerHTML = pv(v.value); };
+          r.querySelector('.sdel').onclick = () => { sn = readSn(); sn.splice(+r.dataset.k, 1); draw(); };
+        });
+        on('x', () => send({ close: 1 }));
+        on('ed', () => { edit = !edit; draw(); if (!edit) st('Đã lưu “Của tôi” cho các lần sau.'); });
+        on('gm', () => { view = 'm'; edit = false; draw(); });
+        on('gt', () => { sn = readSn(); view = 'g'; draw(); });
+        on('bk', () => { if (view === 'm') sn = readSn().filter((x) => x[0] || x[1]); view = 'k'; draw(); });
+        on('sa', () => { sn = readSn(); sn.push(['', '']); draw(); const ks = W.querySelectorAll('.sk'); ks[ks.length - 1].focus(); });
+        on('sr', () => { sn = SN_DEF.map((x) => x.slice()); draw(); st('Đã nạp mẫu mặc định — bấm Lưu để giữ.'); });
+        on('sv', () => {
+          const rows = readSn().filter((x) => x[0] || x[1]);
+          const bad = rows.find((x) => !KEY_OK.test(x[0]) || !x[1]);
+          if (bad) { st('Tên “' + (bad[0] || '…') + '”: cần chữ không dấu/số, bắt đầu bằng chữ, và có biểu thức.'); return; }
+          const seen = new Set(); const dup = rows.find((x) => { const d = seen.has(x[0]); seen.add(x[0]); return d; });
+          if (dup) { st('Tên “' + dup[0] + '” bị trùng.'); return; }
+          sn = rows; save(); draw(); st('Đã lưu ' + rows.length + ' biểu thức gõ tắt.');
+        });
+        on('ss', () => { sc = document.getElementById('sc').value.replace(/\r/g, '').trim(); save(); st('Đã lưu gõ tắt.'); });
+        on('sd', () => { save(true); st('Đã khôi phục mặc định (mở lại bảng để xem).'); });
+      };
+      draw();
+    } else if (m === 'scan') {
+      // rà công thức thô cả đề: nhận danh sách qua messageChild, chọn rồi đổi
+      W.style.gap = '8px';
+      W.innerHTML = '<div class="t">Đang rà đề…</div>';
+      let items = [];
+      const draw = (msg) => {
+        const nOn = items.filter((x) => x.on).length;
+        let h = '<div class="row"><b>' + items.length + ' dòng có công thức viết thô</b><span style="flex:1"></span><label class="mut"><input type="checkbox" id="all" style="width:auto" checked> chọn tất cả</label></div><div class="mut">Chỗ <span class="hl">tô vàng</span> là công cụ đoán (số mũ bị rơi khi chép từ PDF), hãy xem kỹ. Bấm "Đến" để xem dòng trong đề.</div><div class="sb">';
+        items.forEach((x, k) => { h += '<div class="it"><input type="checkbox" data-k="' + k + '"' + (x.on ? ' checked' : '') + '><div><div class="src">' + esc(x.src) + '</div><div class="pv">' + x.html + '</div></div><button type="button" data-g="' + k + '">Đến</button></div>'; });
+        h += '</div><div class="st" id="st">' + esc(msg || '') + '</div><div class="row"><button class="pri" type="button" id="ap">Đổi ' + nOn + ' dòng đã chọn</button><button type="button" id="x">Đóng</button></div>';
+        W.innerHTML = h;
+        W.querySelectorAll('[data-k]').forEach((c) => { c.onchange = () => { items[+c.dataset.k].on = c.checked; document.getElementById('ap').textContent = 'Đổi ' + items.filter((x) => x.on).length + ' dòng đã chọn'; }; });
+        W.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => send({ go: items[+b.dataset.g].id }); });
+        document.getElementById('all').onchange = (e) => { items.forEach((x) => { x.on = e.target.checked; }); draw(); };
+        document.getElementById('ap').onclick = () => { const ids = items.filter((x) => x.on).map((x) => x.id); if (!ids.length) return; document.getElementById('st').textContent = 'Đang đổi…'; send({ apply: ids }); };
+        document.getElementById('x').onclick = () => send({ close: 1 });
+      };
+      try {
+        Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, (a) => {
+          let v = null; try { v = JSON.parse(a.message); } catch (e) { return; }
+          if (v.items) { items = v.items.map((x) => Object.assign({ on: true }, x)); draw(); }
+          if (v.done != null) { const ids = new Set(v.ids || []); items = items.filter((x) => !ids.has(x.id)); draw('Đã đổi ' + v.done + ' dòng' + (v.skip ? ', bỏ qua ' + v.skip + ' dòng đã bị sửa' : '') + '. Bấm Ctrl+Z trong Word nếu muốn lấy lại.'); }
+        });
+      } catch (e) { /* bỏ qua */ }
+      send({ ready: 1 });
+    } else if (m === 'cx') {
+      // câu cần xem: thống kê đủ các câu có cảnh báo, bấm "Đến" để tới câu, bảng vẫn mở; xử lý xong bấm Rà lại / Đóng
+      document.body.classList.add('cx');
+      W.innerHTML = '<div class="t">Đang rà đề…</div>';
+      let items = [], opt = [], PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' }, fp = 0, msg = '';
+      const seen = new Set();
+      const key = (x) => x.p + '|' + x.k + '|' + (x.ph ? 'ph' : '') + (x.o ? 'o' : '');
+      const row = (x, i, grp) => {
+        const lab = x.ph ? (x.n > 1 ? 'Câu ' + x.k + ' → Câu ' + x.k2 : 'Câu ' + x.k) + ' · chưa có tiêu đề phần' : PN[x.p] + ' – Câu ' + x.k;
+        return '<div class="cxi' + (seen.has(key(x)) ? ' seen' : '') + (x.ph ? ' ph' : '') + '"><div><div class="cxh">' + (seen.has(key(x)) ? '✓ ' : '') + esc(lab) + '</div>' + x.w.map((w) => '<div class="cxw">• ' + esc(w) + '</div>').join('') + '</div><button type="button" data-g="' + grp + i + '">Đến</button></div>';
+      };
+      const draw = () => {
+        const parts = [0, 1, 2, 3, 4].filter((p) => !p || items.some((x) => x.p === p) || opt.some((x) => x.p === p));
+        const vis = items.filter((x) => !fp || x.p === fp), visO = opt.filter((x) => !fp || x.p === fp);
+        let h = '<div class="row cxtop"><b>' + items.length + ' mục cần xem</b><span style="flex:1"></span><button type="button" id="rf" title="Đọc lại đề sau khi sửa">⟳ Rà lại</button><button type="button" id="x" title="Đóng (Esc)">✕</button></div>';
+        if (parts.length > 2) h += '<div class="tabs">' + parts.map((p) => '<button type="button" data-p="' + p + '" class="' + (fp === p ? 'on' : '') + '">' + (p ? PN[p].replace('Phần ', '') : 'Tất cả') + '</button>').join('') + '</div>';
+        h += '<div class="sb">';
+        if (!items.length) h += '<div class="t k-ok" style="color:var(--ok);font-weight:600">✓ Không còn câu cần xem.</div>';
+        h += vis.map((x) => row(x, items.indexOf(x), 'i')).join('');
+        if (visO.length) h += '<details class="cxo"><summary>Không bắt buộc · ' + visO.length + ' câu chưa có hướng dẫn giải</summary>' + visO.map((x) => row(x, opt.indexOf(x), 'o')).join('') + '</details>';
+        h += '</div><div class="st" id="st">' + esc(msg) + '</div>';
+        W.innerHTML = h;
+        W.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const g = b.dataset.g, x = g[0] === 'i' ? items[+g.slice(1)] : opt[+g.slice(1)]; if (!x) return; seen.add(key(x)); send({ go: x.s }); msg = 'Đang ở ' + (x.ph ? 'Câu ' + x.k : PN[x.p] + ' – Câu ' + x.k) + '. Sửa xong bấm ⟳ Rà lại.'; const op = W.querySelector('details.cxo'); const wasOpen = op && op.open; draw(); if (wasOpen) W.querySelector('details.cxo').open = true; }; });
+        W.querySelectorAll('[data-p]').forEach((b) => { b.onclick = () => { fp = +b.dataset.p; draw(); }; });
+        document.getElementById('x').onclick = () => send({ close: 1 });
+        document.getElementById('rf').onclick = () => { msg = 'Đang rà lại…'; draw(); send({ refresh: 1 }); };
+      };
+      try {
+        Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, (a) => {
+          let v = null; try { v = JSON.parse(a.message); } catch (e) { return; }
+          if (v.items) { items = v.items; opt = v.opt || []; if (v.pn) PN = v.pn; msg = msg === 'Đang rà lại…' ? 'Đã rà lại ' + new Date().toLocaleTimeString('vi-VN') + '.' : ''; draw(); }
+        });
+      } catch (e) { /* bỏ qua */ }
+      send({ ready: 1 });
+    } else if (m === 'part') {
+      // đề chưa có tiêu đề phần: chọn phần cho từng nhóm câu trước khi xuất
+      let R = []; try { R = JSON.parse(P.get('r') || '[]'); } catch (e) { R = []; }
+      const PNM = { 1: 'Phần I – Nhiều lựa chọn', 2: 'Phần II – Đúng/Sai', 3: 'Phần III – Trả lời ngắn', 4: 'Phần IV – Tự luận' };
+      W.innerHTML = '<div class="t"><b>Đề chưa có tiêu đề phần</b></div><div class="mut">Các câu dưới đây không nằm dưới dòng "PHẦN I/II/III/IV" nào, công cụ đang đoán phần. Chọn đúng phần cho từng nhóm (đổi một nhóm thì các nhóm sau đổi theo), công cụ sẽ chèn dòng tiêu đề phần vào đề.</div><div class="sb">'
+        + R.map((x, k) => '<div class="it" style="grid-template-columns:1fr auto"><div><b>' + esc(x[0]) + '</b><div class="mut">' + esc(x[2]) + (x[2] ? '…' : '') + '</div></div><select data-k="' + k + '" style="font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line);border-radius:6px">' + [1, 2, 3, 4].map((p) => '<option value="' + p + '"' + (p === x[1] ? ' selected' : '') + '>' + PNM[p] + '</option>').join('') + '</select></div>').join('')
+        + '</div><div class="row"><button class="pri" id="ok" type="button">Chèn tiêu đề phần</button><button id="sk" type="button">Xuất luôn (theo đoán)</button><button id="np" type="button" title="Đánh số Câu 1 đến hết theo thứ tự đề gốc, không có dòng tiêu đề phần">Không chia phần</button><button id="no" type="button">Thôi</button></div>';
+      const sels = Array.from(W.querySelectorAll('select'));
+      sels.forEach((x) => { x.onchange = () => { const k = +x.dataset.k; sels.forEach((y) => { if (+y.dataset.k > k && +y.value < +x.value) y.value = x.value; }); }; });
+      document.getElementById('ok').onclick = () => send({ parts: sels.map((x) => +x.value) });
+      document.getElementById('sk').onclick = () => send({ skip: 1 });
+      document.getElementById('np').onclick = () => send({ noparts: 1 });
+      document.getElementById('no').onclick = () => send({ cancel: 1 });
+    } else if (m === 'web') {
+      const U = 'https://qlphys.github.io/dinhdangde/chinh-thuc/';
+      W.innerHTML = '<div class="t">Mở công cụ định dạng đề (bản chính thức) trên trình duyệt.</div><div class="row"><button class="pri" id="go" type="button">Mở công cụ web</button><button id="no" type="button">Đóng</button></div><div class="mut">' + U + '</div>';
+      document.getElementById('go').onclick = () => { window.open(U, '_blank'); setTimeout(() => send({ ok: 1 }), 400); };
+      document.getElementById('no').onclick = () => send({ ok: 1 });
+    } else if (m === 'about') {
+      const info = ['PhongEm.Phys ' + P.get('v'), 'Word: ' + (P.get('wv') || '?'), 'Lỗi gần đây:', P.get('b') || '(không có)', '', 'Mô tả lỗi: '].join('\n');
+      W.innerHTML = '<div class="t"><b>PhongEm.Phys</b> · ' + esc(P.get('v')) + '<br><span class="mut" style="display:inline">Định dạng và xuất đề thi Vật lí trong Word · PhongEm.Phys</span></div>'
+        + '<div><b>Dùng bàn phím (phím Alt):</b> bấm <kbd>Alt</kbd>, Word hiện chữ gợi ý trên từng thẻ; bấm chữ của thẻ <b>PhongEm.Phys</b>, rồi bấm chữ hiện trên nút cần dùng.</div>'
+        + '<table><tr><td><b>Đúng / Sai</b></td><td>con nháy ở dòng phương án hoặc dòng ý</td></tr><tr><td><b>A B C D</b></td><td>con nháy ở bất kỳ đâu trong câu Phần I</td></tr><tr><td><b>Mức độ, Xóa HDG</b></td><td>bôi đen nhiều câu để làm một lần</td></tr><tr><td><b>Xuất GV + HS</b></td><td>file đang soạn được lưu và giữ nguyên</td></tr></table>'
+        + '<div class="row"><button class="pri" id="cp" type="button">Sao chép thông tin lỗi</button><button id="no" type="button">Đóng</button></div><pre id="pi">' + esc(info) + '</pre>';
+      document.getElementById('cp').onclick = async () => { try { await navigator.clipboard.writeText(info); document.getElementById('cp').textContent = 'Đã sao chép ✓'; } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById('pi')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); document.getElementById('cp').textContent = 'Đã sao chép ✓'; } };
+      document.getElementById('no').onclick = () => send({ ok: 1 });
+    }
+  }
+  if (window.Office && Office.onReady) Office.onReady(render); else render();
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' || m === 'cx' ? { close: 1 } : { cancel: 1 }); });
+})();
+</script></body></html>
