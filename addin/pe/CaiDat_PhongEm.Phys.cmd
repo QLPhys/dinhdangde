@@ -17,9 +17,9 @@ if not exist "%C%" mkdir "%C%"
 rem Chuyen add-in da cai kieu cu (moi add-in mot thu muc chia se rieng) sang thu muc chung
 if exist "%PUBLIC%\QLPhysics\QLFormat\manifest.xml" if not exist "%C%\QL_Format.xml" copy /y "%PUBLIC%\QLPhysics\QLFormat\manifest.xml" "%C%\QL_Format.xml" >nul
 if exist "%PUBLIC%\PhongEmPhys\Addin\manifest.xml" if not exist "%C%\PhongEm.Phys.xml" copy /y "%PUBLIC%\PhongEmPhys\Addin\manifest.xml" "%C%\PhongEm.Phys.xml" >nul
-rem Kiem tra phien ban Word: tu ban 2205 (build 15225) tro len dung che do chay thuong truc (nut bam nhanh hon)
+rem Kiem tra phien ban Word (doc ban cua file WINWORD.EXE, du phong: VersionToReport): tu ban 2205 (build 15225) tro len dung che do chay thuong truc
 set "WB=0"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$b=0; try{$v=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' -ErrorAction Stop).VersionToReport; $b=[int]($v.Split('.')[2])}catch{}; if($b -eq 0){try{$p=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Winword.exe' -ErrorAction Stop).'(default)'; $b=[int]((Get-Item $p).VersionInfo.FileBuildPart)}catch{}}; $b" > "%TEMP%\qlf_wb.txt" 2>nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$b=0; try{$p=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Winword.exe' -ErrorAction Stop).'(default)'; $b=[int]((Get-Item $p).VersionInfo.FileBuildPart)}catch{}; if($b -eq 0){try{$v=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' -ErrorAction Stop).VersionToReport; $b=[int]($v.Split('.')[2])}catch{}}; $b" > "%TEMP%\qlf_wb.txt" 2>nul
 if exist "%TEMP%\qlf_wb.txt" set /p WB=<"%TEMP%\qlf_wb.txt"
 set /a WB=%WB%+0 >nul 2>&1 || set "WB=0"
 set "M=manifest_cu.xml"

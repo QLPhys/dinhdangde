@@ -1,18 +1,29 @@
 @echo off
-rem Go add-in "QL_Format - Dinh dang de thi" (QL Physics) khoi Word tren may nay
-set "GUID={5D6E8A1C-3F2B-4C7D-9E10-A2B3C4D5E6F7}"
+rem Go add-in "QL_Format - Dinh dang de thi" - QL Physics khoi Word tren may nay.
+rem Chi xoa file cua QL_Format trong thu muc chung %PUBLIC%\WordAddins; add-in khac (neu co) van giu nguyen.
+setlocal
+set "C=%PUBLIC%\WordAddins"
+:chodong
 tasklist /fi "imagename eq WINWORD.EXE" 2>nul | find /i "WINWORD.EXE" >nul && (
-  echo Word dang mo. Hay DONG HET Word roi bam phim bat ky de tiep tuc...
+  echo Word dang mo. Hay LUU tai lieu va DONG HET Word, roi bam phim bat ky de tiep tuc...
   pause >nul
+  goto chodong
 )
-reg delete "HKCU\Software\Microsoft\Office\16.0\WEF\TrustedCatalogs\%GUID%" /f >nul 2>&1
+if exist "%C%\QL_Format.xml" del /q "%C%\QL_Format.xml"
 reg delete "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "QLPhysDinhDangDe" /f >nul 2>&1
 reg delete "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "QLPhysThuSR" /f >nul 2>&1
-echo Dang go thu muc dung chung (Windows co the hoi quyen quan tri - chon YES)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBTAG0AYgBTAGgAYQByAGUAIAAtAE4AYQBtAGUAIAAnAFEATABGAG8AcgBtAGEAdABBAGQAZABpAG4AJwAgAC0ARQByAHIAbwByAEEAYwB0AGkAbwBuACAAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAgAHwAIABSAGUAbQBvAHYAZQAtAFMAbQBiAFMAaABhAHIAZQAgAC0ARgBvAHIAYwBlACAALQBFAHIAcgBvAHIAQQBjAHQAaQBvAG4AIABTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlAAoA' } catch { }"
-if exist "%PUBLIC%\QLPhysics\QLFormat" rmdir /s /q "%PUBLIC%\QLPhysics\QLFormat"
 if exist "%LOCALAPPDATA%\QLPhysics\DinhDangDe" rmdir /s /q "%LOCALAPPDATA%\QLPhysics\DinhDangDe"
-if exist "%LOCALAPPDATA%\QLPhysics\ThuSR" rmdir /s /q "%LOCALAPPDATA%\QLPhysics\ThuSR"
-if exist "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" rmdir /s /q "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" 2>nul
+set "ADM=0"
+if exist "%PUBLIC%\QLPhysics\QLFormat" set "ADM=1"
+if exist "%C%\" if not exist "%C%\*.xml" set "ADM=1"
+if "%ADM%"=="1" (
+  echo Dang go thu muc dung chung - Windows co the hoi quyen quan tri, chon YES...
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -EncodedCommand JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAnAAoAJABjACAAPQAgAEoAbwBpAG4ALQBQAGEAdABoACAAJABlAG4AdgA6AFAAVQBCAEwASQBDACAAJwBXAG8AcgBkAEEAZABkAGkAbgBzACcACgBHAGUAdAAtAFMAbQBiAFMAaABhAHIAZQAgAC0ATgBhAG0AZQAgACcAUQBMAEYAbwByAG0AYQB0AEEAZABkAGkAbgAnACAAfAAgAFIAZQBtAG8AdgBlAC0AUwBtAGIAUwBoAGEAcgBlACAALQBGAG8AcgBjAGUACgBpAGYAIAAoAC0AbgBvAHQAIAAoAEcAZQB0AC0AQwBoAGkAbABkAEkAdABlAG0AIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAYwAgAC0ARgBpAGwAdABlAHIAIAAnACoALgB4AG0AbAAnACkAKQAgAHsAIABHAGUAdAAtAFMAbQBiAFMAaABhAHIAZQAgAC0ATgBhAG0AZQAgACcAVwBvAHIAZABBAGQAZABpAG4AcwAnACAAfAAgAFIAZQBtAG8AdgBlAC0AUwBtAGIAUwBoAGEAcgBlACAALQBGAG8AcgBjAGUAIAB9AAoA' } catch { }"
+)
+powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAnAAoAJABrACAAPQAgACcASABLAEMAVQA6AFwAUwBvAGYAdAB3AGEAcgBlAFwATQBpAGMAcgBvAHMAbwBmAHQAXABPAGYAZgBpAGMAZQBcADEANgAuADAAXABXAEUARgBcAFQAcgB1AHMAdABlAGQAQwBhAHQAYQBsAG8AZwBzACcACgAkAGMAIAA9ACAASgBvAGkAbgAtAFAAYQB0AGgAIAAkAGUAbgB2ADoAUABVAEIATABJAEMAIAAnAFcAbwByAGQAQQBkAGQAaQBuAHMAJwAKACQAdQBuAGMAIAA9ACAAJwBcAFwAJwAgACsAIAAkAGUAbgB2ADoAQwBPAE0AUABVAFQARQBSAE4AQQBNAEUAIAArACAAJwBcAFcAbwByAGQAQQBkAGQAaQBuAHMAJwAKACQAZQBtAHAAdAB5ACAAPQAgAC0AbgBvAHQAIAAoAEcAZQB0AC0AQwBoAGkAbABkAEkAdABlAG0AIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAYwAgAC0ARgBpAGwAdABlAHIAIAAnACoALgB4AG0AbAAnACkACgBmAG8AcgBlAGEAYwBoACAAKAAkAGUAIABpAG4AIABAACgARwBlAHQALQBDAGgAaQBsAGQASQB0AGUAbQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABrACkAKQAgAHsACgAgACAAJAB1ACAAPQAgACgAWwBzAHQAcgBpAG4AZwBdACgARwBlAHQALQBJAHQAZQBtAFAAcgBvAHAAZQByAHQAeQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABlAC4AUABTAFAAYQB0AGgAKQAuAFUAcgBsACkALgBUAHIAaQBtAEUAbgBkACgAJwBcACcAKQAKACAAIAAkAGkAZAAgAD0AIAAkAGUALgBQAFMAQwBoAGkAbABkAE4AYQBtAGUACgAgACAAaQBmACAAKAAoACQAZQBtAHAAdAB5ACAALQBhAG4AZAAgACgAJAB1ACAALQBlAHEAIAAkAHUAbgBjACkAKQAgAC0AbwByACAAKAAkAGkAZAAgAC0AZQBxACAAJwB7ADUARAA2AEUAOABBADEAQwAtADMARgAyAEIALQA0AEMANwBEAC0AOQBFADEAMAAtAEEAMgBCADMAQwA0AEQANQBFADYARgA3AH0AJwApACAALQBvAHIAIAAoACQAdQAgAC0AbABpAGsAZQAgACcAXABcACoAXABRAEwARgBvAHIAbQBhAHQAQQBkAGQAaQBuACcAKQApACAAewAgAFIAZQBtAG8AdgBlAC0ASQB0AGUAbQAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABlAC4AUABTAFAAYQB0AGgAIAAtAFIAZQBjAHUAcgBzAGUAIAAtAEYAbwByAGMAZQAgAH0ACgB9AAoA
+if exist "%PUBLIC%\QLPhysics\QLFormat" rmdir /s /q "%PUBLIC%\QLPhysics\QLFormat"
+rmdir "%PUBLIC%\QLPhysics" >nul 2>&1
+if exist "%C%\" if not exist "%C%\*.xml" rmdir /s /q "%C%"
 echo Da go add-in QL_Format. Mo lai Word, the QL_Format se khong con.
+echo  (Neu van thay: Insert ^> My Add-ins ^> SHARED FOLDER, bam chuot phai vao QL_Format ^> Remove.)
 pause
