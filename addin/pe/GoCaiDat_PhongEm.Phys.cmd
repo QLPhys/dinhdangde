@@ -11,6 +11,6 @@ echo Dang go thu muc dung chung (Windows co the hoi quyen quan tri - chon YES)..
 powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBTAG0AYgBTAGgAYQByAGUAIAAtAE4AYQBtAGUAIAAnAFAAaABvAG4AZwBFAG0AUABoAHkAcwBBAGQAZABpAG4AJwAgAC0ARQByAHIAbwByAEEAYwB0AGkAbwBuACAAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAgAHwAIABSAGUAbQBvAHYAZQAtAFMAbQBiAFMAaABhAHIAZQAgAC0ARgBvAHIAYwBlACAALQBFAHIAcgBvAHIAQQBjAHQAaQBvAG4AIABTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlAAoA' } catch { }"
 if exist "%PUBLIC%\PhongEmPhys\Addin" rmdir /s /q "%PUBLIC%\PhongEmPhys\Addin"
 if exist "%LOCALAPPDATA%\PhongEmPhys\Addin" rmdir /s /q "%LOCALAPPDATA%\PhongEmPhys\Addin"
-if exist "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" rmdir /s /q "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" 2>nul
+rem KHONG xoa bo nho tam Wef cua Word: xoa se lam mat ca cac add-in khac da them tu thu muc dung chung
 echo Da go add-in PhongEm.Phys. Mo lai Word, the PhongEm.Phys se khong con.
 pause

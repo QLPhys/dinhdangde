@@ -44,7 +44,7 @@ reg add "HKCU\Software\Microsoft\Office\16.0\WEF\TrustedCatalogs\%GUID%" /v "Fla
 rem bo cach cai cu (Developer) de khong bi 2 the PhongEm.Phys
 reg delete "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "PhongEmPhys" /f >nul 2>&1
 if exist "%LOCALAPPDATA%\PhongEmPhys\Addin" rmdir /s /q "%LOCALAPPDATA%\PhongEmPhys\Addin"
-if exist "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" rmdir /s /q "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" 2>nul
+rem KHONG xoa bo nho tam Wef cua Word: xoa se lam mat ca cac add-in khac da them tu thu muc dung chung
 echo.
 echo DA CAI XONG (thu muc dung chung: %UNC%).
 echo  LAM 1 LAN DUY NHAT sau khi cai:
@@ -66,7 +66,6 @@ echo Muon the PhongEm.Phys luon hien: chay lai bo cai nay va chon YES khi Window
 set "D=%LOCALAPPDATA%\PhongEmPhys\Addin"
 if not exist "%D%" mkdir "%D%"
 copy /y "%CAT%\manifest.xml" "%D%\manifest.xml" >nul
-if exist "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" rmdir /s /q "%LOCALAPPDATA%\Microsoft\Office\16.0\Wef" 2>nul
 reg add "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "PhongEmPhys" /t REG_SZ /d "%D%\manifest.xml" /f >nul
 echo.
 pause
