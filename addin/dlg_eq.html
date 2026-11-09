@@ -200,6 +200,7 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
     } else if (m === 'cx') {
       // câu cần xem: thống kê đủ các câu có cảnh báo, bấm "Đến" để tới câu, bảng vẫn mở; xử lý xong bấm Rà lại / Đóng
       document.body.classList.add('cx');
+      const XU = P.get('xu') === '1';
       W.innerHTML = '<div class="t">Đang rà đề…</div>';
       let items = [], opt = [], PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' }, fp = 0, msg = '';
       const seen = new Set();
@@ -211,14 +212,17 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
       const draw = () => {
         const parts = [0, 1, 2, 3, 4].filter((p) => !p || items.some((x) => x.p === p) || opt.some((x) => x.p === p));
         const vis = items.filter((x) => !fp || x.p === fp), visO = opt.filter((x) => !fp || x.p === fp);
-        let h = '<div class="row cxtop"><b>' + items.length + ' mục cần xem</b><span style="flex:1"></span><button type="button" id="rf" title="Đọc lại đề sau khi sửa">⟳ Rà lại</button><button type="button" id="x" title="Đóng (Esc)">✕</button></div>';
+        let h = '<div class="row cxtop"><b>' + (XU ? 'Trước khi xuất: ' : '') + items.length + ' mục cần xem</b><span style="flex:1"></span><button type="button" id="rf" title="Đọc lại đề sau khi sửa">⟳ Rà lại</button><button type="button" id="x" title="Đóng (Esc)">✕</button></div>';
         if (parts.length > 2) h += '<div class="tabs">' + parts.map((p) => '<button type="button" data-p="' + p + '" class="' + (fp === p ? 'on' : '') + '">' + (p ? PN[p].replace('Phần ', '') : 'Tất cả') + '</button>').join('') + '</div>';
         h += '<div class="sb">';
         if (!items.length) h += '<div class="t k-ok" style="color:var(--ok);font-weight:600">✓ Không còn câu cần xem.</div>';
         h += vis.map((x) => row(x, items.indexOf(x), 'i')).join('');
         if (visO.length) h += '<details class="cxo"><summary>Không bắt buộc · ' + visO.length + ' câu chưa có hướng dẫn giải</summary>' + visO.map((x) => row(x, opt.indexOf(x), 'o')).join('') + '</details>';
         h += '</div><div class="st" id="st">' + esc(msg) + '</div>';
+        // mở từ "Xuất GV + HS": bảng vẫn giữ để đến câu bất kỳ, sửa xong bấm Xuất (công cụ đọc lại đề rồi mới xuất)
+        if (XU) h += '<div class="row" style="border-top:1px solid #edf0f5;padding-top:7px"><button class="pri" type="button" id="xu">' + (items.length ? 'Vẫn xuất GV + HS' : 'Xuất GV + HS') + '</button><span class="st">' + (items.length ? 'hoặc bấm Đến để sửa từng câu' : '') + '</span></div>';
         W.innerHTML = h;
+        if (XU) document.getElementById('xu').onclick = () => send({ exp: 1 });
         W.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const g = b.dataset.g, x = g[0] === 'i' ? items[+g.slice(1)] : opt[+g.slice(1)]; if (!x) return; seen.add(key(x)); send({ go: x.s }); msg = 'Đang ở ' + (x.ph ? 'Câu ' + x.k : PN[x.p] + ' – Câu ' + x.k) + '. Sửa xong bấm ⟳ Rà lại.'; const op = W.querySelector('details.cxo'); const wasOpen = op && op.open; draw(); if (wasOpen) W.querySelector('details.cxo').open = true; }; });
         W.querySelectorAll('[data-p]').forEach((b) => { b.onclick = () => { fp = +b.dataset.p; draw(); }; });
         document.getElementById('x').onclick = () => send({ close: 1 });
