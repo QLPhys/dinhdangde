@@ -878,7 +878,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.10-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.10-b3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -2959,8 +2959,21 @@ function textNotes(q) {
   if (junk.length) out.push('Đề có ký tự lạ (có thể do chép từ web/PDF): ' + Array.from(new Set(junk)).slice(0, 4).map((x) => '"' + x + '"').join(', ') + '. Hãy xem lại.');
   return out;
 }
+// chữ "l" đứng ở vị trí số trước dấu phẩy thập phân và đơn vị ("l,25atm", "l,5 atm"): chắc chắn là số 1 -> sửa
+const ELL_RE = /(?<![\p{L}\d])l(?=[,.]\d+\s*(?:atm|at|lít|kg|cm|mm|km|kPa|Pa|mol|N|J|K|m|g|s)(?![\p{L}\d]))/gu;
+function fixEll(q) {
+  if (q.ellDone) return; q.ellDone = true;
+  const seen = [];
+  const fix = (toks) => {
+    if (!toks || !toks.length || toks.some((t) => t.kind === 'c' && t.ch.length !== 1)) return;
+    const tx = textOf(toks);
+    for (const m of tx.matchAll(ELL_RE)) { const t = toks[m.index]; if (t && t.kind === 'c' && t.ch === 'l') { toks[m.index] = new Tok('c', '1', t.rpr, t.flag, t.el); seen.push(tx.slice(m.index, m.index + 8).replace(/\s.*$/, '')); } }
+  };
+  q.stem.forEach(fix); Object.values(q.opts || {}).forEach(fix); Object.values(q.stmts || {}).forEach(fix);
+  if (seen.length) q.warn.push('Chữ "l" gõ thay cho số 1 đã được sửa: ' + Array.from(new Set(seen)).slice(0, 4).map((x) => '"' + x + '" → "1' + x.slice(1) + '"').join(', '));
+}
 function finalizeQ(q) {
-  if (!q.pwarn) q.pwarn = q.warn.slice().concat(textNotes(q));
+  if (!q.pwarn) { fixEll(q); q.pwarn = q.warn.slice().concat(textNotes(q)); }
   q.warn = q.pwarn.slice();
   if (q.part === 1) {
     if (q.manualAns !== undefined) {
@@ -4143,7 +4156,7 @@ function wordMap(parsed, qs, wpi) {
       start = p && wpi.has(p) ? wpi.get(p) : at(tbl);
     } else if (q.srcEi !== undefined) start = at(entEl(q.srcEi));
     const c = q.cluster;
-    return { id: q.id, part: q.part, sec: q.sec || 0, k: cnt[ck], num: q.numSrc || null, start, lead: c && c.ei !== undefined ? at(entEl(c.ei)) : -1, clusterN: c ? (c.count || c.refs.length || c.members.length) : 0, clusterFirst: !!(c && c.members[0] === q) };
+    return { id: q.id, part: q.part, sec: q.sec || 0, sn: ms ? secName(q.sec || 0) : '', k: cnt[ck], num: q.numSrc || null, start, lead: c && c.ei !== undefined ? at(entEl(c.ei)) : -1, clusterN: c ? (c.count || c.refs.length || c.members.length) : 0, clusterFirst: !!(c && c.members[0] === q) };
   });
   const heads = (parsed.heads || []).map((h) => ({ part: h.part, at: at(entEl(h.ei)) })).filter((h) => h.at >= 0);
   const lt = (parsed.secTh || []).filter(Boolean).map((t) => at(entEl(t.at))).filter((x) => x >= 0);   // đầu phần lý thuyết của từng dạng: ranh giới câu
@@ -4229,6 +4242,61 @@ function rawList(body, parsed, qs) {
 
 function need(id) { const q = S && S.reg.get(id); if (!q) throw new Error('Không tìm thấy câu.'); return q; }
 
+// ---- yêu cầu làm tròn của câu trả lời ngắn: so số chữ số thập phân của đáp số với yêu cầu ghi trong đề
+const RQ_PAR = /\([^()]*?(?:làm\s*tròn|chữ\s*số\s*(?:thập\s*phân|sau\s*dấu\s*phẩy|có\s*nghĩa)|phần\s*nguyên|lấy\s*(?:đến|tới)\s*\d)[^()]*?\)/i;
+const RQ_BARE = /(?:\s*,\s*|\s+và\s+|\s+)?(?:kết\s*quả\s*)?(?:được\s*)?làm\s*tròn[^.;?()]*/i;
+const NUMW = { 'một': 1, hai: 2, ba: 3, 'bốn': 4, 'năm': 5, 'sáu': 6 };
+const DECW = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu'];
+function roundTxt(n) { return n === 0 ? '(Kết quả làm tròn đến hàng đơn vị)' : '(Kết quả làm tròn đến ' + (DECW[n] || n) + ' chữ số thập phân)'; }
+function roundKind(s) {
+  if (/có\s*nghĩa/i.test(s)) return { k: 'sig' };
+  if (/làm\s*tròn[^()]*?phần\s*nguyên/i.test(s)) return { k: 'dec', n: 0 };   // "làm tròn đến phần nguyên" = hàng đơn vị
+  if (/phần\s*nguyên|không\s*lấy\s*chữ\s*số\s*sau/i.test(s)) return { k: 'int' };
+  if (/hàng\s*đơn\s*vị/i.test(s)) return { k: 'dec', n: 0 };
+  const m = /(\d|một|hai|ba|bốn|năm|sáu)\s*chữ\s*(?:số\s*)?(?:thập\s*phân|sau\s*(?:dấu\s*)?(?:phẩy|dấu\s*phẩy))/i.exec(s);
+  if (m) return { k: 'dec', n: /\d/.test(m[1]) ? +m[1] : NUMW[m[1].toLowerCase()] };
+  const h = /phần\s*(mười|trăm|nghìn|ngàn)/i.exec(s);
+  if (h) return { k: 'dec', n: { 'mười': 1, 'trăm': 2, 'nghìn': 3, 'ngàn': 3 }[h[1].toLowerCase()] };
+  return { k: '?' };
+}
+// đáp số "2,40" -> 2 chữ số thập phân; "1,6.10⁻¹⁹" -> tính phần trước ".10"
+function roundPlan(stemText, v) {
+  const t = String(stemText || '').replace(/⟦[^⟧]*⟧/g, ' ').replace(/\uFFFC/g, ' ').replace(/\s+/g, ' ');
+  const mant = String(v || '').replace(/\s+/g, '').split(/\.10|×10|x10|\*10/)[0];
+  if (!/^-?\d+(?:[,.]\d+)?$/.test(mant)) return null;
+  const dec = /[,.]/.test(mant) ? mant.split(/[,.]/)[1].length : 0;
+  let m = RQ_PAR.exec(t), bare = false;
+  if (!m) { m = RQ_BARE.exec(t); bare = !!m; }
+  const cur = m ? m[0].replace(/^[\s,]+|\s+$/g, '').replace(/^và\s+/i, '') : '';
+  const kd = cur ? roundKind(cur) : null;
+  return { dec, text: roundTxt(dec), cur, bare, curKind: kd ? kd.k : null, ok: !!kd && kd.k === 'dec' && kd.n === dec };
+}
+// ghi yêu cầu làm tròn vào phần đề (thay yêu cầu cũ đúng chỗ, hoặc thêm vào cuối đề)
+function applyRound(q, n) {
+  const want = roundTxt(n), core = want.slice(1, -1).replace(/^Kết quả /, '');
+  const paras = q.stem;
+  const mk = (str, like) => Array.from(str).map((ch) => new Tok('c', ch, like ? like.rpr : null, false, null));
+  for (const re of [RQ_PAR, RQ_BARE]) {
+    for (let i = paras.length - 1; i >= 0; i--) {
+      const tx = textOf(paras[i]); const m = re.exec(tx);
+      if (!m) continue;
+      let a = m.index, b = m.index + m[0].length, ins;
+      if (re === RQ_PAR) ins = want;
+      else { const lead = /^\s*,/.test(m[0]) ? ', ' : /^\s*và\s/i.test(m[0]) ? ' và ' : /^\s/.test(m[0]) ? ' ' : ''; ins = lead + core; }
+      const like = paras[i][a] && paras[i][a].kind === 'c' && paras[i][a].ch.trim() ? paras[i][a] : paras[i].find((x) => x.kind === 'c' && /\p{L}/u.test(x.ch));
+      paras[i] = paras[i].slice(0, a).concat(mk(ins, like), paras[i].slice(b));
+      return 'replace';
+    }
+  }
+  let j = -1; for (let i = paras.length - 1; i >= 0; i--) if (/\p{L}/u.test(textOf(paras[i]))) { j = i; break; }
+  if (j < 0) { paras.push(mk(want, null)); return 'add'; }
+  const like = paras[j].slice().reverse().find((x) => x.kind === 'c' && /\p{L}/u.test(x.ch));
+  const tl = trim(paras[j]), lt = tl[tl.length - 1];
+  // cuối đề là chữ / số / dấu câu: ghi tiếp cùng dòng; cuối đề là công thức, hình: xuống dòng riêng
+  if (j === paras.length - 1 && lt && lt.kind === 'c' && /[\p{L}\d\.\?:!%\)]/u.test(lt.ch)) paras[j] = tl.concat(mk(' ' + want, like));
+  else paras.splice(paras.length, 0, mk(want, like));
+  return 'add';
+}
 function editQ(id, f) {
   const q = need(id);
   if (!q.orig) q.orig = { stem: q.stem, opts: Object.assign({}, q.opts), stmts: Object.assign({}, q.stmts), tf: Object.assign({}, q.tf), sol: q.sol, ans: q.ans, manualAns: q.manualAns, pwarn: q.pwarn, ansText: q.ansText };
@@ -4244,6 +4312,7 @@ function editQ(id, f) {
   if (q.part === 2 && f.stmts) for (const L of 'abcd') if (f.stmts[L] !== undefined) single(q.stmts, 'stmts', L, f.stmts[L]);
   if (q.part === 1 && f.ans !== undefined) q.manualAns = f.ans || null;
   if (q.part === 3 && f.ans3 !== undefined) q.ansText = String(f.ans3).replace(/\s+/g, ' ').trim() || null;
+  if (q.part === 3 && f.round !== undefined && f.round !== null && f.round !== '') { q.stem = q.stem.map((p) => p.slice()); applyRound(q, +f.round); }
   if (q.part === 2 && f.tf) {
     const dv = stmtTruth(q);
     for (const L of 'abcd') if (f.tf[L] !== undefined && f.tf[L] !== (dv[L] || '')) { if (f.tf[L] === 'Đ' || f.tf[L] === 'S') q.tf[L] = f.tf[L]; else delete q.tf[L]; }
@@ -4608,7 +4677,8 @@ async function quick(arrayBuffer, opt) {
     const em = qs.filter((q) => q.essayMaybe).length; if (em) notes.push(em + ' câu có vẻ là tự luận (lời giải nhiều dòng) nhưng đề không có tiêu đề phần: đang xếp vào Phần III (trả lời ngắn). Muốn xếp vào Phần IV, hãy dùng "Tiếp tục".'); }
   // số câu mới theo từng phần
   const cnt = {}, newNo = new Map();
-  for (const q of qs) { const pk = opt.noParts ? 0 : q.part; cnt[pk] = (cnt[pk] || 0) + 1; newNo.set(q, cnt[pk]); }
+  const msq = qs.some((q) => q.sec > 0);   // chuyên đề nhiều dạng: đánh lại từ 1 trong từng phần của mỗi dạng
+  for (const q of qs) { const pk = (msq ? (q.sec || 0) + '.' : '') + (opt.noParts ? 0 : q.part); cnt[pk] = (cnt[pk] || 0) + 1; newNo.set(q, cnt[pk]); }
   const items = kids(body).filter((c) => !isW(c, 'sectPr'));
   const idxOf = new Map(); kids(body).forEach((c, i) => idxOf.set(c, i));
   const elIdx = (e) => { const el = e.lay || e.srcTbl || e.el; return idxOf.has(el) ? idxOf.get(el) : -1; };
@@ -5015,7 +5085,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState };
+window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState };
 })();
 
 </script>
@@ -5539,7 +5609,11 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     const f = e.target.closest('form.edit'); if (!f) return;
     const id = +f.dataset.form, q = views.get(id), g = (n) => (f.elements[n] ? f.elements[n].value : undefined);
     const fields = { stem: g('stem'), sol: g('sol') };
-    if (q.part === 3) fields.ans3 = g('ans3');
+    if (q.part === 3) {
+      fields.ans3 = g('ans3');
+      const a3 = String(fields.ans3 || '').replace(/\s+/g, '').replace(/\./g, ',');
+      if (a3 && a3 !== String(q.ansText || '').replace(/\s+/g, '')) fields.round = askRound(fields.stem !== undefined ? fields.stem : q.stem.join(' '), a3);
+    }
     if (q.opts) { fields.opts = {}; for (const L of 'ABCD') fields.opts[L] = g('o' + L); fields.ans = g('ans'); }
     if (q.stmts) { fields.stmts = {}; fields.tf = {}; for (const L of 'abcd') { fields.stmts[L] = g('s' + L); fields.tf[L] = g('t' + L); } }
     try { views.set(id, window.DeThi.edit(id, fields)); openForms.delete(id); drafts.delete(id); renderReview(); }
@@ -5862,9 +5936,15 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     if (!/^-?\d+(,\d+)?$/.test(v)) return { err: 'Đáp số chỉ gồm chữ số, dấu "-" và một dấu phẩy thập phân.' };
     const notes = [];
     if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu từ 2025 chỉ có 4 ô (kể cả dấu "-" và dấu phẩy).');
-    const r = roundReq3(stemText), dec = v.includes(',') ? v.split(',')[1].length : 0;
-    if (r !== null && dec !== r) notes.push('Đề yêu cầu ' + (r === 0 ? 'lấy phần nguyên' : 'làm tròn ' + r + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
     return { v, notes };
+  }
+  // yêu cầu làm tròn theo đáp số vừa nhập (2,40 -> hai chữ số thập phân): hỏi trước khi thêm / đổi trong đề
+  function askRound(stemText, v) {
+    const pl = window.DeThi.roundPlan ? window.DeThi.roundPlan(stemText, v) : null;
+    if (!pl || pl.ok) return undefined;
+    const msg = pl.cur ? 'Đáp số ' + v + ' có ' + (pl.dec ? pl.dec + ' chữ số thập phân' : 'dạng số nguyên') + ' nhưng đề đang ghi "' + pl.cur.slice(0, 120) + '".\n\nĐổi thành "' + pl.text + '"?'
+      : 'Đề chưa có yêu cầu làm tròn.\n\nThêm "' + pl.text + '" vào cuối đề (theo đáp số ' + v + ')?';
+    return window.confirm(msg + '\n\nOK: ' + (pl.cur ? 'đổi yêu cầu' : 'thêm yêu cầu') + ' · Cancel: chỉ ghi đáp số') ? pl.dec : undefined;
   }
   const need3 = (id) => { const v = views.get(id); return v && v.part === 3 && !dropped.has(id) && !v.ansText && v.warn.some((w) => /đáp án số/i.test(w)); };
   function quickEdit(id, fields, msg) {
@@ -5875,7 +5955,8 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     const id = +card.dataset.id, v = views.get(id), inp = card.querySelector('input.qa3');
     const c = checkAns3(inp ? inp.value : '', v.stem.join(' '));
     if (c.err) { const e = card.querySelector('.err3'); if (e) e.textContent = c.err; if (inp) inp.focus(); return; }
-    if (!quickEdit(id, { ans3: c.v })) return;
+    const rd = askRound(v.stem.join(' '), c.v);
+    if (!quickEdit(id, { ans3: c.v, round: rd })) return;
     const ids = keptIds(), k = ids.indexOf(id);
     const nx = ids.slice(k + 1).concat(ids.slice(0, k)).find(need3);
     toast((c.notes.length ? '⚠ ' + c.notes.join(' ') + ' ' : '') + 'Đã ghi Đáp án: ' + c.v + '.' + (nx != null ? ' Chuyển sang câu Phần III kế tiếp còn thiếu đáp số.' : ' Không còn câu Phần III nào thiếu đáp số.'));
@@ -6271,7 +6352,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.10-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.10-b3 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }

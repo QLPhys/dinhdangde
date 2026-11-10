@@ -91,7 +91,6 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
         if (nb && v.length > nb) notes.push('Đáp số dài ' + v.length + ' ký tự nhưng bảng chỉ có ' + nb + ' ô: sẽ thêm ' + (v.length - nb) + ' ô vào bảng.');
         else if (v.length > 4) notes.push('Đáp số dài ' + v.length + ' ký tự: phiếu trả lời mẫu 2025 chỉ có 4 ô.');
         const dec = v.includes(',') ? v.split(',')[1].length : 0;
-        if (rd !== null && rd !== '' && dec !== +rd) notes.push('Đề yêu cầu ' + (rd === '0' ? 'lấy phần nguyên' : 'làm tròn ' + rd + ' chữ số thập phân') + ' nhưng đáp số có ' + dec + ' chữ số thập phân.');
         if (notes.length && warned !== v) { warned = v; nt.textContent = notes.join(' ') + ' Bấm "Ghi vào đề" lần nữa để vẫn ghi.'; document.getElementById('ok').textContent = 'Vẫn ghi'; return; }
         send({ v });
       };
@@ -204,9 +203,9 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
       W.innerHTML = '<div class="t">Đang rà đề…</div>';
       let items = [], opt = [], PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' }, fp = 0, msg = '';
       const seen = new Set();
-      const key = (x) => x.p + '|' + x.k + '|' + (x.ph ? 'ph' : '') + (x.o ? 'o' : '');
+      const key = (x) => (x.sn || '') + '|' + x.p + '|' + x.k + '|' + (x.ph ? 'ph' : '') + (x.o ? 'o' : '');
       const row = (x, i, grp) => {
-        const lab = x.ph ? (x.n > 1 ? 'Câu ' + x.k + ' → Câu ' + x.k2 : 'Câu ' + x.k) + ' · chưa có tiêu đề phần' : PN[x.p] + ' – Câu ' + x.k;
+        const lab = x.ph ? (x.n > 1 ? 'Câu ' + x.k + ' → Câu ' + x.k2 : 'Câu ' + x.k) + ' · chưa có tiêu đề phần' : (x.sn ? x.sn + ' · ' : '') + PN[x.p] + ' – Câu ' + x.k;
         return '<div class="cxi' + (seen.has(key(x)) ? ' seen' : '') + (x.ph ? ' ph' : '') + '"><div><div class="cxh">' + (seen.has(key(x)) ? '✓ ' : '') + esc(lab) + '</div>' + x.w.map((w) => '<div class="cxw">• ' + esc(w) + '</div>').join('') + '</div><button type="button" data-g="' + grp + i + '">Đến</button></div>';
       };
       const draw = () => {
