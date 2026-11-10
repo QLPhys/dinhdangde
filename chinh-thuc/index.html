@@ -878,7 +878,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.10.2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.10.3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -2300,10 +2300,12 @@ function parseRaw(body, qkeys, popt) {
     if (/(^|\n)\s*a\s*[\.\)][\s\S]*\n\s*b\s*[\.\)]/.test(j2)) return 2;
     return 3;
   };
+  // chuyên đề nhiều dạng: mỗi "[LT]" giữa đề mở một mục mới (lý thuyết riêng + PHẦN I/II/III riêng)
+  let SEC = 0, thMid = null; const secTh = [];
   const newQ = (ei0) => {
     const pt = NOHEAD ? guessPart(ei0) : part;
     const q = new Q(pt);
-    q.srcEi = ei0;
+    q.srcEi = ei0; q.sec = SEC;
     // đề không có tiêu đề phần (hoặc câu đứng trước tiêu đề phần đầu tiên): phần chỉ là đoán, cần người dùng xác nhận
     if (!popt.part && !PA && (NOHEAD || !heads.length)) q.partGuess = true;
     if (NOHEAD && pt === 4) q.guess4 = true;
@@ -2421,6 +2423,25 @@ function parseRaw(body, qkeys, popt) {
       rk('keep');
       continue;
     }
+    if (ents[ei].ltMark === 'LT' && qs.length && ei >= preEnd) {
+      // "[LT]" sau khi đã có câu hỏi: lý thuyết của dạng tiếp theo -> mục mới
+      SEC++; thMid = { at: ei, els: [], mark: new Set(), sol: new Set() }; secTh[SEC] = thMid;
+      const tel = ents[ei].lay || ents[ei].srcTbl || el;
+      thMid.els.push(tel); thMid.mark.add(tel);
+      cur = null; mode = 'stem'; pc = null; pcAct = null; pendSg = null; part = 1;
+      rk('keep'); continue;
+    }
+    if (thMid) {
+      const tt = ents[ei].toks ? textOf(ents[ei].toks).trim() : '';
+      if (ents[ei].ltMark === 'BT') { thMid = null; rk('keep'); continue; }
+      if (ents[ei].toks && (QSTART_RE.test(tt) || paraHasNumQ(el, qkeys) || headingPart(tt.toUpperCase(), tt) !== null)) thMid = null;
+      else if (isW(el, 'tbl') && tblHasQuestions(el)) thMid = null;
+      else {
+        const tel = ents[ei].lay || ents[ei].srcTbl || el;
+        if (!thMid.els.includes(tel)) thMid.els.push(tel);
+        rk('keep'); continue;
+      }
+    }
     if (pc && pc.open && isW(el, 'tbl') && !ents[ei].toks && !tblHasQuestions(el)) { pc.body.push([new Tok('n', null, null, false, el)]); rk('keep'); continue; }
     if (isW(el, 'tbl') && isKeyTable(el)) { addKey(tblKeyPairs(el)); rk('key'); continue; }
     if (isW(el, 'tbl') && cur && cur.part === 2 && mode !== 'sol' && isTfTable(el)) {
@@ -2494,20 +2515,24 @@ function parseRaw(body, qkeys, popt) {
           for (const p of findAllW(tc, 'p')) { const t = trim(tokensOf(p)); if (hasContent(t)) toks = toks.concat(toks.length ? [new Tok('c', ' ')] : [], t); }
           if (!hasContent(toks)) continue;
           const tx = textOf(toks).split(OBJ).join('').trim();
-          if (!st && /^\s*[a-d]\s*[\.\)]/.test(textOf(toks))) st = toks;
+          if (!st && /^\s*[a-dA-D]\s*[\.\)]/.test(textOf(toks))) st = toks;
           else if (!tx || (st && tx.length < 60)) toks.filter((t) => t.kind === 'n' && (isFigTok(t) || bigObj(t))).forEach((t) => { if (!figs.some((f) => f[0].el === t.el)) figs.push([t]); });
         }
         rows.push({ st, figs });
       }
-      const labs = rows.filter((r) => r.st).map((r) => /^\s*([a-d])/.exec(textOf(r.st))[1]);
-      if (labs.length >= 3 && labs.join('') === 'abcd'.slice(0, labs.length) && rows.every((r) => r.st || !r.figs.length)) {
+      const labs0 = rows.filter((r) => r.st).map((r) => /^\s*([a-dA-D])/.exec(textOf(r.st))[1]);
+      const uc = labs0.length && labs0.every((L) => /[A-D]/.test(L));     // ý ghi nhãn in hoa A. B. C. D. trong bảng
+      const labs = labs0.map((L) => L.toLowerCase());
+      if (labs.length >= 3 && labs.join('') === 'abcd'.slice(0, labs.length) && (uc || labs0.every((L) => /[a-d]/.test(L))) && rows.every((r) => r.st || !r.figs.length)) {
+        if (uc && !cur.ucStmt) { cur.ucStmt = true; cur.warn.push('Các ý ghi nhãn in hoa A, B, C, D: đã đổi thành a), b), c), d), hãy xem lại.'); }
         for (const r of rows) {
           if (!r.st) continue;
-          const lm = /^\s*([a-d])\s*[\.\)]\s*/.exec(textOf(r.st));
+          const lm = /^\s*([a-dA-D])\s*[\.\)]\s*/.exec(textOf(r.st));
+          const L = lm[1].toLowerCase();
           let body = trim(r.st.slice(lm[0].length));
           const v = takeVerdict(body);
-          if (v) { body = v.toks; cur.tf[lm[1]] = v.val; }
-          cur.stmts[lm[1]] = body;
+          if (v) { body = v.toks; cur.tf[L] = v.val; }
+          cur.stmts[L] = body;
           r.figs.forEach((f) => cur.stem.push(f));
         }
         mode = 'stmts'; expStmt = Object.keys(cur.stmts).length;
@@ -2614,7 +2639,7 @@ function parseRaw(body, qkeys, popt) {
     }
     if (isKeyLine(txt)) { addKey(keyPairs(txt)); rk('key'); continue; }
     // tiêu đề phần
-    if (hp !== null) { part = hp; heads.push({ ei, part: hp }); cur = null; mode = 'stem'; pc = null; pcAct = null; pendSg = null; continue; }
+    if (hp !== null) { part = hp; heads.push({ ei, part: hp, sec: SEC }); cur = null; mode = 'stem'; pc = null; pcAct = null; pendSg = null; continue; }
     if (/^[-–— ]*H[ẾE]T[-–— ]*$/.test(up)) break;
     // câu dẫn của chùm câu hỏi (dữ kiện dùng chung)
     {
@@ -2871,7 +2896,7 @@ function parseRaw(body, qkeys, popt) {
     } else if (isW(e, 'tbl')) { if (tblHasQuestions(e)) break; preEls.push(e); }
     else break;
   }
-  return { titleEl, titleTxt, qs, theoryEls, theorySol, theoryMark, theoryHead: theoryHead0, ents, noHead: NOHEAD, preEls, heads, solFrom };
+  return { titleEl, titleTxt, qs, theoryEls, theorySol, theoryMark, theoryHead: theoryHead0, ents, noHead: NOHEAD, preEls, heads, solFrom, secTh };
 }
 
 // đáp án đánh dấu bằng dấu *, chữ đỏ, in đậm (chỉ dùng khi không có gạch chân / tô nền)
@@ -2934,8 +2959,21 @@ function textNotes(q) {
   if (junk.length) out.push('Đề có ký tự lạ (có thể do chép từ web/PDF): ' + Array.from(new Set(junk)).slice(0, 4).map((x) => '"' + x + '"').join(', ') + '. Hãy xem lại.');
   return out;
 }
+// chữ "l" đứng ở vị trí số trước dấu phẩy thập phân và đơn vị ("l,25atm", "l,5 atm"): chắc chắn là số 1 -> sửa
+const ELL_RE = /(?<![\p{L}\d])l(?=[,.]\d+\s*(?:atm|at|lít|kg|cm|mm|km|kPa|Pa|mol|N|J|K|m|g|s)(?![\p{L}\d]))/gu;
+function fixEll(q) {
+  if (q.ellDone) return; q.ellDone = true;
+  const seen = [];
+  const fix = (toks) => {
+    if (!toks || !toks.length || toks.some((t) => t.kind === 'c' && t.ch.length !== 1)) return;
+    const tx = textOf(toks);
+    for (const m of tx.matchAll(ELL_RE)) { const t = toks[m.index]; if (t && t.kind === 'c' && t.ch === 'l') { toks[m.index] = new Tok('c', '1', t.rpr, t.flag, t.el); seen.push(tx.slice(m.index, m.index + 8).replace(/\s.*$/, '')); } }
+  };
+  q.stem.forEach(fix); Object.values(q.opts || {}).forEach(fix); Object.values(q.stmts || {}).forEach(fix);
+  if (seen.length) q.warn.push('Chữ "l" gõ thay cho số 1 đã được sửa: ' + Array.from(new Set(seen)).slice(0, 4).map((x) => '"' + x + '" → "1' + x.slice(1) + '"').join(', '));
+}
 function finalizeQ(q) {
-  if (!q.pwarn) q.pwarn = q.warn.slice().concat(textNotes(q));
+  if (!q.pwarn) { fixEll(q); q.pwarn = q.warn.slice().concat(textNotes(q)); }
   q.warn = q.pwarn.slice();
   if (q.part === 1) {
     if (q.manualAns !== undefined) {
@@ -2968,6 +3006,16 @@ function finalizeQ(q) {
     const miss = ['A', 'B', 'C', 'D'].filter((c) => !(c in q.opts));
     if (miss.length) q.warn.push('Thiếu đáp án ' + miss.join(', '));
   } else if (q.part === 2) {
+    if (q.ucStmt) {
+      // ý ghi nhãn in hoa đã đổi thành a) b) c) d): dòng lời giải "A. Đúng …" đổi nhãn theo cho khớp
+      q.sol = q.sol.map((toks) => {
+        let k = 0; while (k < toks.length && toks[k].kind === 'c' && /\s/.test(toks[k].ch)) k++;
+        const a = toks[k], b = toks[k + 1];
+        if (!a || a.kind !== 'c' || !/^[A-D]$/.test(a.ch) || !b || b.kind !== 'c' || !/^[\.\)]$/.test(b.ch)) return toks;
+        const out = toks.slice(); out[k] = new Tok('c', a.ch.toLowerCase(), a.rpr, a.flag, a.el); out[k + 1] = new Tok('c', ')', b.rpr, b.flag, b.el);
+        return out;
+      });
+    }
     const miss = ['a', 'b', 'c', 'd'].filter((c) => !(c in q.stmts));
     if (miss.length) q.warn.push('Thiếu ý ' + miss.join(', '));
     if (Object.keys(q.tf || {}).length && Object.keys(q.tf).length < Object.keys(q.stmts).length) q.warn.push('Có ý chưa có đáp án Đúng/Sai');
@@ -3312,8 +3360,9 @@ function stmtTruth(q) {
   const t = Object.assign({}, q.tf || {});
   if (!Object.keys(t).length) {
     for (const toks of q.sol) {
-      const m = /^\s*([a-d])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai)\b/i.exec(textOf(toks));
-      if (m && !(m[1] in t)) t[m[1]] = m[2].toLowerCase() === 'đúng' ? 'Đ' : 'S';
+      const m = (q.ucStmt ? /^\s*([a-dA-D])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai)\b/i : /^\s*([a-d])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai)\b/i).exec(textOf(toks));
+      const L = m ? m[1].toLowerCase() : null;
+      if (m && !(L in t)) t[L] = m[2].toLowerCase() === 'đúng' ? 'Đ' : 'S';
     }
   }
   return t;
@@ -3339,10 +3388,10 @@ function partTitle(part, n) {
   const tab = lit('\t', { bold: true, color: BLUE });
   const sp = lit(' ', { bold: true, color: BLUE });
   let runs;
-  if (part === 1) runs = [tab, g('PHẦN I. CÂU TRẮC NGHIỆM PHƯƠNG ÁN NHIỀU LỰA CHỌN.'), sp, lit('Thí sinh trả lời từ câu 1 đến câu ' + n + '. Mỗi câu hỏi thí sinh chỉ chọn một phương án.')];
-  else if (part === 2) runs = [tab, g('PHẦN II. CÂU TRẮC NGHIỆM ĐÚNG SAI.'), sp, lit('Thí sinh trả lời từ câu 1 đến câu ' + n + '. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn '), lit('đúng', { bold: true, color: BLUE }), lit(' hoặc '), lit('sai', { bold: true, color: BLUE }), lit('.')];
-  else if (part === 3) runs = [tab, g('PHẦN III. CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN.'), sp, lit('Thí sinh trả lời từ câu 1 đến câu ' + n + '.')];
-  else runs = [tab, g('PHẦN IV. CÂU TỰ LUẬN.'), sp, lit('Thí sinh trình bày bài làm từ câu 1 đến câu ' + n + '.')];
+  if (part === 1) runs = [tab, g('PHẦN I. CÂU TRẮC NGHIỆM PHƯƠNG ÁN NHIỀU LỰA CHỌN.'), sp, lit((n === 1 ? 'Thí sinh trả lời câu 1' : 'Thí sinh trả lời từ câu 1 đến câu ' + n) + '. Mỗi câu hỏi thí sinh chỉ chọn một phương án.')];
+  else if (part === 2) runs = [tab, g('PHẦN II. CÂU TRẮC NGHIỆM ĐÚNG SAI.'), sp, lit((n === 1 ? 'Thí sinh trả lời câu 1' : 'Thí sinh trả lời từ câu 1 đến câu ' + n) + '. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn '), lit('đúng', { bold: true, color: BLUE }), lit(' hoặc '), lit('sai', { bold: true, color: BLUE }), lit('.')];
+  else if (part === 3) runs = [tab, g('PHẦN III. CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN.'), sp, lit((n === 1 ? 'Thí sinh trả lời câu 1' : 'Thí sinh trả lời từ câu 1 đến câu ' + n) + '.')];
+  else runs = [tab, g('PHẦN IV. CÂU TỰ LUẬN.'), sp, lit((n === 1 ? 'Thí sinh trình bày bài làm câu 1' : 'Thí sinh trình bày bài làm từ câu 1 đến câu ' + n) + '.')];
   return makeP(runs, { keepNext: true, before: 120, tabs: [360, 426] });
 }
 
@@ -3466,14 +3515,30 @@ function ansBoxTbl() {
   t.appendChild(tr);
   return t;
 }
+let SEC_TH = null;   // lý thuyết của từng dạng (mục 1, 2, …) khi giữ lý thuyết
+const multiSec = (qs) => STYLE !== 'm1' && !NOPARTS && qs.some((q) => q.sec > 0);
+function secName(sc) {
+  const els = sc ? (S.secTheory && S.secTheory[sc]) || [] : S.theory || [];
+  const tx = els.map((e) => (e.textContent || '')).join(' ').replace(/\s+/g, ' ');
+  const m = /D[ạa]ng\s*(\d{1,2})/i.exec(tx);
+  return m ? 'Dạng ' + m[1] : 'Mục ' + (sc + 1);
+}
 function buildBody(qs, showAnswer, headerElems) {
   const body = [].concat(headerElems);
   const emitted = new Set();
+  // chuyên đề nhiều dạng: từng dạng giữ lý thuyết + PHẦN I/II/III riêng, số câu đánh lại từ 1 trong từng phần
+  const multi = multiSec(qs);
+  const secs = multi ? Array.from(new Set(qs.map((q) => q.sec || 0))).sort((a, b) => a - b) : [null];
+  for (const sc of secs) {
+  const sq = sc === null ? qs : qs.filter((q) => (q.sec || 0) === sc);
+  if (multi && sc > 0 && SEC_TH && SEC_TH[sc]) body.push(...SEC_TH[sc].map((e) => e.cloneNode(true)));
   // không chia phần: một dãy câu theo thứ tự đề gốc, đánh số 1 → hết, không có dòng tiêu đề phần
-  const groups = NOPARTS && STYLE !== 'm1' ? [{ part: 0, pq: qs.slice() }] : [1, 2, 3, 4].map((p) => ({ part: p, pq: qs.filter((q) => q.part === p) }));
+  const groups = NOPARTS && STYLE !== 'm1' ? [{ part: 0, pq: sq.slice() }] : [1, 2, 3, 4].map((p) => ({ part: p, pq: sq.filter((q) => q.part === p) }));
   for (const { part: gp, pq } of groups) {
     if (!pq.length) continue;
-    if (gp) body.push(partTitle(gp, pq.length));
+    const hk = (sc === null ? 0 : sc) + '.' + gp;
+    if (gp && STYLE !== 'm1' && S && S.review && S.headEls && S.headEls.has(hk)) body.push(S.headEls.get(hk).cloneNode(true));
+    else if (gp) body.push(partTitle(gp, pq.length));
     const newNo = new Map(); pq.forEach((q, i) => newNo.set(q, i + 1));
     pq.forEach((q, i) => {
       const part = q.part;
@@ -3503,6 +3568,7 @@ function buildBody(qs, showAnswer, headerElems) {
       if (showAnswer && (qs2.sol.some((t) => hasContent(trim(t))) || (q.part === 2 && Object.keys(stmtTruth(q)).length))) body.push(...styleSolBlock(buildSolParas(qs2)));
       unKeep(body[body.length - 1]);
     });
+  }
   }
   if (STYLE !== 'm1') body.push(makeP([lit('--------------------- HẾT ------------------------', { bold: true })], { jc: 'center', before: 120 }));
   return body;
@@ -3935,7 +4001,7 @@ const isAutoWarn = (w) => /(đã (sửa|sắp xếp|bỏ|chuyển|thêm|được
 function viewOf(q) {
   const cp = (arr) => arr.filter(hasContent).map((t) => toksToText(q, t));
   const v = {
-    id: q.id, part: q.part, src: q.src, ei: q.srcEi, partGuess: !!q.partGuess, warn: q.warn.filter((w) => !isAutoWarn(w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
+    id: q.id, part: q.part, sec: q.sec || 0, src: q.src, ei: q.srcEi, partGuess: !!q.partGuess, warn: q.warn.filter((w) => !isAutoWarn(w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
     edited: !!q.edited, added: !!q.added, replacedFrom: q.replacedFrom || null, canRevert: !!q.orig,
     ans: q.ans, ansText: q.ansText, stem: cp(q.stem), sol: cp(q.sol), opts: null, stmts: null,
     tagLv: q.tagLv || null, tagPre: TAG_PRE[q.part] || null, tagSrc: q.tag || '',
@@ -4043,6 +4109,10 @@ async function load(arrayBuffer, lopt) {
     titleBlock: (parsed.preEls || []).map((e) => e.cloneNode(true)),
     theory: parsed.theoryEls.map((e) => { const c = e.cloneNode(true); if (parsed.theoryMark && parsed.theoryMark.has(e)) stripLtMark(c); return c; }),
     theorySol: parsed.theoryEls.map((e) => !!(parsed.theorySol && parsed.theorySol.has(e))),
+    // đề ôn tập có "[BT]": tiêu đề phần giữ đúng chữ gốc (theo từng dạng)
+    review: parsed.ents.some((e) => e.ltMark === 'BT'),
+    headEls: (() => { const m = new Map(); for (const h of parsed.heads || []) { const k = (h.sec || 0) + '.' + h.part; if (!m.has(k) && parsed.ents[h.ei] && isW(parsed.ents[h.ei].el, 'p')) m.set(k, parsed.ents[h.ei].el.cloneNode(true)); } return m; })(),
+    secTheory: (parsed.secTh || []).map((t) => (t ? t.els.map((e) => { const c = e.cloneNode(true); if (t.mark.has(e)) stripLtMark(c); return c; }) : null)),
     seq: qs.slice(),
   };
   const thTxt = parsed.theoryEls.map((e) => (e.textContent || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
@@ -4050,7 +4120,8 @@ async function load(arrayBuffer, lopt) {
   const order = qs.map((q) => q.id);
   const emN = qs.filter((q) => q.essayMaybe).length;
   const essayHint = parsed.noHead && !lopt.forcePart && emN ? { n: emN } : null;
-  return { title, theory, order, views: order.map((id) => viewOf(reg.get(id))), essayHint, raw: rawList(body, parsed, qs), map: wordMap(parsed, qs, wpi) };
+  const secs = qs.some((q) => q.sec > 0) ? Array.from(new Set(qs.map((q) => q.sec || 0))).sort((a, b) => a - b).map((k) => ({ k, name: secName(k) })) : null;
+  return { title, theory, secs, order, views: order.map((id) => viewOf(reg.get(id))), essayHint, raw: rawList(body, parsed, qs), map: wordMap(parsed, qs, wpi) };
 }
 // thứ tự đoạn văn đúng như Word đếm (body.paragraphs): mọi w:p trong thân, kể cả trong bảng; bỏ đoạn trong hộp văn bản và bản dự phòng (mc:Fallback)
 function wordParaIndex(body) {
@@ -4074,8 +4145,10 @@ function wordMap(parsed, qs, wpi) {
   const at = (el) => { const p = firstP(el); return p && wpi.has(p) ? wpi.get(p) : -1; };
   const entEl = (ei) => (ents[ei] ? ents[ei].srcTbl || ents[ei].el : null);
   const cnt = {};
+  const ms = qs.some((q) => q.sec > 0);
   const out = qs.map((q) => {
-    cnt[q.part] = (cnt[q.part] || 0) + 1;
+    const ck = (ms ? q.sec || 0 : 0) + '.' + q.part;
+    cnt[ck] = (cnt[ck] || 0) + 1;
     let start = -1;
     if (q.rowPath) {
       const tbl = entEl(q.rowPath.ei);
@@ -4083,10 +4156,11 @@ function wordMap(parsed, qs, wpi) {
       start = p && wpi.has(p) ? wpi.get(p) : at(tbl);
     } else if (q.srcEi !== undefined) start = at(entEl(q.srcEi));
     const c = q.cluster;
-    return { id: q.id, part: q.part, k: cnt[q.part], num: q.numSrc || null, start, lead: c && c.ei !== undefined ? at(entEl(c.ei)) : -1, clusterN: c ? (c.count || c.refs.length || c.members.length) : 0, clusterFirst: !!(c && c.members[0] === q) };
+    return { id: q.id, part: q.part, sec: q.sec || 0, sn: ms ? secName(q.sec || 0) : '', k: cnt[ck], num: q.numSrc || null, start, lead: c && c.ei !== undefined ? at(entEl(c.ei)) : -1, clusterN: c ? (c.count || c.refs.length || c.members.length) : 0, clusterFirst: !!(c && c.members[0] === q) };
   });
   const heads = (parsed.heads || []).map((h) => ({ part: h.part, at: at(entEl(h.ei)) })).filter((h) => h.at >= 0);
-  return { qs: out, heads, total: wpi.total || 0, solAt: parsed.solFrom >= 0 ? at(entEl(parsed.solFrom)) : -1 };
+  const lt = (parsed.secTh || []).filter(Boolean).map((t) => at(entEl(t.at))).filter((x) => x >= 0);   // đầu phần lý thuyết của từng dạng: ranh giới câu
+  return { qs: out, heads, lt, total: wpi.total || 0, solAt: parsed.solFrom >= 0 ? at(entEl(parsed.solFrom)) : -1 };
 }
 // đáp án số ghi ở dòng đầu lời giải: "Đáp án: 0,01" / "Đáp số: 7,5" / "Kết quả = 4"
 function ans3FromSol(lines) {
@@ -4355,6 +4429,7 @@ async function generate(opt, ids, extra) {
     const header = M1 ? [makeP([lit('Mã chuyên đề: ' + (opt.ma1 || 'DE_THI') + ' ', { bold: true, color: RED })], { jc: 'center', before: 48, after: 96, line: 240 })] : titleMode === 'keep' ? (opt.fresh && S.titleBlock && S.titleBlock.length ? S.titleBlock.map((e) => e.cloneNode(true)) : S.titleClone ? [S.titleClone.cloneNode(true)] : []) : buildHeader(opt, pagesGuess);
     // bản HS: bỏ lời giải của các bài ôn lý thuyết (điền khuyết, nối câu)
     const thEls = opt.keepTheory && S.theory && S.theory.length ? S.theory.filter((e, i) => show || !(S.theorySol && S.theorySol[i])).map((e) => e.cloneNode(true)) : [];
+    SEC_TH = opt.keepTheory && S.secTheory ? S.secTheory : null;
     const elems = buildBody(qs, show, header.concat(thEls));
     while (body.firstChild) body.removeChild(body.firstChild);
     for (const e of elems) body.appendChild(e);
@@ -4397,13 +4472,16 @@ async function generate(opt, ids, extra) {
     else if (nP4) notes.push({ id: ids[0], text: 'Đã bỏ Phần IV (tự luận, ' + nP4 + ' câu) theo lựa chọn của bạn; ngân hàng đề không có phần tự luận.' });
     for (const q of qs) if (q.part <= 3 && q.tagSrcPre && q.tagSrcPre !== TAG_PRE[q.part]) notes.push({ id: q.id, text: 'Nhãn gốc [' + q.tagSrcPre + '-…] không khớp ' + ['', 'Phần I', 'Phần II', 'Phần III'][q.part] + ': đã đổi thành ' + m1Tag(q) + '.' });
   }
-  const idx = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  const idx = {}, mSec = multiSec(qs) || (M1 ? false : false);
   for (const q of qs) {
-    idx[q.part]++;
-    for (const wm of q.warn) notes.push({ id: q.id, text: 'Phần ' + ['', 'I', 'II', 'III', 'IV'][q.part] + ' – Câu ' + idx[q.part] + ' (gốc: ' + q.src + '): ' + wm });
+    const key = (mSec ? q.sec || 0 : 0) + '.' + q.part;
+    idx[key] = (idx[key] || 0) + 1;
+    const pre = mSec ? secName(q.sec || 0) + ' · ' : '';
+    for (const wm of q.warn) notes.push({ id: q.id, text: pre + 'Phần ' + ['', 'I', 'II', 'III', 'IV'][q.part] + ' – Câu ' + idx[key] + ' (gốc: ' + q.src + '): ' + wm });
   }
   if (S.copyNote) notes.unshift({ id: ids[0], text: S.copyNote });
-  return { gv: result.GV, hs: result.HS, count, notes, title: S.title };
+  const nSec = multiSec(qs) ? new Set(qs.map((q) => q.sec || 0)).size : 0;
+  return { gv: result.GV, hs: result.HS, count, notes, title: S.title, nSec };
   } finally { STYLE = 'cur'; LINE = 360; JCD = 'both'; }
 }
 
@@ -4543,7 +4621,8 @@ async function quick(arrayBuffer, opt) {
     const em = qs.filter((q) => q.essayMaybe).length; if (em) notes.push(em + ' câu có vẻ là tự luận (lời giải nhiều dòng) nhưng đề không có tiêu đề phần: đang xếp vào Phần III (trả lời ngắn). Muốn xếp vào Phần IV, hãy dùng "Tiếp tục".'); }
   // số câu mới theo từng phần
   const cnt = {}, newNo = new Map();
-  for (const q of qs) { const pk = opt.noParts ? 0 : q.part; cnt[pk] = (cnt[pk] || 0) + 1; newNo.set(q, cnt[pk]); }
+  const msq = qs.some((q) => q.sec > 0);   // chuyên đề nhiều dạng: đánh lại từ 1 trong từng phần của mỗi dạng
+  for (const q of qs) { const pk = (msq ? (q.sec || 0) + '.' : '') + (opt.noParts ? 0 : q.part); cnt[pk] = (cnt[pk] || 0) + 1; newNo.set(q, cnt[pk]); }
   const items = kids(body).filter((c) => !isW(c, 'sectPr'));
   const idxOf = new Map(); kids(body).forEach((c, i) => idxOf.set(c, i));
   const elIdx = (e) => { const el = e.lay || e.srcTbl || e.el; return idxOf.has(el) ? idxOf.get(el) : -1; };
@@ -5057,7 +5136,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   const cluOpt = () => ({ marks: cluMarks.slice(), off: cluOff.slice() });
   let order = [], views = new Map(), dropped = new Set(), swapped = new Map(), origTitle = '', baseIds = [];
   let filter = 'all'; const openForms = new Set(), drafts = new Map();
-  let theory = null;
+  let theory = null, lastR = null;   // lastR: kết quả đọc đề (danh sách dạng của chuyên đề)
   /* ---- kiểu trình bày: 'cur' (hiện tại) hoặc 'm1' (Mẫu 1 - chuẩn công cụ tạo đề) ---- */
   let fm = pref('fm') === 'm1' ? 'm1' : 'cur';
   const isM1 = () => fm === 'm1';
@@ -5069,8 +5148,8 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     cur: 'Kiểu hiện tại: định dạng lại đề và xuất cả bản Giáo viên lẫn bản Học sinh.',
     m1: 'Xuất ngân hàng đề: xuất bản Giáo viên đúng chuẩn cho Công cụ tạo đề (nếu giữ phần tự luận thì có thêm bản Học sinh) (dòng "Mã chuyên đề", nhãn [TN-B], [DS-H], [TLN-VD]… ở đầu mỗi câu, đáp án gạch chân, "Hướng dẫn giải", số trang). Mỗi câu phải có nhãn mức độ; bạn gắn nhãn ngay ở bước xem lại.',
   };
-  function setTheory(t) {
-    theory = t || null;
+  function setTheory(t, r) {
+    theory = t || null; lastR = r || null;
     $('thG').hidden = !theory;
     if (theory) $('thSub').textContent = 'Nhận dạng được: "' + theory.head + '" (' + theory.n + ' đoạn/bảng/hình). Giữ nguyên định dạng, nằm sau tiêu đề, trước Phần I, ở cả hai bản.';
   }
@@ -5087,7 +5166,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       partAtOpt = null; partOk = true;
       const r = await window.DeThi.load(rawBuf, { forcePart: 4, clu: cluOpt() }); renderRaw(r.raw);
       const same = r.order.length === baseIds.length;
-      baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
+      baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory, r);
       if (same) keepDrop.forEach((i) => dropped.add(baseIds[i]));
       openForms.clear(); drafts.clear(); filter = 'all'; out = null; setEssay(null);
       renderReview(); refreshPreview();
@@ -5105,7 +5184,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
         cluMarks = []; cluOff = []; rwA = rwB = -1; partAtOpt = null; partOk = false; noParts = false; showNoParts();
         const r = await window.DeThi.load(b);
         rawBuf = b; renderRaw(r.raw); out = null; setTimeout(() => { if (typeof syncDock === 'function') syncDock(); }, 0);
-        order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
+        order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory, r);
         openForms.clear(); drafts.clear(); filter = 'all';
         origTitle = r.title; setEssay(r.essayHint);
         $('dropT1').textContent = f.name;
@@ -5354,7 +5433,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       const r = await window.DeThi.load(rawBuf, { clu: cluOpt(), partAt: pa });
       partAtOpt = pa; partOk = true; noParts = false; showNoParts(); renderRaw(r.raw);
       const same = r.order.length === baseIds.length;
-      baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
+      baseIds = r.order.slice(); order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory, r);
       if (same) keepDrop.forEach((i) => dropped.add(baseIds[i]));
       openForms.clear(); drafts.clear(); filter = 'all'; out = null; setEssay(null);
       renderReview(); refreshPreview();
@@ -5367,10 +5446,13 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     const list = $('qlist');
     let html = '', any = false;
     if (theory) html += '<div class="thcard"><b>Phần lý thuyết</b> · ' + esc(theory.head) + ' <span>(' + theory.n + ' đoạn/bảng/hình)</span>' + (theory.preview ? '<p>' + esc(theory.preview) + '…</p>' : '') + '<em>Được giữ nguyên ở cả hai bản; bật/tắt ở bước 3.</em></div>';
+    const SECS = !isM1() && lastR && lastR.secs && lastR.secs.length > 1 ? lastR.secs : [null];
+    for (const SC of SECS) {
+    if (SC) html += '<div class="thcard"><b>' + esc(SC.name) + '</b>' + (SC.k ? ' · lý thuyết của dạng này được giữ nguyên ở cả hai bản' : '') + '</div>';
     for (const part of [1, 2, 3, 4]) {
-      const ids = order.filter((id) => views.get(id).part === part);
+      const ids = order.filter((id) => views.get(id).part === part && (!SC || (views.get(id).sec || 0) === SC.k));
       let n = 0;
-      if (part === 4 && !ids.length) continue;
+      if ((part === 4 || SC) && !ids.length) continue;
       html += '<div class="phead"><h3>' + PT[part] + '</h3><span class="qs">' + ids.filter((id) => !dropped.has(id)).length + ' câu</span><button class="mini" data-act="add" data-part="' + part + '" type="button">+ Thêm câu</button></div>';
       ids.forEach((id, k) => {
         const v = views.get(id);
@@ -5381,6 +5463,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
         any = true;
         html += cardHTML(v, n, { first: k === 0, last: k === ids.length - 1 });
       });
+    }
     }
     if (!any) html += '<p class="empty">Không có câu nào khớp bộ lọc.</p>';
     list.innerHTML = html;
@@ -5564,15 +5647,16 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   var fromReport = false, lastGo = null, resolved = new Set(), prevNeed = new Set(), drawerOpen = false, optOpen = false;
   function sideLists() {
     const need = [], opt = [];
+    const MS = !isM1() && lastR && lastR.secs && lastR.secs.length > 1 ? new Map(lastR.secs.map((x) => [x.k, x.name])) : null;
     for (const part of [1, 2, 3, 4]) {
-      let n = 0;
+      const cn = {};
       order.forEach((id) => {
         const v = views.get(id); if (!v || v.part !== part || dropped.has(id)) return;
-        n++;
+        const sk = MS ? v.sec || 0 : 0; cn[sk] = (cn[sk] || 0) + 1; const n = cn[sk];
         const msgs = v.warn.filter((w) => !OPT_RE.test(w)).map((w) => shortW(w).replace(/\s*\([^)]*\)\s*$/, '')).concat(v.hints || []);
         if (v.sugg && !v.sugg.n) msgs.push('Có thể là chùm câu hỏi (xem gợi ý trong thẻ câu)');
         if (isM1() && part <= 3 && !v.tagLv) msgs.push('Chưa gắn nhãn mức độ');
-        const lab = PN[part] + ' · Câu ' + n;
+        const lab = (MS && MS.has(v.sec || 0) ? MS.get(v.sec || 0) + ' · ' : '') + PN[part] + ' · Câu ' + n;
         if (msgs.length) need.push({ id, lab, msgs });
         else if (resolved.has(id)) need.push({ id, lab, msgs: [], done: true });
         if (v.warn.some((w) => OPT_RE.test(w))) opt.push({ id, lab, msgs: ['Chưa có hướng dẫn giải'] });
@@ -5918,7 +6002,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     rawBuf = buf; out = null;
     const same = r.order.length === baseIds.length;
     baseIds = r.order.slice();
-    order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
+    order = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory, r);
     if (same) keepDrop.forEach((i) => dropped.add(baseIds[i]));
     openForms.clear(); drafts.clear(); filter = 'all'; origTitle = r.title;
     renderReview(); refreshPreview();
@@ -5997,7 +6081,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       out = await window.DeThi.generate(curOpt(), keptIds()); wasQuick = false; $('ow').hidden = false; $('dlGVs').textContent = 'Có đáp án và hướng dẫn giải'; $('dlHSs').textContent = 'Không đáp án, không lời giải'; $('b4').textContent = 'Quay lại chỉnh';
       applyFmResult();
       const [a, b, c, d4] = out.count;
-      $('sum').textContent = isM1() ? 'Xuất ngân hàng đề: đề có ' + (a + b + c + (d4 || 0)) + ' câu, đã gắn nhãn mức độ và đánh số lại từng phần từ Câu 1.' : 'Đề có ' + (a + b + c + (d4 || 0)) + ' câu, đã đánh số lại liên tục.';
+      $('sum').textContent = isM1() ? 'Xuất ngân hàng đề: đề có ' + (a + b + c + (d4 || 0)) + ' câu, đã gắn nhãn mức độ và đánh số lại từng phần từ Câu 1.' : out.nSec > 1 ? 'Chuyên đề ' + out.nSec + ' dạng, ' + (a + b + c + (d4 || 0)) + ' câu: giữ thứ tự từng dạng, số câu đánh lại từ Câu 1 trong từng phần của mỗi dạng.' : 'Đề có ' + (a + b + c + (d4 || 0)) + ' câu, đã đánh số lại liên tục.';
       $('chips').innerHTML = '<span class="chip">Phần I · ' + a + ' câu</span><span class="chip">Phần II · ' + b + ' câu</span><span class="chip">Phần III · ' + c + ' câu</span>' + (d4 ? '<span class="chip">Phần IV · ' + d4 + ' câu</span>' : '');
       const list = $('notesList'); list.textContent = '';
       if (out.notes.length) {
@@ -6201,7 +6285,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.10.2 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.10.3 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
@@ -6251,7 +6335,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     try {
       const r = await window.DeThi.load(rawBuf, { clu: cluOpt(), partAt: partAtOpt });
       out = null;
-      order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory);
+      order = r.order.slice(); baseIds = r.order.slice(); views = new Map(r.views.map((v) => [v.id, v])); dropped = new Set(); swapped = new Map(); setTheory(r.theory, r);
       openForms.clear(); drafts.clear(); filter = 'all';
       $('dropT2').textContent = 'Nhận ra ' + r.order.length + ' câu hỏi · ' + (window.__office ? 'bấm để đọc lại tài liệu đang mở' : 'bấm để đổi file khác');
       renderRaw(r.raw); L.scrollTop = st;
