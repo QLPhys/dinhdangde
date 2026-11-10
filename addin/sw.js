@@ -1,7 +1,7 @@
 // QL_Format: nhớ tạm các file của add-in trên máy.
 // Trang .html (lệnh, hộp thoại): lấy bản MỚI qua mạng trước (chờ tối đa 3 giây), mạng chậm/mất mới dùng bản đã nhớ
 // -> vừa phát hành bản mới là Word dùng ngay, không còn chạy mã cũ suốt một phiên. Ảnh, jszip: dùng bản đã nhớ, cập nhật ngầm.
-const CACHE = 'qlf-2026.11.09.5';
+const CACHE = 'qlf-2026.11.10';
 const FILES = ['taskpane.html', 'commands.html', 'dlg.html', 'jszip.min.js'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => Promise.all(FILES.map((f) => fetch(f, { cache: 'no-cache' }).then((r) => (r.ok ? c.put(new URL(f, self.location).href, r) : null)).catch(() => null)))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('qlf-') && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
