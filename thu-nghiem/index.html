@@ -878,7 +878,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.10-b5</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.10-b6</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -3795,15 +3795,44 @@ function finalizeQ(q) {
   if (q.part === 3 && !q.ansText) {
     const k = q.sol.findIndex((t) => hasContent(trim(t)));
     const has = k >= 0 && !hasDrawing(q.sol[k]) && /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*[^\uFFFC]{1,30}$/i.test(textOf(trim(q.sol[k])));
-    const stx = q.stem.map((t) => textOf(t)).join(' ').replace(/\uFFFC/g, ' ');
-    let v = has ? null : solTailAnswer(q.sol, stx), rnote = '';
+    const stx = q.stem.map((t) => textOf(t)).join(' ').replace(/￼/g, ' ');
+    const ti = has ? null : solTailInfo(q.sol, stx);
+    let v = ti ? ti.v : null, rnote = '';
     if (v) {
       // lời giải ghi nhiều chữ số hơn đề yêu cầu (đề: làm tròn đến phần nguyên, lời giải: 99,97) -> làm tròn theo đề
-      const rk = roundKind(stx), n = rk.k === 'dec' ? rk.n : rk.k === 'int' ? 0 : null, d = (v.split(',')[1] || '').length;
-      if (n != null && d > n) { const r = (+v.replace(',', '.')).toFixed(n).replace('.', ','); rnote = ' (lời giải ghi ' + v + ', đã làm tròn theo yêu cầu của đề)'; v = r === '-0' ? '0' : r; }
-      q.ansText = v; q.warn.push('Đáp án số ' + v + ': lấy từ kết quả cuối cùng của lời giải' + rnote + ' (đề chưa ghi đáp số), hãy kiểm tra lại.');
+      // "… = −18,23 ≈ −18": làm tròn lại từ số chính xác −18,23 cho khớp yêu cầu của đề
+      const rk = roundKind(stx), n = rk.k === 'dec' ? rk.n : rk.k === 'int' ? 0 : null;
+      const base = n != null && ti.exact ? ti.exact : v, d = (base.split(',')[1] || '').length;
+      if (n != null && d > n) { const r = (+base.replace(',', '.')).toFixed(n).replace('.', ','); if (r !== v) rnote = ' (lời giải ghi ' + base + ', đã làm tròn theo yêu cầu của đề)'; v = /^-0(?:,0*)?$/.test(r) ? r.slice(1) : r; }
+      q.ansText = v; q.solUnit = ti.unit; q.warn.push('Đáp án số ' + v + ': lấy từ kết quả cuối cùng của lời giải' + rnote + ' (đề chưa ghi đáp số), hãy kiểm tra lại.');
     }
     else if (!has) q.warn.push('Chưa có đáp án số (lời giải chỉ có công thức/hình): bấm Sửa, nhập vào ô "Đáp án".');
+  }
+  q.fit = null;
+  if (q.part === 3) {
+    // đáp số dài quá 4 ô: làm tròn lại cho vừa và sửa yêu cầu làm tròn trong đề; phần nguyên quá lớn -> gợi ý đổi đơn vị
+    if (q.fitNote && q.fitNote.v === q.ansText) q.warn.push(q.fitNote.msg);
+    const stx = q.stem.map((t) => textOf(t)).join(' ').replace(/￼/g, ' ');
+    let num = q.ansText, unit = q.solUnit || null;
+    if (!num) {
+      // đáp số ghi sẵn ở dòng "Đáp án: …" đầu lời giải
+      const line = ans3FromSol(q.sol.map((t) => textOf(trim(t))));
+      const m = line && /^\s*([-−–]?\d+(?:[,.]\d+)?(?:\s*[.×x*]\s*10\s*\^?\s*\(?[-−]?\d+\)?|\s*[.×x*]\s*10[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)?)\s*([^\d\s].{0,12})?$/.exec(line);
+      if (m) { num = m[1].replace(/\s+/g, '').replace(/[−–]/g, '-').replace(/^(-?\d+)\.(\d+)$/, '$1,$2'); if (m[2]) unit = m[2].replace(/[.\s]+$/, ''); }
+    }
+    if (num && !unit && !askedUnit(stx)) { const n0 = ansNum(num); if (n0 && (n0.sci || n0.txt.length > 4)) { const ti = solTailInfo(q.sol, stx); if (ti && ti.unit) unit = ti.unit; } }
+    const p = num ? fit4Plan(stx, num, unit) : null;
+    if (p && p.kind === 'round') {
+      const old = num, rp = roundPlan(stx, p.v);
+      let rq = '';
+      if (rp && !rp.ok) { q.stem = q.stem.map((x) => x.slice()); applyRound(q, p.n); rq = rp.cur ? ' và đổi yêu cầu trong đề thành "' + roundTxt(p.n) + '"' : ' và ghi thêm "' + roundTxt(p.n) + '" vào đề'; }
+      q.ansText = p.v;
+      q.fitNote = { v: p.v, msg: 'Đáp số ' + old + ' dài ' + old.replace(/\s+/g, '').length + ' ký tự, vượt 4 ô của phiếu trả lời: đã làm tròn thành ' + p.v + rq + '.' };
+      q.warn.push(q.fitNote.msg);
+    } else if (p && p.kind === 'unit') {
+      q.fit = { from: p.from, to: p.to, v: p.v, n: p.n, apply: p.apply };
+      q.warn.push('Đáp số ' + p.src + (p.from ? ' ' + p.from : '') + ' không vừa 4 ô của phiếu trả lời. Gợi ý: ' + (p.apply ? 'đổi đơn vị đề hỏi từ ' + p.from + ' sang ' + p.to + ', đáp số ' + p.v + ' (bấm "Đổi đơn vị" ở thẻ câu).' : 'hỏi theo đơn vị ' + p.to + ', đáp số ' + p.v + ' (đơn vị trong đề là công thức/chưa ghi: hãy sửa tay).'));
+    } else if (p) q.warn.push('Đáp số ' + p.from + ' không vừa 4 ô của phiếu trả lời (kể cả dấu "-" và dấu phẩy): hãy đổi đơn vị hoặc cách hỏi.');
   }
 }
 
@@ -3829,9 +3858,18 @@ function unitKey(u) {
     .replace(/^(?:lít|lit|dm3)$/, 'l').replace(/^(?:giây|s)$/, 's').replace(/^(?:mét|met)$/, 'm');
   return x;
 }
+// đơn vị đề hỏi: "… là bao nhiêu kPa?", "… theo đơn vị cm/s"
+const ASK_UNIT_RE = /(?:bao\s+nhi[êe]u|(?:theo\s+)?đơn\s*vị(?:\s+là)?)\s+((?:độ\s+)?[A-Za-zÀ-ỹ°μµΩ%\/∕²³]+(?:\s*[\/∕]\s*[A-Za-z]+[23²³]?)?)\s*(?=\?|\(|\.|,|$)/i;
+function askedUnit(stemTx) {
+  const m = ASK_UNIT_RE.exec(String(stemTx || '').replace(/⟦[^⟧]*⟧/g, ' ').replace(/￼/g, ' '));
+  if (!m || /^(?:lần|phần|là|thì|khi|so|vòng|độ|bằng|được|của|trong|người|học|hạt|phân|electron|quả|vật)$/i.test(m[1])) return null;
+  return m[1].trim();
+}
 // đề không ghi đáp số Phần III: lấy kết quả sau dấu "=" / "≈" cuối cùng của đoạn lời giải cuối ("…≈ −18 °C.", "A = 20,3 kJ.")
 // chỉ nhận khi đuôi là "số [đơn vị]"; đề hỏi "bao nhiêu <đơn vị>" mà đơn vị kết quả khác thì bỏ (tránh lấy nhầm đại lượng phụ)
-function solTailAnswer(sol, stemTx) {
+// trả về { v, unit, exact }: exact = số chính xác hơn đứng ngay trước dấu "≈" cuối ("−18,23 ≈ −18" -> exact −18,23)
+const TAIL_NUM_RE = /^([-−–]?\s*\d+(?:[,.]\d+)?)\s*(°\s*C|°|lít|[a-zA-Zμ%Ω]{1,4}(?:\s*[\/∕]\s*[a-zA-Z]{1,3})?(?:\^?[23])?)?[\s.;,]*$/;
+function solTailInfo(sol, stemTx) {
   if (/(?:^|[\s.?:])a\s*[\.\)]\s.+(?:^|[\s.?:])b\s*[\.\)]\s/.test(stemTx || '')) return null;   // câu nhiều ý a. b. …: không đoán
   for (let i = sol.length - 1; i >= 0; i--) {
     const toks = trim(sol[i]);
@@ -3839,24 +3877,113 @@ function solTailAnswer(sol, stemTx) {
     if (hasDrawing(toks) && !textOf(toks).split(OBJ).join('').trim()) return null;
     let tx = '';
     for (const t of toks) {
-      if (t.kind === 'n') { const e = eqPlain(t.el); if (e) tx += ' ' + e + ' '; else if (t.el && (isW(t.el, 'drawing') || (t.el.getElementsByTagNameNS && t.el.getElementsByTagNameNS(NS.w, 'drawing').length))) return null; else tx += ' \uFFFC '; }
+      if (t.kind === 'n') { const e = eqPlain(t.el); if (e) tx += ' ' + e + ' '; else if (t.el && (isW(t.el, 'drawing') || (t.el.getElementsByTagNameNS && t.el.getElementsByTagNameNS(NS.w, 'drawing').length))) return null; else tx += ' ￼ '; }
       else tx += t.ch;
     }
     tx = tx.replace(/\s+/g, ' ').trim();
-    if (/\uFFFC[\s.;,]*$/.test(tx)) return null;
-    const segs = tx.split(/[=≈]/);
-    if (segs.length < 2) return null;
-    const last = segs[segs.length - 1].replace(/\^\{?\s*(?:°|∘|0|o)\s*\}?\s*C/g, '°C').replace(/[{}]/g, '').trim();
-    const m = /^([-−–]?\s*\d+(?:[,.]\d+)?)\s*(°\s*C|°|[a-zA-Zμ%Ω]{1,4}(?:\s*[\/∕]\s*[a-zA-Z]{1,3})?(?:\^?[23])?)?[\s.;,]*$/.exec(last);
+    if (/￼[\s.;,]*$/.test(tx)) return null;
+    const parts = tx.split(/([=≈])/);
+    if (parts.length < 3) return null;
+    const clean = (x) => x.replace(/\^\{?\s*(?:°|∘|0|o)\s*\}?\s*C/g, '°C').replace(/[{}]/g, '').trim();
+    const last = clean(parts[parts.length - 1]);
+    const m = TAIL_NUM_RE.exec(last);
     if (!m) return null;
     if (m[1].indexOf('.') >= 0 || /10\^/.test(last)) return null;   // "1,013.10^5", "4.105": dấu chấm là phép nhân/lũy thừa, không chắc
     const v = m[1].replace(/\s+/g, '').replace(/[−–]/g, '-');
     if (v.replace(/[-,]/g, '').length > 6) return null;
-    const ask = /bao\s+nhi[êe]u\s+((?:độ\s+)?[A-Za-zÀ-ỹ°μΩ%\/∕²³]+(?:\s*[\/∕]\s*[A-Za-z]+)?)\s*(?:\?|\(|$)/i.exec(stemTx || '');
-    if (ask && m[2] && !/^(?:lần|phần|là|thì|khi|so|vòng)$/i.test(ask[1]) && unitKey(ask[1]) !== unitKey(m[2])) return null;
-    return v;
+    const ask = askedUnit(stemTx);
+    if (ask && m[2] && unitKey(ask) !== unitKey(m[2])) return null;
+    let exact = null;
+    if (parts.length >= 5 && parts[parts.length - 2] === '≈') {
+      const m2 = TAIL_NUM_RE.exec(clean(parts[parts.length - 3]));
+      if (m2 && m2[1].indexOf('.') < 0 && (!m2[2] || !m[2] || unitKey(m2[2]) === unitKey(m[2]))) exact = m2[1].replace(/\s+/g, '').replace(/[−–]/g, '-');
+    }
+    return { v, unit: m[2] ? m[2].replace(/\s+/g, '') : null, exact };
   }
   return null;
+}
+
+/* ---------- đáp số Phần III vừa 4 ô của phiếu trả lời (dấu "-", dấu "," và mỗi chữ số chiếm 1 ô) ---------- */
+const SUPN = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁻': '-', '−': '-' };
+// "63,17" | "-2,5.10^5" | "1,6.10⁻¹⁹" -> { x, txt, dec, sci }
+function ansNum(v) {
+  const s = String(v || '').replace(/\s+/g, '').replace(/[−–]/g, '-');
+  const m = /^(-?\d+(?:,\d+)?)(?:(?:\.|×|x|\*)10(?:\^?\(?(-?\d+)\)?|([⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)))?$/.exec(s);
+  if (!m) return null;
+  const e = m[2] != null ? +m[2] : m[3] ? +Array.from(m[3]).map((c) => SUPN[c]).join('') : 0;
+  const x = parseFloat(m[1].replace(',', '.')) * Math.pow(10, e);
+  return isFinite(x) ? { x, txt: s, dec: (m[1].split(',')[1] || '').length, sci: !!(m[2] != null || m[3]) } : null;
+}
+// số x viết vừa 4 ô, giữ nhiều chữ số thập phân nhất (tối đa maxDec); sai lệch > 5% (0,0012 -> 0,00) coi như không vừa
+function fitTxt(x, maxDec) {
+  for (let n = Math.min(2, maxDec); n >= 0; n--) {
+    let t = (Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n).replace('.', ',');
+    if (/^-0(?:,0*)?$/.test(t)) t = t.slice(1);
+    if (t.length > 4) continue;
+    const r = parseFloat(t.replace(',', '.'));
+    if (x !== 0 && Math.abs(r - x) / Math.abs(x) > 0.05) return null;
+    return { v: t, n };
+  }
+  return null;
+}
+// tiền tố đơn vị: đổi Pa -> kPa, cm/s² -> m/s² … cho đáp số vừa 4 ô
+const UPFX = { G: 1e9, M: 1e6, k: 1e3, '': 1, d: 1e-1, c: 1e-2, m: 1e-3, 'μ': 1e-6, 'µ': 1e-6, n: 1e-9 };
+const UBASE = { Pa: 'kM', J: 'kMm', W: 'kMm', N: 'km', V: 'km', A: 'mμ', Hz: 'kM', g: 'km', m: 'kcmμn', eV: 'kM', T: 'mμ', Wb: 'm', F: 'mμn', 'Ω': 'kM', s: 'mμ', mol: 'm', C: 'mμn', l: 'm', L: 'm' };
+function unitParts(u) {
+  const w = String(u || '').replace(/\s+/g, '').replace(/[∕⁄]/g, '/').replace(/^lít/i, 'l');
+  const m = /^(G|M|k|d|c|m|μ|µ|n)?(Pa|eV|Hz|Wb|mol|J|W|N|V|A|g|m|T|F|Ω|s|C|l|L)(\^?([23²³]))?(\/.*)?$/.exec(w);
+  if (!m || (m[1] === 'd' && m[2] !== 'm')) return null;
+  const pw = m[4] ? +({ '²': 2, '³': 3 }[m[4]] || m[4]) : 1;
+  return { p: m[1] || '', b: m[2], pow: pw, powRaw: m[3] || '', rest: m[5] || '', lit: /^lít/i.test(String(u).trim()) };
+}
+function unitSuggest(u, x, sig) {
+  const P = unitParts(u);
+  if (!P || P.rest && P.pow !== 1) return null;
+  const f0 = UPFX[P.p];
+  const cands = [''].concat(Array.from(UBASE[P.b] || '')).filter((c, i, a) => a.indexOf(c) === i && c !== P.p)
+    .map((c) => ({ to: c + (P.lit && c === '' ? 'lít' : P.b) + P.powRaw + P.rest, k: Math.pow(f0 / UPFX[c], P.pow) }));
+  if ((P.b === 'l' || P.b === 'L') && P.p === '') cands.push({ to: 'm³', k: 1e-3 });   // 12 500 lít -> 12,5 m³
+  cands.sort((a, b) => Math.abs(Math.log10(a.k)) - Math.abs(Math.log10(b.k)));
+  for (const c of cands) {
+    const nx = x * c.k, ip = Math.abs(nx) >= 1 ? String(Math.floor(Math.abs(nx))).length : 1;
+    const f = fitTxt(nx, Math.max(0, Math.min(2, (sig || 3) - ip)));
+    if (!f) continue;
+    return { to: c.to, v: f.v, n: f.n };
+  }
+  return null;
+}
+// số chữ số có nghĩa của đáp số viết ("0,0012" -> 2, "101300" -> 4, "2,5.10^5" -> 2)
+function sigDigits(txt) {
+  const m = String(txt || '').replace(/^-/, '').split(/[.×x*]10/)[0].replace(',', '');
+  return Math.max(1, m.replace(/^0+/, '').replace(/0+$/, (z) => (/,/.test(String(txt).split(/[.×x*]10/)[0]) ? z : '')).length);
+}
+// kế hoạch cho đáp số dài quá 4 ô: làm tròn (kind 'round'), đổi đơn vị (kind 'unit'), hay chỉ báo (kind 'big')
+function fit4Plan(stemTx, v, solUnit) {
+  const a = ansNum(v);
+  if (!a || (!a.sci && a.txt.length <= 4)) return null;
+  // đề đã yêu cầu làm tròn đến n chữ số thập phân và kết quả theo yêu cầu vừa 4 ô: theo đúng yêu cầu của đề
+  const rk = roundKind(String(stemTx || '')), rn = rk.k === 'dec' ? rk.n : rk.k === 'int' ? 0 : null;
+  if (rn != null && rn <= 2) { const f0 = fitTxt(a.x, rn); if (f0 && f0.n === rn) return { kind: 'round', v: f0.v, n: rn, from: a.txt }; }
+  const f = fitTxt(a.x, a.sci ? 2 : a.dec);
+  if (f) return { kind: 'round', v: f.v, n: f.n, from: a.txt };
+  const ask = askedUnit(stemTx), u = ask || solUnit || null;
+  const sg = u ? unitSuggest(u, a.x, sigDigits(a.txt)) : null;
+  if (sg) return { kind: 'unit', v: sg.v, n: sg.n, from: u, to: sg.to, apply: !!ask && !!unitParts(ask), src: a.txt };
+  return { kind: 'big', from: a.txt, unit: u };
+}
+// đổi đơn vị đề hỏi trong phần đề: "… bao nhiêu Pa?" -> "… bao nhiêu kPa?"
+function applyUnit(q, from, to) {
+  const esc = from.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+  const re = new RegExp('((?:bao\\s+nhi[êe]u|(?:theo\\s+)?đơn\\s*vị(?:\\s+là)?)\\s+)' + esc + '(?![\\p{L}\\d])', 'iu');
+  for (let i = q.stem.length - 1; i >= 0; i--) {
+    const m = re.exec(textOf(q.stem[i]));
+    if (!m) continue;
+    const a = m.index + m[1].length, b = a + from.length, like = q.stem[i][a];
+    q.stem = q.stem.slice();
+    q.stem[i] = q.stem[i].slice(0, a).concat(Array.from(to).map((ch) => new Tok('c', ch, like ? like.rpr : null, false, null)), q.stem[i].slice(b));
+    return true;
+  }
+  return false;
 }
 
 // ------------------------------------------------------------------ dựng nội dung
@@ -4377,10 +4504,10 @@ function buildBody(qs, showAnswer, headerElems) {
       if (part === 1) body.push(...buildOptionParas(q, showAnswer));
       else if (part === 2) body.push(...buildStmtParas(q, showAnswer));
       let qs2 = q, ansT = q.ansText;
-      if (q.part === 3 && !ansT) {   // dòng "Đáp án: 170" / "Đáp số: 0,4" đang nằm đầu lời giải -> tách thành dòng Đáp án trước "Hướng dẫn giải"
+      if (q.part === 3) {   // dòng "Đáp án: 170" / "Đáp số: 0,4" đang nằm đầu lời giải -> tách thành dòng Đáp án trước "Hướng dẫn giải" (đáp số đã sửa cho vừa 4 ô thì dùng số mới)
         const k = q.sol.findIndex((t) => hasContent(trim(t)));
         const m = k >= 0 && !hasDrawing(q.sol[k]) ? /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*(.{1,30}?)\s*\.?\s*$/i.exec(textOf(trim(q.sol[k]))) : null;
-        if (m && !/[\uFFFC]/.test(m[1])) { ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
+        if (m && !/[\uFFFC]/.test(m[1])) { if (!ansT) ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
       }
       if (!showAnswer && q.part === 3 && HSBOX && STYLE !== 'm1') {
         const lp = body[body.length - 1];
@@ -4826,7 +4953,7 @@ function viewOf(q) {
   const v = {
     id: q.id, part: q.part, sec: q.sec || 0, src: q.src, ei: q.srcEi, partGuess: !!q.partGuess, warn: q.warn.filter((w) => !isAutoWarn(w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
     edited: !!q.edited, added: !!q.added, replacedFrom: q.replacedFrom || null, canRevert: !!q.orig,
-    ans: q.ans, ansText: q.ansText, stem: cp(q.stem), sol: cp(q.sol), opts: null, stmts: null,
+    ans: q.ans, ansText: q.ansText, fit: q.fit || null, stem: cp(q.stem), sol: cp(q.sol), opts: null, stmts: null,
     tagLv: q.tagLv || null, tagPre: TAG_PRE[q.part] || null, tagSrc: q.tag || '',
   };
   if (q.part === 1) { v.opts = {}; for (const L of 'ABCD') v.opts[L] = q.opts[L] ? toksToText(q, q.opts[L]) : ''; }
@@ -5136,6 +5263,15 @@ function editQ(id, f) {
   if (q.part === 1 && f.ans !== undefined) q.manualAns = f.ans || null;
   if (q.part === 3 && f.ans3 !== undefined) q.ansText = String(f.ans3).replace(/\s+/g, ' ').trim() || null;
   if (q.part === 3 && f.round !== undefined && f.round !== null && f.round !== '') { q.stem = q.stem.map((p) => p.slice()); applyRound(q, +f.round); }
+  if (q.part === 3 && f.unit && f.unit.from && f.unit.to) {
+    const old = f.unit.src || (q.orig && q.orig.ansText) || ans3FromSol(q.sol.map((t) => textOf(trim(t)))) || '';
+    const n0 = /^\s*([-−–]?\d[\d,.]*(?:\s*[.×x*]\s*10\s*\^?\s*\(?[-−]?\d+\)?)?)/.exec(String(old));
+    if (applyUnit(q, f.unit.from, f.unit.to) && n0 && f.ans3) {
+      // ghi thêm dòng đổi đơn vị cuối lời giải để HS/GV thấy vì sao đáp số khác số trong lời giải
+      q.sol = q.sol.concat([Array.from('Đổi đơn vị: ' + n0[1].trim() + ' ' + f.unit.from + ' ≈ ' + String(f.ans3).trim() + ' ' + f.unit.to + '.').map((ch) => new Tok('c', ch, null, false, null))]);
+    }
+    q.fitNote = null;
+  }
   if (q.part === 2 && f.tf) {
     const dv = stmtTruth(q);
     for (const L of 'abcd') if (f.tf[L] !== undefined && f.tf[L] !== (dv[L] || '')) { if (f.tf[L] === 'Đ' || f.tf[L] === 'S') q.tf[L] = f.tf[L]; else delete q.tf[L]; }
@@ -5908,7 +6044,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState };
+window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState };
 })();
 
 </script>
@@ -6434,8 +6570,12 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     const fields = { stem: g('stem'), sol: g('sol') };
     if (q.part === 3) {
       fields.ans3 = g('ans3');
-      const a3 = String(fields.ans3 || '').replace(/\s+/g, '').replace(/\./g, ',');
-      if (a3 && a3 !== String(q.ansText || '').replace(/\s+/g, '')) fields.round = askRound(fields.stem !== undefined ? fields.stem : q.stem.join(' '), a3);
+      let a3 = String(fields.ans3 || '').replace(/\s+/g, '').replace(/\./g, ',');
+      if (a3 && a3 !== String(q.ansText || '').replace(/\s+/g, '')) {
+        const st = fields.stem !== undefined ? fields.stem : q.stem.join(' '), ff = fit4(st, a3, fields);
+        a3 = ff.v; fields.ans3 = a3; if (ff.note) toast(ff.note);
+        fields.round = ff.round !== undefined ? ff.round : askRound(st, a3);
+      }
     }
     if (q.opts) { fields.opts = {}; for (const L of 'ABCD') fields.opts[L] = g('o' + L); fields.ans = g('ans'); }
     if (q.stmts) { fields.stmts = {}; fields.tf = {}; for (const L of 'abcd') { fields.stmts[L] = g('s' + L); fields.tf[L] = g('t' + L); } }
@@ -6737,6 +6877,8 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       h += '<div class="qfix"><span>Đáp án:</span><input class="qa3" type="text" inputmode="decimal" autocomplete="off" aria-label="Đáp số"><button class="mini" type="button" data-act="qa3">Ghi</button>'
         + (sg ? '<button class="mini" type="button" data-act="qsg" data-v="' + esc(sg) + '">Gợi ý từ lời giải: ' + esc(sg) + '</button>' : '')
         + '<span class="hint3">' + esc(rh) + '</span><span class="err3"></span></div>';
+    } else if (v.part === 3 && v.fit && v.fit.apply) {
+      h += '<div class="qfix"><span>Đáp số ' + esc(v.ansText || '') + ' không vừa 4 ô:</span><button class="mini" type="button" data-act="qunit">Đổi ' + esc(v.fit.from) + ' → ' + esc(v.fit.to) + ', đáp số ' + esc(v.fit.v) + '</button></div>';
     }
     return h;
   }
@@ -6769,6 +6911,21 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       : 'Đề chưa có yêu cầu làm tròn.\n\nThêm "' + pl.text + '" vào cuối đề (theo đáp số ' + v + ')?';
     return window.confirm(msg + '\n\nOK: ' + (pl.cur ? 'đổi yêu cầu' : 'thêm yêu cầu') + ' · Cancel: chỉ ghi đáp số') ? pl.dec : undefined;
   }
+  // đáp số dài quá 4 ô của phiếu trả lời: làm tròn cho vừa (tự sửa luôn yêu cầu làm tròn), phần nguyên quá lớn thì hỏi đổi đơn vị
+  function fit4(stemText, v, fields) {
+    const p = window.DeThi.fit4Plan ? window.DeThi.fit4Plan(stemText, v) : null;
+    if (!p) return { v };
+    if (p.kind === 'round') {
+      const rp = window.DeThi.roundPlan(stemText, p.v);
+      return { v: p.v, round: rp && !rp.ok ? p.n : null, note: 'Đáp số ' + v + ' vượt 4 ô của phiếu trả lời: đã làm tròn thành ' + p.v + (rp && !rp.ok ? ' và sửa yêu cầu làm tròn trong đề' : '') + '.' };
+    }
+    if (p.kind === 'unit' && p.apply && window.confirm('Đáp số ' + v + ' ' + p.from + ' không vừa 4 ô của phiếu trả lời.\n\nĐổi đơn vị đề hỏi từ ' + p.from + ' sang ' + p.to + ' và ghi đáp số ' + p.v + '?\n\nOK: đổi đơn vị · Cancel: giữ nguyên')) {
+      fields.unit = { from: p.from, to: p.to, src: v };
+      const rp = window.DeThi.roundPlan(stemText, p.v);
+      return { v: p.v, round: rp && !rp.ok ? rp.dec : null, note: 'Đã đổi đơn vị ' + p.from + ' → ' + p.to + ', đáp số ' + p.v + '.' };
+    }
+    return { v, note: p.kind === 'unit' ? 'Đáp số ' + v + ' không vừa 4 ô: gợi ý hỏi theo đơn vị ' + p.to + ', đáp số ' + p.v + '.' : 'Đáp số ' + v + ' không vừa 4 ô của phiếu trả lời: hãy đổi đơn vị hoặc cách hỏi.' };
+  }
   const need3 = (id) => { const v = views.get(id); return v && v.part === 3 && !dropped.has(id) && !v.ansText && v.warn.some((w) => /đáp án số/i.test(w)); };
   function quickEdit(id, fields, msg) {
     try { views.set(id, window.DeThi.edit(id, fields)); renderReview(); if (msg) toast(msg); return true; }
@@ -6778,20 +6935,28 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     const id = +card.dataset.id, v = views.get(id), inp = card.querySelector('input.qa3');
     const c = checkAns3(inp ? inp.value : '', v.stem.join(' '));
     if (c.err) { const e = card.querySelector('.err3'); if (e) e.textContent = c.err; if (inp) inp.focus(); return; }
-    const rd = askRound(v.stem.join(' '), c.v);
-    if (!quickEdit(id, { ans3: c.v, round: rd })) return;
+    const fl = { ans3: c.v }, ff = fit4(v.stem.join(' '), c.v, fl);
+    if (ff.note) c.notes = [ff.note];
+    c.v = ff.v; fl.ans3 = c.v;
+    fl.round = ff.round !== undefined ? ff.round : askRound(v.stem.join(' '), c.v);
+    if (!quickEdit(id, fl)) return;
     const ids = keptIds(), k = ids.indexOf(id);
     const nx = ids.slice(k + 1).concat(ids.slice(0, k)).find(need3);
     toast((c.notes.length ? '⚠ ' + c.notes.join(' ') + ' ' : '') + 'Đã ghi Đáp án: ' + c.v + '.' + (nx != null ? ' Chuyển sang câu Phần III kế tiếp còn thiếu đáp số.' : ' Không còn câu Phần III nào thiếu đáp số.'));
     if (nx != null) { lastGo = nx; focusQ(nx); setTimeout(() => { const el = $('qlist').querySelector('[data-id="' + nx + '"] input.qa3'); if (el) el.focus({ preventScroll: true }); }, skin === 'modern' ? 700 : 120); }
   }
   $('qlist').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-act="qans"],[data-act="qtf"],[data-act="qa3"],[data-act="qsg"]'); if (!b) return;
+    const b = e.target.closest('[data-act="qans"],[data-act="qtf"],[data-act="qa3"],[data-act="qsg"],[data-act="qunit"]'); if (!b) return;
     const card = b.closest('[data-id]'), id = +card.dataset.id, act = b.dataset.act;
     if (act === 'qans') quickEdit(id, { ans: b.dataset.v }, 'Đã chọn đáp án ' + b.dataset.v + '.');
     else if (act === 'qtf') quickEdit(id, { tf: { [b.dataset.l]: b.dataset.v } }, 'Ý ' + b.dataset.l + ') ' + (b.dataset.v === 'Đ' ? 'Đúng' : 'Sai') + '.');
     else if (act === 'qsg') { const inp = card.querySelector('input.qa3'); if (inp) { inp.value = b.dataset.v; inp.focus(); } }
     else if (act === 'qa3') submitAns3(card);
+    else if (act === 'qunit') {
+      const v = views.get(id), f = v && v.fit; if (!f) return;
+      const rp = window.DeThi.roundPlan(v.stem.join(' '), f.v);
+      quickEdit(id, { unit: { from: f.from, to: f.to }, ans3: f.v, round: rp && !rp.ok ? rp.dec : null }, 'Đã đổi đơn vị ' + f.from + ' → ' + f.to + ', đáp số ' + f.v + '.');
+    }
   });
   $('qlist').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('qa3')) { e.preventDefault(); submitAns3(e.target.closest('[data-id]')); } });
 
@@ -7175,7 +7340,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.10-b5 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.10-b6 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
