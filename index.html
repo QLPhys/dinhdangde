@@ -35,7 +35,7 @@ small, .muted { color: var(--ink2); }
     <div class="card">
       <span class="tag t-ok">Chính thức</span>
       <h2>Dùng hằng ngày</h2>
-      <p>Bản đã kiểm tra, dùng chung cho cả tổ. Phiên bản v2026.11.10.4.</p>
+      <p>Bản đã kiểm tra, dùng chung cho cả tổ. Phiên bản v2026.11.12.</p>
       <a class="btn" href="chinh-thuc/">Mở công cụ</a>
     </div>
     <div class="card">
@@ -89,6 +89,16 @@ small, .muted { color: var(--ink2); }
   <section>
     <h2>Nhật ký thay đổi</h2>
     <div class="log">
+      <h3>Chính thức · v2026.11.12 (12/11) · Bảng Đúng/Sai đánh dấu x, đáp số Phần III vừa 4 ô</h3>
+      <ul>
+        <li>Bảng Đúng/Sai có ô "Phát biểu" trải 2 cột (nhãn a | nội dung) và tô nền trang trí cả hai cột Đúng/Sai, đánh dấu bằng x: đọc đúng đáp án (trước đây báo "dòng thứ … chưa rõ đáp án"). Ô nhãn "a" kèm nội dung "a) …" không còn lặp nhãn.</li>
+        <li>Hình đề bài đặt trước bảng hình các phương án: giữ đúng thứ tự như đề gốc.</li>
+        <li>Lời giải Phần II gõ nhầm "D." in hoa giữa các dòng a. b. c.: nhận là ý d.</li>
+        <li>Phần III đề chưa ghi đáp số: lấy kết quả cuối cùng của lời giải (đọc cả công thức MathType/Equation), làm tròn theo yêu cầu của đề, có ghi chú "hãy kiểm tra lại"; không đoán khi đơn vị khác đơn vị đề hỏi, câu nhiều ý a. b. hoặc số dạng 1,013.10⁵.</li>
+        <li>Đáp số Phần III luôn vừa 4 ô phiếu trả lời (kể cả dấu "-" và dấu phẩy): dài quá thì tự làm tròn và sửa yêu cầu làm tròn trong đề; phần nguyên quá lớn/quá nhỏ thì gợi ý đổi đơn vị đề hỏi (Pa → kPa, J → mJ, lít → m³…), đồng ý thì đổi chữ đơn vị trong câu hỏi và ghi thêm dòng đổi đơn vị vào lời giải. Áp dụng khi đọc đề, ở Bước 2 công cụ web và nút Đáp số trên add-in.</li>
+        <li>Bỏ cảnh báo nhầm "ký tự lạ" với số đo kèm đơn vị (1360 gam, mol, atm…).</li>
+        <li>Không cần cài lại: Word tự nhận bản mới ở lần mở sau (QL_Format và PhongEm.Phys).</li>
+      </ul>
       <h3>Chính thức · v2026.11.10.4 (10/11) · Đáp số trả lời ngắn tự nhận yêu cầu làm tròn</h3>
       <ul>
         <li>Nhập đáp số câu trả lời ngắn (nút Đáp số trên add-in QL_Format / PhongEm.Phys, Bước 2 công cụ web): công cụ đếm số chữ số thập phân của đáp số (2,40 → hai chữ số thập phân; số nguyên → hàng đơn vị).</li>
@@ -368,7 +378,7 @@ small, .muted { color: var(--ink2); }
         <li>Số trang cách mép dưới ít nhất 1 cm, in không bị mất.</li>
         <li>Bộ đề in nhiều đề; nhận diện thêm nhiều kiểu trình bày đề.</li>
       </ul>
-      <p class="muted" style="margin:10px 0 0">Các bản chính thức đã phát hành: <a href="phien-ban/v2026.11.10.4/">v2026.11.10.4</a> · <a href="phien-ban/v2026.11.10.3/">v2026.11.10.3</a> · <a href="phien-ban/v2026.11.10.2/">v2026.11.10.2</a> · <a href="phien-ban/v2026.11.10/">v2026.11.10</a> · <a href="phien-ban/v2026.11.09.5/">v2026.11.09.5</a> · <a href="phien-ban/v2026.11.09.4/">v2026.11.09.4</a> · <a href="phien-ban/v2026.11.09.3/">v2026.11.09.3</a> · <a href="phien-ban/v2026.11.09/">v2026.11.09</a> · <a href="phien-ban/v2026.11.08.3/">v2026.11.08.3</a> · <a href="phien-ban/v2026.11.08.2/">v2026.11.08.2</a> · <a href="phien-ban/v2026.11.08/">v2026.11.08</a> · <a href="phien-ban/v2026.11.03.2/">v2026.11.03.2</a> · <a href="phien-ban/v2026.11.03/">v2026.11.03</a> · <a href="phien-ban/v2026.11.02.6/">v2026.11.02.6</a> · <a href="phien-ban/v2026.11.02.5/">v2026.11.02.5</a> · <a href="phien-ban/v2026.11.02.4/">v2026.11.02.4</a> · <a href="phien-ban/v2026.11.02.3/">v2026.11.02.3</a> · <a href="phien-ban/v2026.11.02.2/">v2026.11.02.2</a> · <a href="phien-ban/v2026.11.02/">v2026.11.02</a> · <a href="phien-ban/v2026.11.01.4/">v2026.11.01.4</a> · <a href="phien-ban/v2026.11.01.3/">v2026.11.01.3</a> · <a href="phien-ban/v2026.11.01.2/">v2026.11.01.2</a> · <a href="phien-ban/v2026.11.01/">v2026.11.01</a> · <a href="phien-ban/v2026.10.31.3/">v2026.10.31.3</a> · <a href="phien-ban/v2026.10.31.2/">v2026.10.31.2</a> · <a href="phien-ban/v2026.10.31/">v2026.10.31</a> · <a href="phien-ban/v2026.10.30.4/">v2026.10.30.4</a> · <a href="phien-ban/v2026.10.30.3/">v2026.10.30.3</a> · <a href="phien-ban/v2026.10.30.2/">v2026.10.30.2</a> · <a href="phien-ban/v2026.10.30/">v2026.10.30</a> · <a href="phien-ban/v2026.10.29.4/">v2026.10.29.4</a> · <a href="phien-ban/v2026.10.29.3/">v2026.10.29.3</a> · <a href="phien-ban/v2026.10.29.2/">v2026.10.29.2</a> · <a href="phien-ban/v2026.10.29/">v2026.10.29</a> · <a href="phien-ban/v2026.10.28/">v2026.10.28</a>.</p>
+      <p class="muted" style="margin:10px 0 0">Các bản chính thức đã phát hành: <a href="phien-ban/v2026.11.12/">v2026.11.12</a> · <a href="phien-ban/v2026.11.10.4/">v2026.11.10.4</a> · <a href="phien-ban/v2026.11.10.3/">v2026.11.10.3</a> · <a href="phien-ban/v2026.11.10.2/">v2026.11.10.2</a> · <a href="phien-ban/v2026.11.10/">v2026.11.10</a> · <a href="phien-ban/v2026.11.09.5/">v2026.11.09.5</a> · <a href="phien-ban/v2026.11.09.4/">v2026.11.09.4</a> · <a href="phien-ban/v2026.11.09.3/">v2026.11.09.3</a> · <a href="phien-ban/v2026.11.09/">v2026.11.09</a> · <a href="phien-ban/v2026.11.08.3/">v2026.11.08.3</a> · <a href="phien-ban/v2026.11.08.2/">v2026.11.08.2</a> · <a href="phien-ban/v2026.11.08/">v2026.11.08</a> · <a href="phien-ban/v2026.11.03.2/">v2026.11.03.2</a> · <a href="phien-ban/v2026.11.03/">v2026.11.03</a> · <a href="phien-ban/v2026.11.02.6/">v2026.11.02.6</a> · <a href="phien-ban/v2026.11.02.5/">v2026.11.02.5</a> · <a href="phien-ban/v2026.11.02.4/">v2026.11.02.4</a> · <a href="phien-ban/v2026.11.02.3/">v2026.11.02.3</a> · <a href="phien-ban/v2026.11.02.2/">v2026.11.02.2</a> · <a href="phien-ban/v2026.11.02/">v2026.11.02</a> · <a href="phien-ban/v2026.11.01.4/">v2026.11.01.4</a> · <a href="phien-ban/v2026.11.01.3/">v2026.11.01.3</a> · <a href="phien-ban/v2026.11.01.2/">v2026.11.01.2</a> · <a href="phien-ban/v2026.11.01/">v2026.11.01</a> · <a href="phien-ban/v2026.10.31.3/">v2026.10.31.3</a> · <a href="phien-ban/v2026.10.31.2/">v2026.10.31.2</a> · <a href="phien-ban/v2026.10.31/">v2026.10.31</a> · <a href="phien-ban/v2026.10.30.4/">v2026.10.30.4</a> · <a href="phien-ban/v2026.10.30.3/">v2026.10.30.3</a> · <a href="phien-ban/v2026.10.30.2/">v2026.10.30.2</a> · <a href="phien-ban/v2026.10.30/">v2026.10.30</a> · <a href="phien-ban/v2026.10.29.4/">v2026.10.29.4</a> · <a href="phien-ban/v2026.10.29.3/">v2026.10.29.3</a> · <a href="phien-ban/v2026.10.29.2/">v2026.10.29.2</a> · <a href="phien-ban/v2026.10.29/">v2026.10.29</a> · <a href="phien-ban/v2026.10.28/">v2026.10.28</a>.</p>
     </div>
   </section>
 </main>
