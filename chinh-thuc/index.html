@@ -878,7 +878,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.12</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.13</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -1466,8 +1466,57 @@ var MTEF = (function () {
     const cstr = () => { let s = ''; while (p < b.length && b[p]) s += String.fromCharCode(b[p++]); p++; return s; };
     const nudge = (opt) => { if (opt & 0x08) { const a = u8(), c = u8(); if (a === 128 && c === 128) p += 4; } };
     // header
-    const ver = u8(); if (ver !== 5) throw new Error('MTEF v' + ver);
+    const ver = u8();
+    if (ver === 3) { p += 4; return objList3(); }   // Microsoft Equation 3.0 / MathType 3: platform, product, version, subversion
+    if (ver !== 5) throw new Error('MTEF v' + ver);
     p += 4; cstr(); p += 1;   // platform, product, version, subversion, app key, eqn options
+    /* MTEF v3 (Equation Editor 3.0, ProgID "Equation.3"): kiểu bản ghi ở 4 bit thấp, tuỳ chọn ở 4 bit cao của cùng một byte */
+    function isE3(o) { return !o || (o.k === 'line' && !o.items.length); }
+    function objList3() {
+      const out = [];
+      while (p < b.length) {
+        const t = u8();
+        if ((t & 15) === 0) break;
+        const o = record3(t & 15, t >> 4); if (o) out.push(o);
+      }
+      return out;
+    }
+    function record3(tag, opt) {
+      if (opt & 0x08) { const a = u8(), c = u8(); if (a === 128 && c === 128) p += 4; }   // nudge
+      switch (tag) {
+        case 1: // LINE
+          if (opt & 0x04) u16();          // giãn dòng
+          if (opt & 0x02) ruler();
+          if (opt & 0x01) return { k: 'line', items: [] };
+          return { k: 'line', items: objList3() };
+        case 2: { // CHAR
+          const tf = u8() - 128, ch = u16();
+          const emb = (opt & 0x02) ? objList3().filter((x) => x.k === 'emb').map((x) => x.t) : [];
+          return { k: 'char', tf, ch, emb, fs: false };
+        }
+        case 3: { // TMPL: số hiệu mẫu của v3 khác v5 -> đổi sang số v5 để dùng chung phần dựng chữ
+          const s3 = u8(), vr = u8(); u8();
+          const subs = objList3();
+          if (s3 === 15 || s3 === 44) {   // chỉ số: ô 0 = dưới, ô 1 = trên
+            const lo = !isE3(subs[0]), hi = !isE3(subs[1]);
+            return { k: 'tmpl', sel: lo && hi ? 29 : lo ? 27 : 28, vr: 0, subs };
+          }
+          const M3 = { 8: 9, 9: 9, 10: 9, 11: 9, 12: 9, 13: 10, 14: 11, 16: 12, 17: 13, 18: 14, 19: 14, 20: 14, 21: 15, 22: 15, 23: 15, 24: 15, 25: 15, 26: 15,
+            27: 24, 28: 24, 29: 16, 30: 16, 31: 17, 32: 17, 33: 18, 34: 18, 35: 19, 36: 19, 37: 20, 38: 20, 39: 23, 40: 26, 41: 11, 42: 21, 43: 22, 45: 30, 46: 31, 47: 31, 48: 34 };
+          return { k: 'tmpl', sel: s3 <= 7 ? s3 : (M3[s3] != null ? M3[s3] : 99), vr: s3 === 13 ? vr & 1 : 0, subs };
+        }
+        case 4: { u8(); u8(); if (opt & 0x02) ruler(); return { k: 'pile', lines: objList3() }; }        // PILE
+        case 5: { u8(); u8(); u8(); const rows = u8(), cols = u8();                                       // MATRIX
+          p += Math.ceil(((rows + 1) * 2) / 8) + Math.ceil(((cols + 1) * 2) / 8);
+          return { k: 'matrix', rows, cols, cells: objList3() }; }
+        case 6: return { k: 'emb', t: u8() };                                                             // EMBELL
+        case 7: ruler(); return null;                                                                     // RULER
+        case 8: u8(); u8(); cstr(); return null;                                                          // FONT
+        case 9: { const a = u8(); if (a === 101) u16(); else if (a === 100) { u8(); u16(); } else u8(); return null; }   // SIZE
+        case 10: case 11: case 12: case 13: case 14: return null;                                         // FULL, SUB, SUB2, SYM, SUBSYM
+        default: throw new Error('MTEF3: bản ghi lạ ' + tag);
+      }
+    }
     // đọc danh sách đối tượng tới END
     function objList() {
       const out = [];
@@ -4292,6 +4341,13 @@ function buildSolParas(q) {
 
 // lời giải Đúng/Sai viết dạng "KĐ: <chép lại ý> → sai." (không ghi a, b, c, d): đổi thành "a) Sai." theo ý trùng khớp
 function kdLines(q) {
+  // lời giải ghi kết luận trong ngoặc ngay sau nhãn: "a. [Đ] Ta có …", "b) (S) …", "c. [Sai] …" -> "a. Đúng. Ta có …"
+  q.sol = q.sol.map((toks) => {
+    const m = /^(\s*[a-d]\s*[\.\)]\s*)[\[\(]\s*(đúng|sai|đ|s)\s*[\]\)]\s*\.?\s*/i.exec(textOf(toks));
+    if (!m) return toks;
+    const w = /^(đ|đúng)$/i.test(m[2]) ? 'Đúng' : 'Sai', rest = toks.slice(m[0].length), like = toks[m[1].length];
+    return toks.slice(0, m[1].length).concat(Array.from(w + (hasContent(rest) ? '. ' : '.')).map((c) => new Tok('c', c, like ? like.rpr : null, false, null)), rest);
+  });
   const nz = (t) => String(t).replace(/[\uFFFC\s\.,;:]+/g, ' ').trim().toLowerCase();
   const keys = 'abcd'.split('').filter((L) => q.stmts && L in q.stmts).map((L) => [L, nz(textOf(q.stmts[L]))]);
   if (!keys.length) return;
@@ -7340,7 +7396,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.12 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.13 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
