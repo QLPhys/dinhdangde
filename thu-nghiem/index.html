@@ -882,7 +882,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.14-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.14-b3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -3876,7 +3876,9 @@ function finalizeQ(q) {
       const rk = roundKind(stx), n = rk.k === 'dec' ? rk.n : rk.k === 'int' ? 0 : null;
       const base = n != null && ti.exact ? ti.exact : v, d = (base.split(',')[1] || '').length;
       if (n != null && d > n) { const r = (+base.replace(',', '.')).toFixed(n).replace('.', ','); if (r !== v) rnote = ' (lời giải ghi ' + base + ', đã làm tròn theo yêu cầu của đề)'; v = /^-0(?:,0*)?$/.test(r) ? r.slice(1) : r; }
-      q.ansText = v; q.solUnit = ti.unit; q.warn.push('Đáp án số ' + v + ': tự lấy từ kết quả cuối cùng của lời giải' + rnote + ' (đề chưa ghi đáp số).');
+      q.ansText = v; q.solUnit = ti.unit;
+      // công thức cuối chỉ đọc được một phần (MathType có mũi tên kèm chữ…): vẫn lấy nhưng để thầy xem lại trong Câu cần xem
+      q.warn.push('Đáp án số ' + v + ': ' + (ti.bad ? 'lấy' : 'tự lấy') + ' từ kết quả cuối cùng của lời giải' + rnote + ' (đề chưa ghi đáp số)' + (ti.bad ? ', công thức cuối chỉ đọc được một phần: hãy kiểm tra lại.' : '.'));
     }
     else if (!has) q.warn.push('Chưa có đáp án số (lời giải chỉ có công thức/hình): bấm Sửa, nhập vào ô "Đáp án".');
   }
@@ -3909,7 +3911,7 @@ function finalizeQ(q) {
 }
 
 // chữ của một công thức (OMML hoặc MathType OLE) để đọc kết quả; '' nếu không đọc được
-function eqPlain(el) {
+function eqPlain(el, info) {
   try {
     if (!el) return '';
     const oms = el.localName === 'oMath' || el.localName === 'oMathPara' ? [el] : Array.from(el.getElementsByTagNameNS(NS.m, 'oMath'));
@@ -3919,7 +3921,8 @@ function eqPlain(el) {
     const id = ole.getAttributeNS(NS.r, 'id') || ole.getAttribute('r:id');
     const b = OLE.files[OLE.rels[id]];
     const o = b ? MTEF.fromOle(b) : null;
-    if (!o || o.bad) return '';
+    if (!o || !o.lin) return '';   // công thức có phần chưa dựng chính xác (mũi tên kèm chữ…) vẫn đủ để đọc kết quả cuối
+    if (o.bad && info) info.bad = true;
     return o.lin.replace(/\uE005/g, '{').replace(/\uE006/g, '}').replace(/\uE00C/g, ' ').replace(/[\uE000-\uE0FF]/g, '');
   } catch (e) { return ''; }
 }
@@ -3948,14 +3951,16 @@ function solTailInfo(sol, stemTx) {
     if (!hasContent(toks)) continue;
     if (hasDrawing(toks) && !textOf(toks).split(OBJ).join('').trim()) return null;
     let tx = '';
+    const info = {};
     for (const t of toks) {
-      if (t.kind === 'n') { const e = eqPlain(t.el); if (e) tx += ' ' + e + ' '; else if (t.el && (isW(t.el, 'drawing') || (t.el.getElementsByTagNameNS && t.el.getElementsByTagNameNS(NS.w, 'drawing').length))) return null; else tx += ' ￼ '; }
+      if (t.kind === 'n') { const e = eqPlain(t.el, info); if (e) tx += ' ' + e + ' '; else if (t.el && (isW(t.el, 'drawing') || (t.el.getElementsByTagNameNS && t.el.getElementsByTagNameNS(NS.w, 'drawing').length))) return null; else tx += ' ￼ '; }
       else tx += t.ch;
     }
     tx = tx.replace(/\s+/g, ' ').trim();
     if (/￼[\s.;,]*$/.test(tx)) return null;
     const parts = tx.split(/([=≈])/);
     if (parts.length < 3) return null;
+    if (/;/.test(tx.split(/[⇔⇒→]/).pop())) return null;   // hệ nhiều kết quả "{p₁ = 4.10⁵ Pa ; V₁ = 9 l}": câu hỏi nhiều đại lượng, không đoán
     const clean = (x) => x.replace(/\^\{?\s*(?:°|∘|0|o)\s*\}?\s*C/g, '°C').replace(/[{}]/g, '').trim();
     const last = clean(parts[parts.length - 1]).replace(/^([-−–]?\s*\d+(?:[,.]\d+)?)\s*\(\s*([^()]{1,12}?)\s*\)/, '$1 $2');   // "192(kPa)", "36 (lít)": đơn vị trong ngoặc
     const m = TAIL_NUM_RE.exec(last);
@@ -3970,7 +3975,7 @@ function solTailInfo(sol, stemTx) {
       const m2 = TAIL_NUM_RE.exec(clean(parts[parts.length - 3]));
       if (m2 && m2[1].indexOf('.') < 0 && (!m2[2] || !m[2] || unitKey(m2[2]) === unitKey(m[2]))) exact = m2[1].replace(/\s+/g, '').replace(/[−–]/g, '-');
     }
-    return { v, unit: m[2] ? m[2].replace(/\s+/g, '') : null, exact };
+    return { v, unit: m[2] ? m[2].replace(/\s+/g, '') : null, exact, bad: !!info.bad };
   }
   return null;
 }
@@ -7419,7 +7424,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.14-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.14-b3 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
