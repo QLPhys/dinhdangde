@@ -66,6 +66,18 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
       document.getElementById('y').onclick = () => send({ yes: 1 });
       document.getElementById('n').onclick = () => send({ no: 1 });
       document.getElementById('y').focus();
+    } else if (m === 'xo') {
+      // Xuất GV + HS: chọn ghi đè bản GV lên file gốc hay tách riêng (giữ file gốc); nút đậm là lần chọn trước
+      const ow = P.get('d') === 'ow', np = P.get('np') === '1';
+      const bt = (id, pri, a, b) => '<button class="' + (pri ? 'pri ' : '') + 'xo" id="' + id + '" type="button" style="display:block;width:100%;text-align:left;padding:10px 12px;margin:0 0 8px"><b>' + a + '</b><br><span style="font-weight:400;font-size:12.5px;opacity:.85">' + b + '</span></button>';
+      W.innerHTML = '<div class="t"><b>Xuất bản Giáo viên + Học sinh</b></div>'
+        + bt('sp', !ow, 'GV và HS tách riêng, giữ file gốc', 'Mở bản GV và bản HS ở 2 cửa sổ Word mới; file đang soạn giữ nguyên.')
+        + bt('ow', ow, 'GV ghi đè lên file gốc', 'File đang mở được thay bằng bản GV và lưu lại' + (np ? ' (file chưa có tên: công cụ chỉ thay nội dung, thầy tự lưu)' : '') + '; bản HS mở ở cửa sổ mới.')
+        + '<div class="row"><button id="no" type="button">Thôi</button></div>';
+      document.getElementById('sp').onclick = () => send({ mode: 'split' });
+      document.getElementById('ow').onclick = () => send({ mode: 'ow' });
+      document.getElementById('no').onclick = () => send({ cancel: 1 });
+      document.getElementById(ow ? 'ow' : 'sp').focus();
     } else if (m === 'ans') {
       const rd = P.get('rd'), sg = P.get('sg'), nb = +(P.get('bx') || 0);
       W.innerHTML = '<div class="mut">' + esc(P.get('q')) + '</div>'
