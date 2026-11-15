@@ -474,6 +474,10 @@ body.side-wide .dock .rst, body.side-wide #cuOpen, body.side-wide .step[data-i="
 .sidep .sb { overflow: auto; padding: 6px 8px 12px; flex: 1 1 auto; overscroll-behavior: contain; }
 .sidep .gh { font-size: 12px; font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: .03em; padding: 8px 8px 4px; }
 .sidep .it { display: block; width: 100%; text-align: left; font: inherit; border: 0; background: none; color: var(--ink); padding: 7px 8px 7px 10px; border-radius: 10px; cursor: pointer; }
+.sidep .it .ith { display: flex; align-items: center; gap: 6px; } .sidep .it .ith b { flex: 1; } .sidep .it .go { padding: 2px 9px; }
+.sidep .it .sa { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 3px 0 6px; } .sidep .it .sa em { font-style: normal; font-size: 12px; color: var(--ink2); margin-right: 2px; }
+.sidep .it .sa .mini { padding: 2px 9px; min-width: 0; } .sidep .it .sa .mini.yes { color: var(--green); font-weight: 600; } .sidep .it .sa .mini.no { color: var(--red); font-weight: 600; } .sidep .it .sa .mini.on { background: var(--blue); color: #fff; }
+.sidep .it .sa .tfg { display: inline-flex; gap: 2px; align-items: center; margin-right: 4px; } .sidep .it .sa input.sa3 { width: 70px; font: inherit; font-size: 13px; padding: 2px 6px; border: 1px solid var(--hair); border-radius: 6px; }
 .sidep .it b { font-size: 13.5px; font-weight: 600; } .sidep .it span { display: block; color: var(--amber-ink); font-size: 12.5px; line-height: 1.35; }
 .sidep .it:hover { background: color-mix(in srgb, var(--blue) 9%, transparent); }
 .sidep .it.on { background: color-mix(in srgb, var(--blue) 13%, transparent); box-shadow: inset 3px 0 0 var(--blue); }
@@ -823,6 +827,19 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
           </button>
         </div>
         <div class="btns all"><button class="btn pri" id="dlAll" type="button">Tải cả hai bản</button></div>
+        <div id="one1" style="margin:4px 0 12px">
+          <p class="hint" style="margin:0 6px 8px"><b>Hoặc xuất 1 file</b> (số trang liên tục cả file):</p>
+          <div class="dl" id="dl1">
+            <button class="card" id="dlK" type="button">
+              <div class="tile hs"><svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6h18l8 8v28H12z"/><path d="M18 22h14M18 29h14M25 36h7"/><path d="M17 36l2 2 3-4"/></svg></div>
+              <div><b>Đề + Đáp án, HDG</b><span>Đề cho HS ở trên; bảng đáp án và hướng dẫn giải gọn (2 cột) sang trang mới ở cuối</span></div>
+            </button>
+            <button class="card" id="dlB" type="button">
+              <div class="tile gv"><svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 8h20v16H10zM18 24h20v16H18z"/></svg></div>
+              <div><b>Bản HS + Bản GV</b><span>Bản HS ở trên; bản GV (có đáp án, lời giải) sang trang mới ở dưới</span></div>
+            </button>
+          </div>
+        </div>
         <div class="ow" id="ow">
           <b>Ghi đè lên file gốc</b>
           <p id="owTxt"></p>
@@ -882,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15-b3</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15-b4</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4592,6 +4609,180 @@ function secName(sc) {
   const m = /D[ạa]ng\s*(\d{1,2})/i.exec(tx);
   return m ? 'Dạng ' + m[1] : 'Mục ' + (sc + 1);
 }
+// Phần III: dòng "Đáp án: 170" / "Đáp số: 0,4" đang nằm đầu lời giải -> tách ra thành đáp số (đáp số đã sửa cho vừa 4 ô thì dùng số mới)
+function p3Ans(q) {
+  let qs2 = q, ansT = q.ansText;
+  if (q.part === 3) {
+    const k = q.sol.findIndex((t) => hasContent(trim(t)));
+    const m = k >= 0 && !hasDrawing(q.sol[k]) ? /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*(.{1,30}?)\s*\.?\s*$/i.exec(textOf(trim(q.sol[k]))) : null;
+    if (m && !/[\uFFFC]/.test(m[1])) { if (!ansT) ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
+  }
+  return { qs2, ansT };
+}
+// các nhóm câu theo đúng thứ tự và cách đánh số của buildBody: [{ sec, part, pq }]
+function bodyGroups(qs) {
+  const multi = multiSec(qs);
+  const secs = multi ? Array.from(new Set(qs.map((q) => q.sec || 0))).sort((a, b) => a - b) : [null];
+  const out = [];
+  for (const sc of secs) {
+    const sq = sc === null ? qs : qs.filter((q) => (q.sec || 0) === sc);
+    const groups = NOPARTS && STYLE !== 'm1' ? [{ part: 0, pq: sq.slice() }] : [1, 2, 3, 4].map((p) => ({ part: p, pq: sq.filter((q) => q.part === p) }));
+    for (const g of groups) if (g.pq.length) out.push({ sec: sc, multi, part: g.part, pq: g.pq });
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ XUẤT 1 FILE: đề HS + đáp án, hướng dẫn giải gọn (2 cột) ở cuối
+const PN_RO = ['', 'I', 'II', 'III', 'IV'];
+const KEY_LINE = { val: 'single', sz: 4, space: 0, color: '000000' };
+// bảng đáp án gọn: hàng tiêu đề + các hàng giá trị; cột đầu là nhãn
+function keyTbl(head, rows, firstW) {
+  const W = PAGE_USABLE * 20, n = head.length - 1, cw = Math.floor((W - firstW) / Math.max(n, 1));
+  const t = mk('tbl'), pr = mk('tblPr');
+  pr.appendChild(mk('tblW', { w: firstW + cw * n, type: 'dxa' }));
+  pr.appendChild(mk('jc', { val: 'center' }));
+  const bd = mk('tblBorders'); for (const sd of ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']) bd.appendChild(mk(sd, KEY_LINE)); pr.appendChild(bd);
+  pr.appendChild(mk('tblLayout', { type: 'fixed' }));
+  const mar = mk('tblCellMar'); mar.appendChild(mk('left', { w: 40, type: 'dxa' })); mar.appendChild(mk('right', { w: 40, type: 'dxa' })); pr.appendChild(mar);
+  t.appendChild(pr);
+  const g = mk('tblGrid'); g.appendChild(mk('gridCol', { w: firstW })); for (let i = 0; i < n; i++) g.appendChild(mk('gridCol', { w: cw })); t.appendChild(g);
+  const row = (cells, hd) => {
+    const tr = mk('tr'), trPr = mk('trPr'); trPr.appendChild(mk('cantSplit')); tr.appendChild(trPr);
+    cells.forEach((c, i) => {
+      const tc = mk('tc'), tp = mk('tcPr'); tp.appendChild(mk('tcW', { w: i ? cw : firstW, type: 'dxa' }));
+      if (hd) { const sh = mk('shd'); sh.setAttributeNS(NS.w, 'w:val', 'clear'); sh.setAttributeNS(NS.w, 'w:color', 'auto'); sh.setAttributeNS(NS.w, 'w:fill', 'F2F2F2'); tp.appendChild(sh); }
+      tp.appendChild(mk('vAlign', { val: 'center' })); tc.appendChild(tp);
+      tc.appendChild(makeP(c === '' ? [] : [lit(String(c), hd || !i ? { bold: true } : { bold: true, color: RED })], { jc: 'center', line: 240 }));
+      tr.appendChild(tc);
+    });
+    t.appendChild(tr);
+  };
+  row(head, true); rows.forEach((r) => row(r, false));
+  return t;
+}
+function keyTables(g) {
+  const out = [], pq = g.pq;
+  const chunk = (arr, k) => { const r = []; for (let i = 0; i < arr.length; i += k) r.push(arr.slice(i, i + k)); return r; };
+  const pad = (a, k, v) => a.concat(Array(Math.max(0, k - a.length)).fill(v));
+  const idx = pq.map((q, i) => ({ q, n: i + 1 }));
+  if (g.part === 1 || g.part === 0) {
+    const items = idx.filter((x) => g.part === 1 || x.q.part === 1);
+    for (const ch of chunk(items, 10)) out.push(keyTbl(['Câu'].concat(pad(ch.map((x) => x.n), 10, '')), [['Đáp án'].concat(pad(ch.map((x) => x.q.ans || '?'), 10, ''))], 1000));
+  }
+  if (g.part === 2 || g.part === 0) {
+    const items = idx.filter((x) => x.q.part === 2);
+    for (const ch of chunk(items, 8)) {
+      const tf = ch.map((x) => stmtTruth(x.q));
+      out.push(keyTbl(['Câu'].concat(pad(ch.map((x) => x.n), 8, '')), 'abcd'.split('').map((L) => [L + ')'].concat(pad(tf.map((t, k) => (L in ch[k].q.stmts) ? t[L] || '?' : ''), 8, ''))), 1000));
+    }
+  }
+  if (g.part === 3 || g.part === 0) {
+    const items = idx.filter((x) => x.q.part === 3);
+    for (const ch of chunk(items, 8)) out.push(keyTbl(['Câu'].concat(pad(ch.map((x) => x.n), 8, '')), [['Đáp án'].concat(pad(ch.map((x) => p3Ans(x.q).ansT || '?'), 8, ''))], 1000));
+  }
+  return out;
+}
+// lời giải gọn: bỏ dòng "Hướng dẫn giải", bỏ dòng trống, giãn dòng đơn, không cách đoạn; dòng đầu gắn nhãn "Câu n. (B)"
+function compactSol(q, num) {
+  const { qs2, ansT } = p3Ans(q);
+  let lab = '';
+  if (q.part === 1) lab = q.ans ? '(' + q.ans + ')' : '';
+  else if (q.part === 2) { const t = stmtTruth(q); lab = 'abcd'.split('').filter((L) => t[L]).map((L) => L + ') ' + t[L]).join('  '); lab = lab ? '(' + lab + ')' : ''; }
+  else if (q.part === 3) lab = ansT ? '(' + ansT + ')' : '';
+  const has = qs2.sol.some((t) => hasContent(trim(t)));
+  if (!has) return null;
+  const els = buildSolParas(qs2).slice(1);
+  const out = [];
+  for (const el of els) {
+    if (isW(el, 'p')) {
+      const tx = (el.textContent || '').trim();
+      const obj = ['drawing', 'pict', 'object', 'oMath', 'oMathPara'].some((n) => el.getElementsByTagNameNS('*', n).length > 0);
+      if (!tx && !obj) continue;
+      let pPr = findW(el, 'pPr'); if (!pPr) { pPr = mk('pPr'); el.insertBefore(pPr, el.firstChild); }
+      Array.from(pPr.children).filter((c) => isW(c, 'spacing') || isW(c, 'keepNext') || isW(c, 'pBdr') || isW(c, 'shd')).forEach((c) => pPr.removeChild(c));
+      const sp = mk('spacing', { before: 0, after: 0, line: 240, lineRule: 'auto' });
+      const nx = Array.from(pPr.children).find((c) => ['ind', 'contextualSpacing', 'mirrorIndents', 'suppressOverlap', 'jc', 'textDirection', 'textAlignment', 'textboxTightWrap', 'outlineLvl', 'divId', 'cnfStyle', 'rPr', 'sectPr', 'pPrChange'].includes(c.localName));
+      pPr.insertBefore(sp, nx || null);
+      const ind = findW(pPr, 'ind'); if (ind) { ind.setAttributeNS(NS.w, 'w:left', '0'); ind.removeAttributeNS(NS.w, 'firstLine'); ind.removeAttributeNS(NS.w, 'hanging'); }
+      const jc = findW(pPr, 'jc'); if (jc) jc.setAttributeNS(NS.w, 'w:val', 'left');   // cột hẹp: canh đều làm giãn chữ quanh công thức
+    } else if (isW(el, 'tbl')) { /* bảng giữ nguyên */ }
+    out.push(el);
+  }
+  const head = [lit('Câu ' + num + '.', { bold: true, color: BLUE })].concat(lab ? [lit(' ' + lab, { bold: true, color: RED })] : []).concat([lit(' ')]);
+  const f = out[0];
+  if (f && isW(f, 'p') && !/^\s*[a-d]\s*[\)\.]/.test(f.textContent || '')) {
+    const pPr = findW(f, 'pPr'), ref = pPr ? pPr.nextSibling : f.firstChild;
+    head.forEach((r) => f.insertBefore(r, ref));
+  } else out.unshift(makeP(head, { line: 240, jc: 'left' }));
+  return out;
+}
+// lời giải "rộng" (bảng, hình/công thức rộng hơn một cột) in cả bề ngang trang
+function wideEls(els, colPt) {
+  for (const el of els) {
+    if (isW(el, 'tbl')) return true;
+    const s = ser(el);
+    let m; const re1 = /width:([\d.]+)pt/g, re2 = /<wp:extent cx="(\d+)"/g;
+    while ((m = re1.exec(s))) if (parseFloat(m[1]) > colPt) return true;
+    while ((m = re2.exec(s))) if (parseInt(m[1], 10) / 12700 > colPt) return true;
+  }
+  return false;
+}
+function sectSet(sect, name, attrs) {
+  const ORDER = ['headerReference', 'footerReference', 'footnotePr', 'endnotePr', 'type', 'pgSz', 'pgMar', 'paperSrc', 'pgBorders', 'lnNumType', 'pgNumType', 'cols', 'formProt', 'vAlign', 'noEndnote', 'titlePg', 'textDirection', 'bidi', 'rtlGutter', 'docGrid', 'printerSettings', 'sectPrChange'];
+  Array.from(sect.children).filter((c) => isW(c, name)).forEach((c) => sect.removeChild(c));
+  if (!attrs) return sect;
+  const e = mk(name, attrs), k = ORDER.indexOf(name);
+  const nx = Array.from(sect.children).find((c) => c.namespaceURI === NS.w && ORDER.indexOf(c.localName) > k);
+  sect.insertBefore(e, nx || null);
+  return sect;
+}
+// nối các phần trong một file: đánh lại id hình / VML / bookmark của bản sao thứ k để Word không báo trùng
+function bumpIds(els, k) {
+  for (const root of els) for (const el of [root].concat(Array.from(root.getElementsByTagName('*')))) {
+    if (el.namespaceURI === NS.wp && el.localName === 'docPr') { const n = parseInt(el.getAttribute('id'), 10); if (!isNaN(n)) el.setAttribute('id', String(n + k * 100000)); }
+    if (isW(el, 'bookmarkStart') || isW(el, 'bookmarkEnd')) { const id = parseInt(wattr(el, 'id'), 10); if (!isNaN(id)) el.setAttributeNS(NS.w, 'w:id', String(id + k * 100000)); if (isW(el, 'bookmarkStart')) el.setAttributeNS(NS.w, 'w:name', (wattr(el, 'name') || 'bm') + '_' + k); }
+    for (const a of Array.from(el.attributes || [])) if ((a.localName === 'id' || a.localName === 'ShapeID') && /^_x0000_[it]\d+$/.test(a.value)) a.value = a.value.slice(0, 8) + (parseInt(a.value.slice(8), 10) + k * 100000);
+  }
+  return els;
+}
+function bannerP(text, brk) {
+  const p = makeP([lit(text, { bold: true, color: RED })], { jc: 'center', before: 0, after: 120, line: 240 });
+  if (brk) { const pPr = findW(p, 'pPr'); pPr.insertBefore(mk('pageBreakBefore'), pPr.firstChild); }
+  return p;
+}
+// đề HS + "ĐÁP ÁN VÀ HƯỚNG DẪN GIẢI": bảng đáp án gọn, lời giải 2 cột; trả về [phần tử thân, các vị trí cần ngắt section]
+function keySolPart(qs) {
+  const els = [bannerP('ĐÁP ÁN VÀ HƯỚNG DẪN GIẢI', true)];
+  const groups = bodyGroups(qs);
+  const gname = (g) => (g.multi ? secName(g.sec || 0) + ' – ' : '') + (g.part ? 'Phần ' + PN_RO[g.part] : '');
+  for (const g of groups) {
+    if (g.part === 4) continue;
+    const tb = keyTables(g);
+    if (!tb.length) continue;
+    const nm = gname(g);
+    if (nm) els.push(makeP([lit(nm + (g.part === 1 ? '. Trắc nghiệm nhiều lựa chọn' : g.part === 2 ? '. Đúng / Sai' : g.part === 3 ? '. Trả lời ngắn' : ''), { bold: true })], { jc: 'left', keepNext: true, line: 240, before: 60, after: 40 }));
+    tb.forEach((t) => { els.push(t); els.push(makeP([], { line: 240, after: 0 })); });
+  }
+  const colPt = (PAGE_USABLE - 14) / 2;
+  const blocks = [];   // { wide, els }
+  let any = false;
+  for (const g of groups) {
+    const nm = gname(g);
+    let headPut = false;
+    g.pq.forEach((q, i) => {
+      const sol = compactSol(q, i + 1);
+      if (!sol) return;
+      any = true;
+      const wide = wideEls(sol, colPt - 4);
+      if (!headPut && nm) { sol.unshift(makeP([lit(nm.toUpperCase(), { bold: true, color: GREEN2 })], { jc: 'left', keepNext: true, line: 240, before: 60 })); headPut = true; }
+      const last = blocks[blocks.length - 1];
+      if (last && last.wide === wide) last.els.push(...sol); else blocks.push({ wide, els: sol });
+    });
+  }
+  if (any) els.push(makeP([lit('HƯỚNG DẪN GIẢI', { bold: true, color: RED })], { jc: 'center', line: 240, before: 60, after: 60 }));
+  return { els, blocks };
+}
+
 function buildBody(qs, showAnswer, headerElems) {
   const body = [].concat(headerElems);
   const emitted = new Set();
@@ -4622,12 +4813,7 @@ function buildBody(qs, showAnswer, headerElems) {
       body.push(...stemParas(q, i + 1));
       if (part === 1) body.push(...buildOptionParas(q, showAnswer));
       else if (part === 2) body.push(...buildStmtParas(q, showAnswer));
-      let qs2 = q, ansT = q.ansText;
-      if (q.part === 3) {   // dòng "Đáp án: 170" / "Đáp số: 0,4" đang nằm đầu lời giải -> tách thành dòng Đáp án trước "Hướng dẫn giải" (đáp số đã sửa cho vừa 4 ô thì dùng số mới)
-        const k = q.sol.findIndex((t) => hasContent(trim(t)));
-        const m = k >= 0 && !hasDrawing(q.sol[k]) ? /^\s*(?:đáp\s*án|đáp\s*số|kết\s*quả)\s*(?:là)?\s*[:=]\s*(.{1,30}?)\s*\.?\s*$/i.exec(textOf(trim(q.sol[k]))) : null;
-        if (m && !/[\uFFFC]/.test(m[1])) { if (!ansT) ansT = m[1]; qs2 = Object.create(q); qs2.sol = q.sol.filter((_, i) => i !== k); }
-      }
+      const { qs2, ansT } = p3Ans(q);
       if (!showAnswer && q.part === 3 && HSBOX && STYLE !== 'm1') {
         const lp = body[body.length - 1];
         if (lp && isW(lp, 'p')) { const pp = Array.from(lp.children).find((x) => isW(x, 'pPr')); if (pp && !Array.from(pp.children).some((x) => isW(x, 'keepNext'))) { const st = Array.from(pp.children).find((x) => isW(x, 'pStyle')); pp.insertBefore(mk('keepNext'), st ? st.nextSibling : pp.firstChild); } }
@@ -5075,10 +5261,45 @@ function linesToParas(q, text, origParas) {
 
 // cảnh báo do công cụ đã tự xử lý xong: không hiện ở màn hình xem lại, chỉ ghi vào báo cáo sau khi xuất
 const isAutoWarn = (w) => /(đã (sửa|sắp xếp|bỏ|chuyển|thêm|được đổi)|tự (đổi|gán|lấy)|nối thêm dòng)/.test(w) && !/hãy (kiểm tra|xem lại)/.test(w);
+// ------------------------------------------------------------------ CÂU CẦN XEM: chọn Có / Không ngay trên bảng báo cáo
+const ackKey = (w) => String(w || '').replace(/\s*\([^)]*\)\s*\.?$/, '').replace(/\s+/g, ' ').trim();
+const isAcked = (q, w) => !!(q.acked && q.acked.has(ackKey(w)));
+// loại lựa chọn cho từng dòng cảnh báo:
+//  p1/p2/p3: thiếu dữ liệu -> chọn A–D / Đúng–Sai từng ý / nhập đáp số
+//  c1/c2/c3: công cụ đã tự quyết -> Có (giữ cách công cụ làm) / Không (tự chọn lại)
+//  unit: gợi ý đổi đơn vị -> Có (đổi) / Không (giữ nguyên)
+//  rv: công cụ đoán, cần xác nhận -> Có (đúng, ẩn dòng này) / Không (đến câu để sửa tay)
+//  go: chỉ đến câu để sửa
+function warnKind(part, w) {
+  w = String(w || '');
+  let m;
+  if (part === 1) {
+    if (/^Chưa (chọn|đánh dấu) đáp án đúng/.test(w)) return { k: 'p1' };
+    if ((m = /Tạm chọn ([A-D])\b/.exec(w))) return { k: 'c1', v: m[1] };
+    if ((m = /^Đáp án ([A-D]) lấy từ/.exec(w))) return { k: 'c1', v: m[1] };
+    if ((m = /^Đáp án đánh dấu là ([A-D]) nhưng/.exec(w))) return { k: 'c1', v: m[1] };
+    if (/^Có nhiều đáp án được đánh dấu/.test(w)) return { k: 'p1' };
+  }
+  if (part === 2) {
+    if (/^Có ý chưa có đáp án Đúng\/Sai|^Chưa biết ý nào Đúng|chưa rõ đáp án/.test(w)) return { k: 'p2' };
+    if (/và lời giải không khớp|^Đúng\/Sai lệch nhau/.test(w)) return { k: 'c2' };
+  }
+  if (part === 3) {
+    if (/^Chưa có đáp án số/.test(w)) return { k: 'p3' };
+    if ((m = /^Đáp án số (\S+): (?:tự )?lấy từ kết quả cuối/.exec(w))) return { k: 'c3', v: m[1] };
+    if ((m = /^Đáp số trong câu là (\S+) nhưng bảng đáp án/.exec(w))) return { k: 'c3', v: m[1] };
+    if (/không vừa 4 ô của phiếu trả lời\. Gợi ý: đổi đơn vị/.test(w)) return { k: 'unit' };
+  }
+  if (/hãy (kiểm tra|xem lại)/.test(w)) return { k: 'rv' };
+  return { k: 'go' };
+}
+// "Có" cho dòng cảnh báo không cần sửa gì thêm: ẩn dòng đó (bản xuất không còn ghi chú này)
+function ackQ(id, w) { const q = need(id); (q.acked || (q.acked = new Set())).add(ackKey(w)); return viewOf(q); }
+
 function viewOf(q) {
   const cp = (arr) => arr.filter(hasContent).map((t) => toksToText(q, t));
   const v = {
-    id: q.id, part: q.part, sec: q.sec || 0, src: q.src, ei: q.srcEi, partGuess: !!q.partGuess, warn: q.warn.filter((w) => !isAutoWarn(w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
+    id: q.id, part: q.part, sec: q.sec || 0, src: q.src, ei: q.srcEi, partGuess: !!q.partGuess, warn: q.warn.filter((w) => !isAutoWarn(w) && !isAcked(q, w)), autoFixed: q.warn.filter(isAutoWarn), hints: (q.hints || []).slice(),
     edited: !!q.edited, added: !!q.added, replacedFrom: q.replacedFrom || null, canRevert: !!q.orig,
     ans: q.ans, ansText: q.ansText, fit: q.fit || null, stem: cp(q.stem), sol: cp(q.sol), opts: null, stmts: null,
     tagLv: q.tagLv || null, tagPre: TAG_PRE[q.part] || null, tagSrc: q.tag || '',
@@ -5414,7 +5635,7 @@ function revertQ(id) {
   if (!q.orig) return viewOf(q);
   const o = q.orig;
   q.stem = o.stem; q.opts = o.opts; q.stmts = o.stmts; q.tf = o.tf || {}; q.sol = o.sol; q.ans = o.ans; q.manualAns = o.manualAns; q.pwarn = o.pwarn; q.ansText = o.ansText;
-  q.orig = null; q.edited = false;
+  q.orig = null; q.edited = false; q.acked = null;
   finalizeQ(q);
   return viewOf(q);
 }
@@ -5566,15 +5787,18 @@ async function generate(opt, ids, extra) {
   const root = S.root, body = S.body, files = S.files;
   const pagesGuess = Math.max(1, Math.round(qs.length / 4));
   const result = {};
-  for (const who of extra.only || ['GV', 'HS']) {
-    const show = who === 'GV';
-    const header = M1 ? [makeP([lit('Mã chuyên đề: ' + (opt.ma1 || 'DE_THI') + ' ', { bold: true, color: RED })], { jc: 'center', before: 48, after: 96, line: 240 })] : titleMode === 'keep' ? (opt.fresh && S.titleBlock && S.titleBlock.length ? S.titleBlock.map((e) => e.cloneNode(true)) : S.titleClone ? [S.titleClone.cloneNode(true)] : []) : buildHeader(opt, pagesGuess);
+  const combo = !M1 && (opt.combo === 'key' || opt.combo === 'gvhs') ? opt.combo : '';
+  const mkHeader = () => M1 ? [makeP([lit('Mã chuyên đề: ' + (opt.ma1 || 'DE_THI') + ' ', { bold: true, color: RED })], { jc: 'center', before: 48, after: 96, line: 240 })] : titleMode === 'keep' ? (opt.fresh && S.titleBlock && S.titleBlock.length ? S.titleBlock.map((e) => e.cloneNode(true)) : S.titleClone ? [S.titleClone.cloneNode(true)] : []) : buildHeader(opt, pagesGuess);
+  const mkElems = (show) => {
+    const header = mkHeader();
     // bản HS: bỏ lời giải của các bài ôn lý thuyết (điền khuyết, nối câu)
     const thEls = opt.keepTheory && S.theory && S.theory.length ? S.theory.filter((e, i) => show || !(S.theorySol && S.theorySol[i])).map((e) => e.cloneNode(true)) : [];
     SEC_TH = opt.keepTheory && S.secTheory ? S.secTheory : null;
-    const elems = buildBody(qs, show, header.concat(thEls));
+    // tách hẳn khỏi cây gốc: bản sau dựng lại không kéo mất phần tử của bản trước
+    return buildBody(qs, show, header.concat(thEls)).map((e) => e.cloneNode(true));
+  };
+  const pack = async (elems, splitSects) => {
     while (body.firstChild) body.removeChild(body.firstChild);
-    for (const e of elems) body.appendChild(e);
     const out = Object.assign({}, files);
     let sectEl = M1 || opt.fresh ? null : (S.sectClone ? S.sectClone.cloneNode(true) : null);
     if (M1) {
@@ -5585,15 +5809,62 @@ async function generate(opt, ids, extra) {
     }
     if (!sectEl) sectEl = DOC.createElementNS(NS.w, 'w:sectPr');
     if (!M1) applyPage(sectEl, DOC);   // khổ A4 dọc, lề 1 / 1 / 1,5 / 1 cm cho cả hai bản (ngân hàng đề đã có lề riêng giống vậy)
-    if (sectEl) body.appendChild(sectEl);
     if (sectEl && opt.pageNum && opt.pageNum !== 'off') addPageNumbers(sectEl, out, opt);
+    if (splitSects) sectEl = splitSects(elems, sectEl);
+    for (const e of elems) body.appendChild(e);
+    if (sectEl) body.appendChild(sectEl);
     const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ser(root).replace(/^<\?xml[^>]*\?>\s*/, '');
     out['word/document.xml'] = new TextEncoder().encode(xml);
     await pruneRels(out, xml);
     const z = new JSZip();
     z.file('[Content_Types].xml', out['[Content_Types].xml']);
     for (const name of Object.keys(out)) if (name !== '[Content_Types].xml') z.file(name, out[name]);
-    result[who] = await z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
+    return await z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
+  };
+  if (combo === 'gvhs') {
+    // 1 file: bản HS ở trên, bản GV sang trang mới ở dưới; số trang liên tục cả file
+    const hsEls = mkElems(false);
+    const gvEls = bumpIds(mkElems(true), 1);
+    result.ONE = await pack(hsEls.concat([bannerP('BẢN DÀNH CHO GIÁO VIÊN', true)], gvEls));
+  } else if (combo === 'key') {
+    // 1 file: đề HS ở trên; đáp án (bảng gọn) + hướng dẫn giải 2 cột sang trang mới ở dưới
+    const hsEls = mkElems(false);
+    const ks = keySolPart(qs);
+    const solEls = bumpIds(ks.els.concat(...ks.blocks.map((b) => b.els)), 1);
+    result.ONE = await pack(hsEls.concat(solEls), (elems, base) => {
+      if (!ks.blocks.length) return base;
+      const mkS = (cols, first) => {
+        const c = base.cloneNode(true);
+        if (!first) {
+          sectSet(c, 'titlePg', null);
+          const pn = findW(c, 'pgNumType'); if (pn && pn.hasAttributeNS(NS.w, 'start')) pn.removeAttributeNS(NS.w, 'start');
+          sectSet(c, 'type', { val: 'continuous' });
+        }
+        sectSet(c, 'cols', cols === 2 ? { num: 2, space: 284 } : { space: 720 });
+        return c;
+      };
+      // đoạn chứa sectPr: đoạn cuối của khối; khối kết thúc bằng bảng thì thêm một đoạn rỗng nhỏ
+      const holder = (arr) => {
+        let p = arr[arr.length - 1];
+        if (!p || !isW(p, 'p') || hasSectPr(p)) { p = makeP([], { line: 20, after: 0 }); arr.push(p); }
+        let pPr = findW(p, 'pPr'); if (!pPr) { pPr = mk('pPr'); p.insertBefore(pPr, p.firstChild); }
+        return (sect) => { const rp = findW(pPr, 'rPr'); const after = Array.from(pPr.children).find((c) => isW(c, 'pPrChange')); pPr.insertBefore(sect, after || null); };
+      };
+      // phần trên (đề HS + bảng đáp án) là section 1 cột, kết thúc ngay trước khối lời giải đầu tiên
+      const nTop = hsEls.length + ks.els.length;
+      const top = elems.slice(0, nTop);
+      holder(top)(mkS(1, true));
+      const tail = [];
+      ks.blocks.forEach((b, i) => {
+        const arr = b.els.slice();
+        if (i < ks.blocks.length - 1) holder(arr)(mkS(b.wide ? 1 : 2, false));
+        tail.push(...arr);
+      });
+      elems.length = 0; elems.push(...top, ...tail);
+      return mkS(ks.blocks[ks.blocks.length - 1].wide ? 1 : 2, false);
+    });
+  } else for (const who of extra.only || ['GV', 'HS']) {
+    result[who] = await pack(mkElems(who === 'GV'));
   }
   const count = [1, 2, 3, 4].map((p) => qs.filter((q) => q.part === p).length);
   const notes = [];
@@ -5619,11 +5890,11 @@ async function generate(opt, ids, extra) {
     const key = (mSec ? q.sec || 0 : 0) + '.' + q.part;
     idx[key] = (idx[key] || 0) + 1;
     const pre = mSec ? secName(q.sec || 0) + ' · ' : '';
-    for (const wm of q.warn) notes.push({ id: q.id, text: pre + 'Phần ' + ['', 'I', 'II', 'III', 'IV'][q.part] + ' – Câu ' + idx[key] + ' (gốc: ' + q.src + '): ' + wm });
+    for (const wm of q.warn) if (!isAcked(q, wm)) notes.push({ id: q.id, text: pre + 'Phần ' + ['', 'I', 'II', 'III', 'IV'][q.part] + ' – Câu ' + idx[key] + ' (gốc: ' + q.src + '): ' + wm });
   }
   if (S.copyNote) notes.unshift({ id: ids[0], text: S.copyNote });
   const nSec = multiSec(qs) ? new Set(qs.map((q) => q.sec || 0)).size : 0;
-  return { gv: result.GV, hs: result.HS, count, notes, title: S.title, nSec };
+  return { gv: result.GV, hs: result.HS, one: result.ONE || null, combo, count, notes, title: S.title, nSec };
   } finally { STYLE = 'cur'; LINE = 360; JCD = 'both'; }
 }
 
@@ -6171,7 +6442,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState };
+window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
 })();
 
 </script>
@@ -6803,16 +7074,61 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
       order.forEach((id) => {
         const v = views.get(id); if (!v || v.part !== part || dropped.has(id)) return;
         const sk = MS ? v.sec || 0 : 0; cn[sk] = (cn[sk] || 0) + 1; const n = cn[sk];
-        const msgs = v.warn.filter((w) => !OPT_RE.test(w)).map((w) => shortW(w).replace(/\s*\([^)]*\)\s*$/, '')).concat(v.hints || []);
-        if (v.sugg && !v.sugg.n) msgs.push('Có thể là chùm câu hỏi (xem gợi ý trong thẻ câu)');
-        if (isM1() && part <= 3 && !v.tagLv) msgs.push('Chưa gắn nhãn mức độ');
+        const wk = (w) => (window.DeThi.warnKind ? window.DeThi.warnKind(part, w) : { k: 'go' });
+        const msgs = v.warn.filter((w) => !OPT_RE.test(w)).map((w) => Object.assign({ t: shortW(w).replace(/\s*\([^)]*\)\s*$/, ''), w }, wk(w))).concat((v.hints || []).map((w) => ({ t: w, w, k: 'go' })));
+        if (v.sugg && !v.sugg.n) msgs.push({ t: 'Có thể là chùm câu hỏi (xem gợi ý trong thẻ câu)', k: 'sg' });
+        if (isM1() && part <= 3 && !v.tagLv) msgs.push({ t: 'Chưa gắn nhãn mức độ', k: 'lv' });
         const lab = (MS && MS.has(v.sec || 0) ? MS.get(v.sec || 0) + ' · ' : '') + PN[part] + ' · Câu ' + n;
         if (msgs.length) need.push({ id, lab, msgs });
         else if (resolved.has(id)) need.push({ id, lab, msgs: [], done: true });
-        if (v.warn.some((w) => OPT_RE.test(w))) opt.push({ id, lab, msgs: ['Chưa có hướng dẫn giải'] });
+        if (v.warn.some((w) => OPT_RE.test(w))) opt.push({ id, lab, msgs: [{ t: 'Chưa có hướng dẫn giải', k: 'go' }] });
       });
     }
     return { need, opt };
+  }
+  // nút chọn ngay trên bảng báo cáo: Có / Không, chọn đáp án, Đúng/Sai, nhập đáp số
+  const sidePick = new Set();   // câu đang ở chế độ "Không": hiện ô tự chọn lại
+  function sideCtl(id, m, k) {
+    const v = views.get(id); if (!v) return '';
+    const yn = (y, n, ty, tn) => '<button class="mini yes" type="button" data-sa="' + y + '" data-k="' + k + '" title="' + esc(ty || '') + '">Có</button><button class="mini no" type="button" data-sa="' + n + '" data-k="' + k + '" title="' + esc(tn || '') + '">Không</button>';
+    const pick = sidePick.has(id + '|' + k);
+    let h = '';
+    if (m.k === 'p1' || (m.k === 'c1' && pick)) h = '<em>Chọn:</em>' + 'ABCD'.split('').filter((L) => v.opts && v.opts[L] !== undefined).map((L) => '<button class="mini" type="button" data-sa="p1" data-v="' + L + '">' + L + '</button>').join('');
+    else if (m.k === 'c1') h = '<em>Giữ đáp án ' + esc(m.v) + '?</em>' + yn('c1', 'pk', 'Đúng là ' + m.v + ': ghi chọn này vào đề', 'Không phải: tự chọn lại A–D');
+    else if (m.k === 'p2' || (m.k === 'c2' && pick)) h = 'abcd'.split('').filter((L) => v.stmts && v.stmts[L]).map((L) => { const c = v.tf && v.tf[L]; return '<span class="tfg"><b>' + L + ')</b><button class="mini' + (c === 'Đ' ? ' on' : '') + '" type="button" data-sa="p2" data-l="' + L + '" data-v="Đ">Đ</button><button class="mini' + (c === 'S' ? ' on' : '') + '" type="button" data-sa="p2" data-l="' + L + '" data-v="S">S</button></span>'; }).join('');
+    else if (m.k === 'c2') h = '<em>Giữ Đúng/Sai theo lời giải?</em>' + yn('ack', 'pk', 'Đúng: giữ như công cụ đã lấy', 'Không: tự đặt Đúng/Sai từng ý');
+    else if (m.k === 'p3' || (m.k === 'c3' && pick)) { const sg = m.k === 'c3' ? m.v : suggestAns3(v.sol || []); h = '<input class="sa3" type="text" inputmode="decimal" autocomplete="off" aria-label="Đáp số" value="' + esc(m.k === 'c3' ? '' : '') + '" placeholder="' + esc(sg || 'đáp số') + '"><button class="mini" type="button" data-sa="p3">Ghi</button>' + (sg ? '<button class="mini" type="button" data-sa="p3s" data-v="' + esc(sg) + '">' + esc(sg) + '</button>' : ''); }
+    else if (m.k === 'c3') h = '<em>Giữ đáp số ' + esc(m.v) + '?</em>' + yn('c3', 'pk', 'Đúng: ghi Đáp án ' + m.v, 'Không: tự nhập đáp số');
+    else if (m.k === 'unit' && v.fit && v.fit.apply) h = '<em>Đổi ' + esc(v.fit.from) + ' → ' + esc(v.fit.to) + ', đáp số ' + esc(v.fit.v) + '?</em>' + yn('unit', 'ack', 'Đổi đơn vị trong đề và ghi đáp số mới', 'Giữ nguyên đơn vị');
+    else if (m.k === 'rv') h = '<em>Công cụ xử lý đúng?</em>' + yn('ack', 'fix', 'Đúng: ẩn dòng này', 'Chưa đúng: đến câu để sửa');
+    else if (m.k === 'sg') h = '<em>Là chùm câu hỏi?</em>' + yn('sg', 'sgno', 'Nhận gợi ý chùm câu', 'Không phải chùm');
+    else if (m.k === 'lv') h = ['B', 'H', 'VD', 'VDC'].map((L) => '<button class="mini" type="button" data-sa="lv" data-v="' + L + '">' + L + '</button>').join('');
+    return h ? '<div class="sa" data-k="' + k + '">' + h + '</div>' : '';
+  }
+  function sideAct(b) {
+    const row = b.closest('[data-sid]'), id = +row.dataset.sid, v = views.get(id), act = b.dataset.sa, k = +(b.dataset.k || b.closest('.sa').dataset.k);
+    const L = sideLists().need.concat(sideLists().opt).find((x) => x.id === id), m = L && L.msgs[k];
+    const ok = (nv, msg) => { if (Array.isArray(nv)) nv.forEach((x) => views.set(x.id, x)); else if (nv) views.set(nv.id, nv); sidePick.delete(id + '|' + k); renderReview(); if (msg) toast(msg); };
+    try {
+      if (act === 'pk') { sidePick.add(id + '|' + k); renderSide(); return; }
+      if (act === 'fix') { lastGo = id; focusQ(id); if (!isWide()) { drawerOpen = false; sideSync(); } toast('Sửa câu này trong thẻ câu (nút Sửa), xong danh sách tự cập nhật.'); return; }
+      if (act === 'ack') return ok(window.DeThi.ack(id, m.w), 'Đã xác nhận.');
+      if (act === 'c1') return ok(window.DeThi.edit(id, { ans: m.v }), 'Đã giữ đáp án ' + m.v + '.');
+      if (act === 'p1') return ok(window.DeThi.edit(id, { ans: b.dataset.v }), 'Đã chọn đáp án ' + b.dataset.v + '.');
+      if (act === 'p2') return ok(window.DeThi.edit(id, { tf: { [b.dataset.l]: b.dataset.v } }), 'Ý ' + b.dataset.l + ') ' + (b.dataset.v === 'Đ' ? 'Đúng' : 'Sai') + '.');
+      if (act === 'c3' || act === 'p3' || act === 'p3s') {
+        const raw = act === 'c3' ? m.v : act === 'p3s' ? b.dataset.v : (row.querySelector('.sa[data-k="' + k + '"] input.sa3') || {}).value;
+        const c = checkAns3(raw, v.stem.join(' '));
+        if (c.err) { toast(c.err); return; }
+        const fl = { ans3: c.v }, ff = fit4(v.stem.join(' '), c.v, fl);
+        fl.ans3 = ff.v; fl.round = ff.round !== undefined ? ff.round : askRound(v.stem.join(' '), ff.v);
+        return ok(window.DeThi.edit(id, fl), (ff.note ? '⚠ ' + ff.note + ' ' : '') + 'Đã ghi Đáp án: ' + ff.v + '.');
+      }
+      if (act === 'unit') { const f = v.fit, rp = window.DeThi.roundPlan(v.stem.join(' '), f.v); return ok(window.DeThi.edit(id, { unit: { from: f.from, to: f.to }, ans3: f.v, round: rp && !rp.ok ? rp.dec : null }), 'Đã đổi đơn vị ' + f.from + ' → ' + f.to + ', đáp số ' + f.v + '.'); }
+      if (act === 'sg') { const sel = $('qlist').querySelector('[data-id="' + id + '"] .sgn'); return ok(window.DeThi.cluster(id, +(sel ? sel.value : 2)), 'Đã nhận chùm câu hỏi.'); }
+      if (act === 'sgno') return ok(window.DeThi.noSugg(id), 'Đã bỏ gợi ý chùm.');
+      if (act === 'lv') return ok(window.DeThi.setTag(id, b.dataset.v), 'Đã gắn nhãn ' + b.dataset.v + '.');
+    } catch (err) { alert('Không áp dụng được: ' + (err && err.message ? err.message : err)); }
   }
   function renderSide() {
     const P = $('sideP');
@@ -6825,7 +7141,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     prevNeed = nowNeed;
     const lst = sideLists();
     const nN = nowNeed.size;
-    const it = (x) => '<button class="it' + (x.done ? ' done' : '') + '" type="button" data-sid="' + x.id + '"><b>' + esc(x.lab) + '</b>' + (x.done ? '<span>✓ Đã sửa</span>' : x.msgs.map((m) => '<span>' + esc(m) + '</span>').join('')) + '</button>';
+    const it = (x) => '<div class="it' + (x.done ? ' done' : '') + '" data-sid="' + x.id + '"><div class="ith"><b>' + esc(x.lab) + '</b><button class="mini go" type="button" data-sgo="' + x.id + '">Đến</button></div>' + (x.done ? '<span>✓ Đã sửa</span>' : x.msgs.map((m, k) => '<span>' + esc(m.t) + '</span>' + sideCtl(x.id, m, k)).join('')) + '</div>';
     let h = '<div class="gh">Cần sửa · ' + nN + '</div>';
     h += lst.need.length ? lst.need.map(it).join('') : '<div class="empty">✓ Không còn câu cần sửa.</div>';
     if (lst.opt.length) h += '<details class="grp"' + (optOpen ? ' open' : '') + '><summary>Không bắt buộc · ' + lst.opt.length + ' câu chưa có hướng dẫn giải</summary>' + lst.opt.map(it).join('') + '</details>';
@@ -6974,10 +7290,13 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   stage.addEventListener('transitionend', () => { if (isWide()) placeSide(); });
   sideSync();
   $('sideB').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-sa]'); if (a) { sideAct(a); return; }
+    if (e.target.closest('input')) return;
     const b = e.target.closest('[data-sid]'); if (!b) return;
     lastGo = +b.dataset.sid; focusQ(lastGo);
     if (!isWide()) { drawerOpen = false; sideSync(); }
   });
+  $('sideB').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('sa3')) { e.preventDefault(); const g = e.target.closest('.sa').querySelector('[data-sa="p3"]'); if (g) sideAct(g); } });
   $('sideB').addEventListener('toggle', (e) => { if (e.target.classList && e.target.classList.contains('grp')) optOpen = e.target.open; }, true);
   $('sideFab').addEventListener('click', () => { drawerOpen = true; sideSync(); spy(); });
   $('sideX').addEventListener('click', () => { drawerOpen = false; sideSync(); });
@@ -7287,6 +7606,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
     $('dlHS').hidden = !both; $('dl').classList.toggle('one', !both);
     $('dlAll').textContent = both ? 'Tải cả hai bản' : 'Tải bản Giáo viên';
     if (m1) { $('dlGVs').textContent = 'Ngân hàng đề: nhãn mức độ, đáp án gạch chân, hướng dẫn giải, số trang'; $('dlHSs').textContent = 'Ngân hàng đề: không đáp án, không hướng dẫn giải'; }
+    $('one1').hidden = m1 || wasQuick;
   }
   /* ---------- tạo nhanh: không định dạng, không xem lại ---------- */
   let wasQuick = false;
@@ -7377,6 +7697,19 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   const dlGV = async () => (out ? saveOut(out.gv, rawName + (isM1() ? (out.hs ? '_Mau1_GV' : '_Mau1') : '_GV') + '.docx') : ''), dlHS = async () => (out && out.hs ? saveOut(out.hs, rawName + (isM1() ? '_Mau1_HS' : '_HS') + '.docx') : '');
   $('dlGV').addEventListener('click', async () => { const r = await dlGV(); mark($('dlGV')); if (r) $('locMsg').textContent = 'Đã lưu ' + r; });
   $('dlHS').addEventListener('click', async () => { const r = await dlHS(); mark($('dlHS')); if (r) $('locMsg').textContent = 'Đã lưu ' + r; });
+  // xuất 1 file: dựng lúc bấm (đề HS + đáp án/HDG 2 cột, hoặc HS + GV)
+  async function dlOne(kind, el) {
+    if (!out || wasQuick || isM1()) return;
+    el.disabled = true;
+    try {
+      const r = await window.DeThi.generate(Object.assign(curOpt(), { combo: kind }), keptIds());
+      const res = r.one ? await saveOut(r.one, rawName + (kind === 'key' ? '_DeVaDapAn' : '_HS_GV') + '.docx') : '';
+      mark(el); if (res) $('locMsg').textContent = 'Đã lưu ' + res;
+    } catch (e) { $('locMsg').textContent = 'Không xuất được: ' + (e && e.message ? e.message : e); }
+    el.disabled = false;
+  }
+  $('dlK').addEventListener('click', () => dlOne('key', $('dlK')));
+  $('dlB').addEventListener('click', () => dlOne('gvhs', $('dlB')));
   $('dlAll').addEventListener('click', async () => {
     const a = await dlGV(); mark($('dlGV'));
     if (isM1() && !(out && out.hs)) { if (a) $('locMsg').textContent = 'Đã lưu ' + a; return; }
@@ -7468,7 +7801,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15-b3 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15-b4 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
