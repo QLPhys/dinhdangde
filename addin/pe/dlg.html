@@ -76,8 +76,8 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
         + bt('split', 'GV và HS tách riêng, giữ file gốc', 'Mở bản GV và bản HS ở 2 cửa sổ Word mới; file đang soạn giữ nguyên.')
         + bt('ow', 'GV ghi đè lên file gốc', 'File đang mở được thay bằng bản GV và lưu lại' + (np ? ' (file chưa có tên: công cụ chỉ thay nội dung, thầy tự lưu)' : '') + '; bản HS mở ở cửa sổ mới.')
         + (k1 ? '<div class="mut" style="margin:4px 0 6px">Xuất 1 file (mở ở cửa sổ mới, số trang liên tục cả file):</div>'
-          + bt('key', '1 file: Đề + Đáp án, HDG', 'Đề cho HS ở trên; bảng đáp án và hướng dẫn giải gọn (2 cột) sang trang mới ở cuối.')
-          + bt('gvhs', '1 file: Bản HS + Bản GV', 'Bản HS ở trên; bản GV (có đáp án, lời giải) sang trang mới ở dưới.') : '')
+          + bt('key', '1 file: Đề HS + Hướng dẫn giải', 'Đề cho HS giữ nguyên cấu trúc đề gốc; sang trang mới là đáp án và hướng dẫn giải như bản GV (không chép lại đề).')
+          + bt('gvhs', '1 file: Bản HS + Bản GV', 'Ghép bản HS và bản GV (như 2 file xuất riêng) thành 1 file; bản GV bắt đầu ở trang mới.') : '')
         + '<div class="row"><button id="no" type="button">Thôi</button></div>';
       ['split', 'ow', 'key', 'gvhs'].forEach((id) => { const e = document.getElementById(id); if (e) e.onclick = () => send({ mode: id }); });
       document.getElementById('no').onclick = () => send({ cancel: 1 });
