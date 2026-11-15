@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15-b5</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15-b6</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4751,8 +4751,10 @@ function bannerP(text, brk) {
   return p;
 }
 // đề HS + "ĐÁP ÁN VÀ HƯỚNG DẪN GIẢI": bảng đáp án gọn, lời giải 2 cột; trả về [phần tử thân, các vị trí cần ngắt section]
-function keySolPart(qs) {
+function keySolPart(qs, opt) {
   const els = [bannerP('ĐÁP ÁN VÀ HƯỚNG DẪN GIẢI', true)];
+  // đáp án các bài ôn lý thuyết (điền khuyết, nối câu): bản HS đã bỏ, đưa xuống phần đáp án
+  const thSol = opt && opt.keepTheory && S.theory && S.theorySol ? S.theory.filter((e, i) => S.theorySol[i]).map((e) => e.cloneNode(true)) : [];
   const groups = bodyGroups(qs);
   const gname = (g) => (g.multi ? secName(g.sec || 0) + ' – ' : '') + (g.part ? 'Phần ' + PN_RO[g.part] : '');
   for (const g of groups) {
@@ -4766,6 +4768,7 @@ function keySolPart(qs) {
   const colPt = (PAGE_USABLE - 14) / 2;
   const blocks = [];   // { wide, els }
   let any = false;
+  if (thSol.length) { any = true; blocks.push({ wide: true, els: [makeP([lit('LÝ THUYẾT', { bold: true, color: GREEN2 })], { jc: 'left', keepNext: true, line: 240, before: 60 })].concat(thSol) }); }
   for (const g of groups) {
     const nm = gname(g);
     let headPut = false;
@@ -5821,10 +5824,6 @@ async function generate(opt, ids, extra) {
     for (const name of Object.keys(out)) if (name !== '[Content_Types].xml') z.file(name, out[name]);
     return await z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
   };
-  // xuất 1 file là một đề hoàn chỉnh: bỏ phần lý thuyết, không giữ cấu trúc theo dạng của file gốc (gom Phần I–IV, đánh số liên tục)
-  const secSave = combo ? qs.map((q) => q.sec) : null;
-  if (combo) { opt.keepTheory = false; qs.forEach((q) => { q.sec = 0; }); }
-  try {
   if (combo === 'gvhs') {
     // 1 file: bản HS ở trên, bản GV sang trang mới ở dưới; số trang liên tục cả file
     const hsEls = mkElems(false);
@@ -5833,7 +5832,7 @@ async function generate(opt, ids, extra) {
   } else if (combo === 'key') {
     // 1 file: đề HS ở trên; đáp án (bảng gọn) + hướng dẫn giải 2 cột sang trang mới ở dưới
     const hsEls = mkElems(false);
-    const ks = keySolPart(qs);
+    const ks = keySolPart(qs, opt);
     const solEls = bumpIds(ks.els.concat(...ks.blocks.map((b) => b.els)), 1);
     result.ONE = await pack(hsEls.concat(solEls), (elems, base) => {
       if (!ks.blocks.length) return base;
@@ -5870,7 +5869,6 @@ async function generate(opt, ids, extra) {
   } else for (const who of extra.only || ['GV', 'HS']) {
     result[who] = await pack(mkElems(who === 'GV'));
   }
-  } finally { if (secSave) qs.forEach((q, i) => { q.sec = secSave[i]; }); }
   const count = [1, 2, 3, 4].map((p) => qs.filter((q) => q.part === p).length);
   const notes = [];
   const seenCl = new Set();
@@ -7806,7 +7804,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15-b5 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15-b6 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
