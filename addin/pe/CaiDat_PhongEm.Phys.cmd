@@ -76,6 +76,9 @@ echo      (Word moi: Home ^> Add-ins ^> More Add-ins / Advanced)
 echo   3. Chon the SHARED FOLDER (THU MUC DUNG CHUNG) ^> PhongEm.Phys ^> Add (Them).
 echo  May co ca QL_Format va PhongEm.Phys thi ca hai cung nam trong the SHARED FOLDER: them lan luot tung cai.
 echo  Tu lan sau, moi lan mo Word the "PhongEm.Phys" luon co san tren Ribbon.
+echo  Dang mo trang huong dan co hinh (6 buoc them add-in vao Word):
+echo   https://qlphys.github.io/dinhdangde/huongdan/?b=pe
+start "" "https://qlphys.github.io/dinhdangde/huongdan/?b=pe"
 echo.
 pause
 exit /b 0
@@ -90,5 +93,9 @@ set "D=%LOCALAPPDATA%\PhongEmPhys\Addin"
 if not exist "%D%" mkdir "%D%"
 copy /y "%C%\%F%" "%D%\manifest.xml" >nul
 reg add "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "PhongEmPhys" /t REG_SZ /d "%D%\manifest.xml" /f >nul
+echo.
+echo Dang mo trang huong dan co hinh (o buoc 3 chon the DEVELOPER ADD-INS):
+echo  https://qlphys.github.io/dinhdangde/huongdan/?b=pe
+start "" "https://qlphys.github.io/dinhdangde/huongdan/?b=pe"
 echo.
 pause

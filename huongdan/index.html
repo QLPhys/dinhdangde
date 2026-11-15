@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thêm add-in vào Word · QL Physics</title>
+<style>
+:root { --bg: #eef3fb; --card: #ffffff; --ink: #14223a; --ink2: #51607a; --blue: #0a6cff; --green: #1f7a3a; --red: #c0281d; --amber: #9a5b00; --hair: #d5deec; --tint: #fff6e5; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0f1522; --card: #182133; --ink: #e8eef8; --ink2: #a3b0c6; --blue: #5aa2ff; --green: #5ccf80; --red: #ff7a6e; --amber: #f0b45a; --hair: #2b3850; --tint: #2a2416; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 900px; margin: 0 auto; padding: 28px 16px 48px; }
+h1 { font-size: 27px; margin: 0 0 6px; line-height: 1.3; } .sub { color: var(--ink2); margin: 0 0 20px; }
+.ok { background: var(--card); border: 1px solid var(--hair); border-left: 5px solid var(--green); border-radius: 12px; padding: 12px 16px; margin: 0 0 20px; }
+.step { background: var(--card); border: 1px solid var(--hair); border-radius: 16px; padding: 18px; margin: 0 0 18px; }
+.step h2 { font-size: 19px; margin: 0 0 8px; display: flex; gap: 10px; align-items: center; }
+.n { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 99px; background: var(--red); color: #fff; font-size: 15px; font-weight: 700; }
+.step p { margin: 0 0 10px; } .step ol { margin: 0 0 12px; padding-left: 22px; } .step li { margin: 4px 0; }
+img { width: 100%; height: auto; display: block; border: 1px solid var(--hair); border-radius: 10px; }
+b.k { white-space: nowrap; }
+.warn { background: var(--tint); border: 1px solid var(--hair); border-radius: 12px; padding: 12px 16px; margin: 0 0 18px; }
+.tabs { display: flex; gap: 8px; margin: 0 0 18px; flex-wrap: wrap; }
+.tabs a { text-decoration: none; padding: 7px 14px; border-radius: 99px; border: 1px solid var(--blue); color: var(--blue); font-weight: 600; font-size: 14.5px; }
+.tabs a.on { background: var(--blue); color: #fff; }
+h3 { font-size: 17px; margin: 22px 0 8px; }
+.muted { color: var(--ink2); font-size: 14.5px; }
+a { color: var(--blue); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Cài xong <span class="nm">PhongEm.Phys</span>: thêm vào Word (làm 1 lần)</h1>
+  <p class="sub">Add-in cài qua thư mục dùng chung <b>không tự hiện</b> trên Word. Thầy cô làm 6 bước dưới đây một lần; từ lần mở Word sau, thẻ <b class="nm">PhongEm.Phys</b> luôn có sẵn trên thanh Ribbon.</p>
+  <div class="tabs"><a href="?b=ql" id="tql">QL_Format</a><a href="?b=pe" id="tpe">PhongEm.Phys</a></div>
+
+  <div class="ok">Bộ cài đã chạy xong là phần khó đã xong. Nếu trong khung <b>My Add-ins</b> không thấy <span class="nm">PhongEm.Phys</span> thì <b>không phải lỗi cài</b>: add-in nằm ở thẻ <b>SHARED FOLDER</b> như bước 3–5.</div>
+
+  <div class="step">
+    <h2><span class="n">1–2</span>Mở hộp Office Add-ins</h2>
+    <ol>
+      <li>Mở Word, mở một file bất kỳ (hoặc file trắng).</li>
+      <li>Thẻ <b class="k">Home (Trang đầu)</b> &gt; nút <b class="k">Add-ins (Phần bổ trợ)</b> &gt; bấm <b class="k">More Add-ins (Thêm phần bổ trợ)</b> ở góc dưới khung vừa mở.</li>
+    </ol>
+    <p class="muted">Word kiểu cũ: thẻ <b>Insert (Chèn)</b> &gt; <b>My Add-ins (Phần bổ trợ của tôi)</b>.</p>
+    <img src="img/b1-addins.jpg" alt="Thẻ Home, nút Add-ins và nút More Add-ins được khoanh đỏ" loading="lazy">
+  </div>
+
+  <div class="step">
+    <h2><span class="n">3–5</span>Chọn thẻ SHARED FOLDER rồi thêm</h2>
+    <ol start="3">
+      <li>Trong hộp <b>Office Add-ins</b>, chọn thẻ <b class="k">SHARED FOLDER (THƯ MỤC DÙNG CHUNG)</b>.</li>
+      <li>Bấm vào <b class="nm">PhongEm.Phys</b>.</li>
+      <li>Bấm <b class="k">Add (Thêm)</b>.</li>
+    </ol>
+    <img id="i2" src="img/b2-shared-pe.jpg" alt="Hộp Office Add-ins, thẻ SHARED FOLDER, add-in và nút Add được khoanh đỏ" loading="lazy">
+  </div>
+
+  <div class="step">
+    <h2><span class="n">6</span>Thẻ add-in hiện trên Ribbon</h2>
+    <p>Thẻ <b class="nm">PhongEm.Phys</b> xuất hiện cạnh các thẻ của Word. Xong — các lần mở Word sau không cần làm lại.</p>
+    <img id="i3" src="img/b3-ribbon-pe.jpg" alt="Thẻ add-in trên thanh Ribbon được khoanh đỏ" loading="lazy">
+  </div>
+
+  <h3>Nếu không giống hình</h3>
+  <div class="warn">
+    <ul style="margin:0;padding-left:20px">
+      <li><b>Thẻ SHARED FOLDER trống hoặc không có thẻ này:</b> đóng hết Word rồi mở lại; nếu vẫn vậy, chạy lại bộ cài và chọn <b>Yes (Có)</b> khi Windows hỏi quyền.</li>
+      <li><b>Bộ cài báo "KHONG TAO DUOC THU MUC DUNG CHUNG":</b> máy không cho quyền quản trị. Add-in khi đó nằm ở thẻ <b>DEVELOPER ADD-INS</b> trong hộp Office Add-ins (bước 3 chọn thẻ này thay cho SHARED FOLDER) và có thể phải thêm lại mỗi lần mở Word.</li>
+      <li>Vẫn chưa được: chạy file <b>KiemTra_AddIn.cmd</b> (chỉ đọc thông tin, không thay đổi gì), gửi file <b>KiemTra_AddIn.txt</b> tạo ra trên Desktop cho thầy Lập.</li>
+    </ul>
+  </div>
+  <p class="muted">QL Physics · Tổ Vật lí · Trường THPT Chu Văn An · <a href="../">Trang công cụ</a></p>
+</main>
+<script>
+(function () {
+  var b = 'pe';
+  try { b = new URLSearchParams(location.search).get('b') === 'ql' ? 'ql' : 'pe'; } catch (e) {}
+  var name = b === 'ql' ? 'QL_Format' : 'PhongEm.Phys';
+  document.querySelectorAll('.nm').forEach(function (e) { e.textContent = name; });
+  document.getElementById('i2').src = 'img/b2-shared-' + b + '.jpg';
+  document.getElementById('i3').src = 'img/b3-ribbon-' + b + '.jpg';
+  document.getElementById('t' + b).className = 'on';
+  document.title = 'Thêm ' + name + ' vào Word · QL Physics';
+})();
+</script>
+</body>
+</html>
