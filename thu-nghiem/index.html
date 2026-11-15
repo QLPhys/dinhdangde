@@ -882,7 +882,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -3897,6 +3897,8 @@ function finalizeQ(q) {
       const rk = roundKind(stx), n = rk.k === 'dec' ? rk.n : rk.k === 'int' ? 0 : null;
       const base = n != null && ti.exact ? ti.exact : v, d = (base.split(',')[1] || '').length;
       if (n != null && d > n) { const r = (+base.replace(',', '.')).toFixed(n).replace('.', ','); if (r !== v) rnote = ' (lời giải ghi ' + base + ', đã làm tròn theo yêu cầu của đề)'; v = /^-0(?:,0*)?$/.test(r) ? r.slice(1) : r; }
+      // đề chưa có yêu cầu làm tròn: lấy số chính xác nhất trong lời giải ("−18,23 ≈ −18") rồi giữ nhiều chữ số nhất vừa 4 ô
+      if (n == null && rk.k === '?' && ti.exact) { const f = fitTxt(parseFloat(ti.exact.replace(',', '.')), (ti.exact.split(',')[1] || '').length); if (f && f.v !== v) { rnote = ' (lời giải ghi ' + ti.exact + ' ≈ ' + v + ', lấy ' + f.v + ' cho đủ 4 ô)'; v = f.v; } }
       q.ansText = v; q.solUnit = ti.unit;
       // công thức cuối chỉ đọc được một phần (MathType có mũi tên kèm chữ…): vẫn lấy nhưng để thầy xem lại trong Câu cần xem
       q.warn.push('Đáp án số ' + v + ': ' + (ti.bad ? 'lấy' : 'tự lấy') + ' từ kết quả cuối cùng của lời giải' + rnote + ' (đề chưa ghi đáp số)' + (ti.bad ? ', công thức cuối chỉ đọc được một phần: hãy kiểm tra lại.' : '.'));
@@ -3928,6 +3930,16 @@ function finalizeQ(q) {
       q.fit = { from: p.from, to: p.to, v: p.v, n: p.n, apply: p.apply };
       q.warn.push('Đáp số ' + p.src + (p.from ? ' ' + p.from : '') + ' không vừa 4 ô của phiếu trả lời. Gợi ý: ' + (p.apply ? 'đổi đơn vị đề hỏi từ ' + p.from + ' sang ' + p.to + ', đáp số ' + p.v + ' (bấm "Đổi đơn vị" ở thẻ câu).' : 'hỏi theo đơn vị ' + p.to + ', đáp số ' + p.v + ' (đơn vị trong đề là công thức/chưa ghi: hãy sửa tay).'));
     } else if (p) q.warn.push('Đáp số ' + p.from + ' không vừa 4 ô của phiếu trả lời (kể cả dấu "-" và dấu phẩy): hãy đổi đơn vị hoặc cách hỏi.');
+    // đề chưa có yêu cầu làm tròn: tự ghi yêu cầu khớp số chữ số thập phân của đáp số (số nguyên -> hàng đơn vị)
+    if (q.rndNote) q.warn.push(q.rndNote);
+    const val = String(q.ansText || num || '').replace(/\s+/g, '').replace(/[−–]/g, '-'), a4 = ansNum(val);
+    const stx2 = q.stem.map((t) => textOf(t)).join(' ').replace(/\uFFFC/g, ' ');
+    if (a4 && !a4.sci && val.length <= 4 && (!p || p.kind === 'round') && roundKind(stx2).k === '?' && !/làm\s*tròn/i.test(stx2)) {
+      const nd = a4.dec;
+      q.stem = q.stem.map((x) => x.slice()); applyRound(q, nd);
+      q.rndNote = 'Đề chưa có yêu cầu làm tròn: đã thêm "' + roundTxt(nd) + '" vào đề cho khớp đáp số ' + val + '.';
+      q.warn.push(q.rndNote);
+    }
   }
 }
 
@@ -7455,7 +7467,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
