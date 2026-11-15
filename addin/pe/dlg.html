@@ -38,6 +38,7 @@ body.cx .w{padding:8px 9px;gap:6px} body.cx{font-size:13px} body.cx .cxtop butto
 body.cx .tabs{gap:3px;flex-wrap:wrap} body.cx .tabs button{min-height:24px;padding:1px 9px;font-size:12px}
 .cxi{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;border-bottom:1px solid #edf0f5;padding:6px 2px}
 .cxi .cxh{font-weight:600;font-size:12.5px} .cxi .cxw{font-size:12px;color:var(--warn)} .cxi button{min-height:26px;padding:1px 10px;font-size:12px}
+.cxa{display:flex;flex-wrap:wrap;align-items:center;gap:3px;margin:2px 0 5px 8px;font-size:12px} .cxa span{color:var(--mut);margin-right:2px} .cxa .tfg{display:inline-flex;gap:2px;align-items:center;margin-right:4px;color:inherit} .cxi .cxa button{min-height:22px;padding:0 8px} .cxa button.yes{color:var(--ok);font-weight:600} .cxa button.no{color:#c0281d;font-weight:600} .cxa button.on{background:#0a58ca;color:#fff;border-color:#0a58ca} .cxa input.cxn{width:64px;font:inherit;font-size:12px;padding:2px 5px;border:1px solid var(--line);border-radius:5px}
 .cxi.ph .cxh{color:#8a4b00} .cxi.seen{opacity:.6} .cxi.seen .cxh{color:var(--ok)}
 .cxo summary{cursor:pointer;font-size:12.5px;color:var(--mut);padding:6px 0} .cxo .cxw{color:var(--mut)}
 body.sym .gr.snp button{width:auto;padding:0 6px;font:11.5px 'Segoe UI',sans-serif;color:#5b2a86;background:#f6f0fb;border-color:#e1d2ef}
@@ -68,16 +69,19 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
       document.getElementById('y').focus();
     } else if (m === 'xo') {
       // Xuất GV + HS: chọn ghi đè bản GV lên file gốc hay tách riêng (giữ file gốc); nút đậm là lần chọn trước
-      const ow = P.get('d') === 'ow', np = P.get('np') === '1';
-      const bt = (id, pri, a, b) => '<button class="' + (pri ? 'pri ' : '') + 'xo" id="' + id + '" type="button" style="display:block;width:100%;text-align:left;padding:10px 12px;margin:0 0 8px"><b>' + a + '</b><br><span style="font-weight:400;font-size:12.5px;opacity:.85">' + b + '</span></button>';
+      const dm = P.get('d') || 'split', np = P.get('np') === '1', k1 = P.get('k1') === '1';
+      const cur = ['split', 'ow', 'key', 'gvhs'].includes(dm) && (k1 || dm === 'split' || dm === 'ow') ? dm : 'split';
+      const bt = (id, a, b) => '<button class="' + (cur === id ? 'pri ' : '') + 'xo" id="' + id + '" type="button" style="display:block;width:100%;text-align:left;padding:10px 12px;margin:0 0 8px"><b>' + a + '</b><br><span style="font-weight:400;font-size:12.5px;opacity:.85">' + b + '</span></button>';
       W.innerHTML = '<div class="t"><b>Xuất bản Giáo viên + Học sinh</b></div>'
-        + bt('sp', !ow, 'GV và HS tách riêng, giữ file gốc', 'Mở bản GV và bản HS ở 2 cửa sổ Word mới; file đang soạn giữ nguyên.')
-        + bt('ow', ow, 'GV ghi đè lên file gốc', 'File đang mở được thay bằng bản GV và lưu lại' + (np ? ' (file chưa có tên: công cụ chỉ thay nội dung, thầy tự lưu)' : '') + '; bản HS mở ở cửa sổ mới.')
+        + bt('split', 'GV và HS tách riêng, giữ file gốc', 'Mở bản GV và bản HS ở 2 cửa sổ Word mới; file đang soạn giữ nguyên.')
+        + bt('ow', 'GV ghi đè lên file gốc', 'File đang mở được thay bằng bản GV và lưu lại' + (np ? ' (file chưa có tên: công cụ chỉ thay nội dung, thầy tự lưu)' : '') + '; bản HS mở ở cửa sổ mới.')
+        + (k1 ? '<div class="mut" style="margin:4px 0 6px">Xuất 1 file (mở ở cửa sổ mới, số trang liên tục cả file):</div>'
+          + bt('key', '1 file: Đề + Đáp án, HDG', 'Đề cho HS ở trên; bảng đáp án và hướng dẫn giải gọn (2 cột) sang trang mới ở cuối.')
+          + bt('gvhs', '1 file: Bản HS + Bản GV', 'Bản HS ở trên; bản GV (có đáp án, lời giải) sang trang mới ở dưới.') : '')
         + '<div class="row"><button id="no" type="button">Thôi</button></div>';
-      document.getElementById('sp').onclick = () => send({ mode: 'split' });
-      document.getElementById('ow').onclick = () => send({ mode: 'ow' });
+      ['split', 'ow', 'key', 'gvhs'].forEach((id) => { const e = document.getElementById(id); if (e) e.onclick = () => send({ mode: id }); });
       document.getElementById('no').onclick = () => send({ cancel: 1 });
-      document.getElementById(ow ? 'ow' : 'sp').focus();
+      document.getElementById(cur).focus();
     } else if (m === 'ans') {
       const rd = P.get('rd'), sg = P.get('sg'), nb = +(P.get('bx') || 0);
       W.innerHTML = '<div class="mut">' + esc(P.get('q')) + '</div>'
@@ -218,7 +222,28 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
       const key = (x) => (x.sn || '') + '|' + x.p + '|' + x.k + '|' + (x.ph ? 'ph' : '') + (x.o ? 'o' : '');
       const row = (x, i, grp) => {
         const lab = x.ph ? (x.n > 1 ? 'Câu ' + x.k + ' → Câu ' + x.k2 : 'Câu ' + x.k) + ' · chưa có tiêu đề phần' : (x.sn ? x.sn + ' · ' : '') + PN[x.p] + ' – Câu ' + x.k;
-        return '<div class="cxi' + (seen.has(key(x)) ? ' seen' : '') + (x.ph ? ' ph' : '') + '"><div><div class="cxh">' + (seen.has(key(x)) ? '✓ ' : '') + esc(lab) + '</div>' + x.w.map((w) => '<div class="cxw">• ' + esc(w) + '</div>').join('') + '</div><button type="button" data-g="' + grp + i + '">Đến</button></div>';
+        return '<div class="cxi' + (seen.has(key(x)) ? ' seen' : '') + (x.ph ? ' ph' : '') + '"><div><div class="cxh">' + (seen.has(key(x)) ? '✓ ' : '') + esc(lab) + '</div>' + x.w.map((w, j) => '<div class="cxw">• ' + esc(w) + '</div>' + (grp === 'i' ? ctl(x, i, j) : '')).join('') + '</div><button type="button" data-g="' + grp + i + '">Đến</button></div>';
+      };
+      // nút chọn ngay trên bảng: Có / Không, A–D, Đ/S từng ý, nhập đáp số
+      const pick = new Set(), tfSel = {};
+      const ctl = (x, i, j) => {
+        const c = (x.c || [])[j]; if (!c) return '';
+        const b = (a, t, cl, ex) => '<button type="button" class="cxb' + (cl ? ' ' + cl : '') + '" data-a="' + a + '" data-i="' + i + '" data-j="' + j + '"' + (ex || '') + '>' + t + '</button>';
+        const yn = (y, n) => b(y, 'Có', 'yes') + b(n, 'Không', 'no');
+        const pk = pick.has(i + '.' + j);
+        let h = '';
+        if (c.k === 'p1' || (c.k === 'c1' && pk)) h = '<span>Chọn:</span>' + 'ABCD'.split('').map((L) => b('p1', L, '', ' data-v="' + L + '"')).join('');
+        else if (c.k === 'c1') h = '<span>Giữ đáp án ' + esc(c.v) + '?</span>' + yn('c1', 'pk');
+        else if (c.k === 'p2' || (c.k === 'c2' && pk)) {
+          const sel = tfSel[i] || (tfSel[i] = Object.assign({}, x.tf || {}));
+          h = (x.sl || []).map((L) => '<span class="tfg"><b>' + L + ')</b>' + b('tf', 'Đ', sel[L] === 'Đ' ? 'on' : '', ' data-l="' + L + '" data-v="Đ"') + b('tf', 'S', sel[L] === 'S' ? 'on' : '', ' data-l="' + L + '" data-v="S"') + '</span>').join('') + b('p2', 'Ghi', 'pri');
+        } else if (c.k === 'c2') h = '<span>Giữ Đúng/Sai theo lời giải?</span>' + yn('c2', 'pk');
+        else if (c.k === 'p3' || (c.k === 'c3' && pk)) h = '<input class="cxn" id="n' + i + '_' + j + '" inputmode="decimal" autocomplete="off" placeholder="đáp số">' + b('p3', 'Ghi', 'pri');
+        else if (c.k === 'c3') h = '<span>Giữ đáp số ' + esc(c.v) + '?</span>' + yn('c3', 'pk');
+        else if (c.k === 'unit' && x.fit) h = '<span>Đổi ' + esc(x.fit.from) + ' → ' + esc(x.fit.to) + ', đáp số ' + esc(x.fit.v) + '?</span>' + yn('unit', 'ack');
+        else if (c.k === 'rv') h = '<span>Công cụ xử lý đúng?</span>' + yn('ack', 'fix');
+        else if (c.k === 'lv') h = ['B', 'H', 'VD', 'VDC'].map((L) => b('lv', L, '', ' data-v="' + L + '"')).join('');
+        return h ? '<div class="cxa">' + h + '</div>' : '';
       };
       const draw = () => {
         const parts = [0, 1, 2, 3, 4].filter((p) => !p || items.some((x) => x.p === p) || opt.some((x) => x.p === p));
@@ -236,13 +261,28 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
         if (XU) document.getElementById('xu').onclick = () => send({ exp: 1 });
         W.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const g = b.dataset.g, x = g[0] === 'i' ? items[+g.slice(1)] : opt[+g.slice(1)]; if (!x) return; seen.add(key(x)); send({ go: x.s }); msg = 'Đang ở ' + (x.ph ? 'Câu ' + x.k : PN[x.p] + ' – Câu ' + x.k) + '. Sửa xong bấm ⟳ Rà lại.'; const op = W.querySelector('details.cxo'); const wasOpen = op && op.open; draw(); if (wasOpen) W.querySelector('details.cxo').open = true; }; });
         W.querySelectorAll('[data-p]').forEach((b) => { b.onclick = () => { fp = +b.dataset.p; draw(); }; });
+        W.querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => {
+          const i = +b.dataset.i, j = +b.dataset.j, x = items[i], c = x && x.c[j], a = b.dataset.a; if (!c) return;
+          if (a === 'pk') { pick.add(i + '.' + j); draw(); return; }
+          if (a === 'tf') { (tfSel[i] || (tfSel[i] = {}))[b.dataset.l] = b.dataset.v; draw(); return; }
+          let k = a, v = c.v;
+          if (a === 'p1') v = b.dataset.v;
+          else if (a === 'lv') v = b.dataset.v;
+          else if (a === 'p2') { v = tfSel[i] || {}; if (!Object.keys(v).length) { msg = 'Chọn Đ hoặc S cho từng ý rồi bấm Ghi.'; draw(); return; } }
+          else if (a === 'p3') { const e = document.getElementById('n' + i + '_' + j); v = e ? e.value.trim() : ''; if (!v) { msg = 'Nhập đáp số rồi bấm Ghi.'; draw(); return; } }
+          seen.add(key(x)); pick.delete(i + '.' + j); delete tfSel[i];
+          msg = 'Đang ghi vào đề…'; draw();
+          send({ act: { s: x.s, k, v, a: c.a, tf: x.tf, fit: x.fit, st: x.st } });
+        }; });
+        W.querySelectorAll('input.cxn').forEach((e) => { e.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const g = e.parentNode.querySelector('[data-a="p3"]'); if (g) g.click(); } }; });
         document.getElementById('x').onclick = () => send({ close: 1 });
         document.getElementById('rf').onclick = () => { msg = 'Đang rà lại…'; draw(); send({ refresh: 1 }); };
       };
       try {
         Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, (a) => {
           let v = null; try { v = JSON.parse(a.message); } catch (e) { return; }
-          if (v.items) { items = v.items; opt = v.opt || []; if (v.pn) PN = v.pn; msg = msg === 'Đang rà lại…' ? 'Đã rà lại ' + new Date().toLocaleTimeString('vi-VN') + '.' : ''; draw(); }
+          if (v.items) { items = v.items; opt = v.opt || []; if (v.pn) PN = v.pn; pick.clear(); Object.keys(tfSel).forEach((k) => delete tfSel[k]); msg = msg === 'Đang rà lại…' ? 'Đã rà lại ' + new Date().toLocaleTimeString('vi-VN') + '.' : msg === 'Đang ghi vào đề…' ? '' : ''; draw(); }
+          if (v.note) { msg = v.note; draw(); }
         });
       } catch (e) { /* bỏ qua */ }
       send({ ready: 1 });
