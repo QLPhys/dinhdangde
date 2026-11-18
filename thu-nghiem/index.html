@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.16-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.18-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -2210,6 +2210,27 @@ function Q(part) {
   this.tagLv = null; this.ans = null; this.flagged = []; this.flagStr = {}; this.warn = []; this.src = ''; this.tf = {}; this.ansText = null;
 }
 
+// nhãn A./B./C./D. giữa dòng có thể chỉ là tên điểm trong nội dung ("các điểm A. B. C", "Điểm B. C và E đi xuống"):
+// chỉ nhận là nhãn khi cách xa (tab, từ 2 dấu cách, sau dấu câu kết thúc) hoặc không đứng trong chuỗi tên điểm
+const PT_WORD = /(?:^|[^A-Za-zÀ-ỹ])(?:điểm|các|và|hoặc|tại|từ|đến|tới|qua|giữa|nút|bụng|cả|đoạn|cạnh|đỉnh|góc|tam\s+giác|vị\s+trí|vật|points?|and|or|at|from|to)$/i;
+function midLabelOk(s, at, end, first) {
+  if (at === first) return true;
+  const pre = s.slice(Math.max(0, at - 40), at);
+  const ws = /[ \t\u00A0]*$/.exec(pre)[0];
+  if (/\t|\s{2,}/.test(ws)) return true;           // cách bằng tab / nhiều dấu cách: nhãn thật
+  const w = pre.slice(0, pre.length - ws.length);
+  if (!w) return true;
+  // chuỗi tên điểm "điểm A. B." / "A. B. C." (không nhầm với đơn vị "10 V. B." hay "Tại A. B. Tại B.")
+  let w2 = w, k = 0, m2;
+  const base = Math.max(0, at - 40), L = s.charAt(at), ch = [];
+  while ((m2 = /(?:^|[\s,;])([A-Z])[\.,]$/.exec(w2)) && base + m2.index + m2[0].length - 2 !== first) { ch.unshift(m2[1]); w2 = w2.slice(0, m2.index + (m2[0].length - 2)).replace(/[ \t\u00A0]+$/, ''); k++; }
+  // "A. B. C." đứng liền trước "D.": dãy tên điểm liên tiếp
+  if (k >= 2 && ch.slice(-2).every((c, i, a) => c.charCodeAt(0) === L.charCodeAt(0) - a.length + i)) return false;
+  const postLone = /^[A-Z](?:\s*[,\.]|\s+(?:và|hoặc|and|or)(?=\s|$))/.test(s.slice(end, end + 16).replace(/^[ \t\u00a0]+/, ''));
+  if (postLone && (!/[\.;!?]$/.test(w) || (k === 1 && PT_WORD.test(w2)))) return false; // "Điểm B. C và E", "điểm A. B. C"
+  return true;
+}
+
 function findLabels(toks, letters, regex, expectedIdx, allowCoerce) {
   const s = textOf(toks);
   const found = [];
@@ -2222,6 +2243,7 @@ function findLabels(toks, letters, regex, expectedIdx, allowCoerce) {
     if (m[0].length === 0) { re.lastIndex++; continue; }
     if (exp >= letters.length) break;
     let ok;
+    if (/^[A-D]$/.test(letter) && !midLabelOk(s, m.index, m.index + m[0].length, firstNonspace)) continue;
     if (letter === letters[exp]) ok = true;
     else if (allowCoerce && m.index === firstNonspace && !found.length && letters.includes(letter)) { ok = true; coerced = true; }
     else ok = false;
@@ -2494,6 +2516,7 @@ function anyOrderLabels(toks, used) {
     const L = m[1];
     if (seen.has(L)) continue;
     if (!found.length && m.index !== first) return [];
+    if (!midLabelOk(s, m.index, m.index + m[0].length, first)) continue;
     found.push([m.index, m.index + m[0].length, L, m.index < toks.length ? toks[m.index].flag : false]);
     seen.add(L);
   }
@@ -3650,6 +3673,19 @@ function parseRaw(body, qkeys, popt) {
             continue;
           }
         }
+      }
+      if (startsLabel && r.found.length > 1 && !cur.anyOrder) {
+        // mỗi phương án một dòng (các dòng kế tiếp lần lượt bắt đầu bằng các nhãn còn lại tới D):
+        // nhãn giữa dòng này chỉ là chữ trong nội dung (tên điểm…), không tách
+        const L0 = r.found[0][2], need = 'ABCD'.slice('ABCD'.indexOf(L0) + 1);
+        let got = '';
+        for (let j = ei + 1; j < ents.length && got.length < need.length; j++) {
+          const e = ents[j]; if (!e.toks) break;
+          const t = textOf(e.toks).replace(/\uFFFC/g, ' ').trim(); if (!t) continue;
+          const mm = /^([A-D])\s*[\.\)]/.exec(t); if (!mm || mm[1] !== need[got.length]) break;
+          got += mm[1];
+        }
+        if (need && got === need) r = { found: [r.found[0]], exp: 'ABCD'.indexOf(L0) + 1, coerced: r.coerced };
       }
       if (startsLabel || (mode === 'opts' && !r.found.length)) {
         if (startsLabel) { expOpt = absorbOptions(cur, toks, r.found, r.coerced); mode = 'opts'; }
@@ -7727,7 +7763,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.16-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản 2026.11.18-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
