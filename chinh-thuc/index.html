@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản v2026.11.15.5</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.19</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -1982,7 +1982,8 @@ function normRpr(orig, o) {
   }
   rp.appendChild(keepFont || mk('rFonts', { ascii: FONT, hAnsi: FONT, cs: FONT, eastAsia: FONT }));
   const origB = orig ? findW(orig, 'b') : null;
-  const origCol = orig ? findW(orig, 'color') : null;
+  let origCol = orig ? findW(orig, 'color') : null;
+  if (REFMT && origCol && /^(?:000000|auto)$/i.test(wattr(origCol, 'val') || '')) origCol = null;   // đọc lại file GV: chữ đen ghi rõ màu vẫn giữ in đậm
   if (o.bold || (origB && !['0', 'false'].includes(wattr(origB, 'val')) && !origCol && !node)) rp.appendChild(mk('b'));
   const origI = orig ? findW(orig, 'i') : null;
   if (o.italic === true || (o.italic === undefined && origI && !['0', 'false'].includes(wattr(origI, 'val')))) rp.appendChild(mk('i'));
@@ -2178,9 +2179,9 @@ function hasDrawing(toks) {
 const HDR_RE = /^\s*(l[ờo]i gi[ảa]i|h[ưu][ớo]ng d[ẫa]n gi[ảa]i|đáp án và l[ờo]i gi[ảa]i)\s*[:\.]?\s*$/i;
 const ESSAY_PTS_RE = /[\(\[]\s*\d+(?:[.,]\d+)?\s*(?:điểm|đ|pt)(?![A-Za-zÀ-ỹ])\s*[\)\]]/i;
 const ESSAY_SUB_RE = /^\s*(?:[a-d]|[1-9])\s*[\.\)]\s*(?:Hãy\s+)?(?:Tính|Xác định|Tìm|Viết|Vẽ|Chứng minh|Giải thích|Lập|Thiết lập|So sánh|Nêu|Trình bày|Phân tích|Đánh giá|Suy ra|Cho biết|Chọn|Biểu diễn|Dựa vào|Hỏi|Cần|Khi nào|Tại sao|Vì sao)(?![A-Za-zÀ-ỹ])/i;
-const QSTART_RE = /^[\s\uFFFC]*(?:C[âa]u(?:\s*h[ỏo]i)?|B[àa]i(?:\s*t[ậa]p)?(?=\s*\d+\s*[:\.\)\(\[]))\s*(\d+)\s*[:\.\)]?\s*/i;
+const QSTART_RE = /^[\s\uFFFC]*(?:C[âa]u(?:\s*h[ỏo]i)?|Question|B[àa]i(?:\s*t[ậa]p)?(?=\s*\d+\s*[:\.\)\(\[]))\s*(\d+)\s*[:\.\)]?\s*/i;
 const NUMQ_RE = /^\s*(\d{1,3})\s*[\.\)]\s+(?=\S)/;
-const QSTART_T = /^[\s\uFFFC]*(?:\[[^\]]{1,24}\]\s*)?(?:C[âa]u(?:\s*h[ỏo]i)?|B[àa]i(?:\s*t[ậa]p)?(?=\s*\d+\s*[:\.\)\(\[]))\s*(\d+)\s*[:\.\)]?\s*/i;   // như QSTART_RE nhưng cho phép nhãn [TN-B] đứng trước chữ "Câu"
+const QSTART_T = /^[\s\uFFFC]*(?:\[[^\]]{1,24}\]\s*)?(?:C[âa]u(?:\s*h[ỏo]i)?|Question|B[àa]i(?:\s*t[ậa]p)?(?=\s*\d+\s*[:\.\)\(\[]))\s*(\d+)\s*[:\.\)]?\s*/i;   // như QSTART_RE nhưng cho phép nhãn [TN-B] đứng trước chữ "Câu"
 // đoạn mở đầu bằng nhãn mức độ chuẩn [TN-B]/[DS-H]/[TLN-VD]… cũng là điểm bắt đầu của một câu (kể cả khi không có chữ "Câu N")
 const TAGQ_RE = /^[\s\uFFFC]*\[\s*(?:TN|DS|TLN)\s*[-_–]\s*(?:B|H|VDC|VD)\s*\]/i;
 const tagqMatch = (txt) => (TAGQ_RE.test(txt) ? ['', ''] : null);
@@ -2210,6 +2211,27 @@ function Q(part) {
   this.tagLv = null; this.ans = null; this.flagged = []; this.flagStr = {}; this.warn = []; this.src = ''; this.tf = {}; this.ansText = null;
 }
 
+// nhãn A./B./C./D. giữa dòng có thể chỉ là tên điểm trong nội dung ("các điểm A. B. C", "Điểm B. C và E đi xuống"):
+// chỉ nhận là nhãn khi cách xa (tab, từ 2 dấu cách, sau dấu câu kết thúc) hoặc không đứng trong chuỗi tên điểm
+const PT_WORD = /(?:^|[^A-Za-zÀ-ỹ])(?:điểm|các|và|hoặc|tại|từ|đến|tới|qua|giữa|nút|bụng|cả|đoạn|cạnh|đỉnh|góc|tam\s+giác|vị\s+trí|vật|points?|and|or|at|from|to)$/i;
+function midLabelOk(s, at, end, first) {
+  if (at === first) return true;
+  const pre = s.slice(Math.max(0, at - 40), at);
+  const ws = /[ \t\u00A0]*$/.exec(pre)[0];
+  if (/\t|\s{2,}/.test(ws)) return true;           // cách bằng tab / nhiều dấu cách: nhãn thật
+  const w = pre.slice(0, pre.length - ws.length);
+  if (!w) return true;
+  // chuỗi tên điểm "điểm A. B." / "A. B. C." (không nhầm với đơn vị "10 V. B." hay "Tại A. B. Tại B.")
+  let w2 = w, k = 0, m2;
+  const base = Math.max(0, at - 40), L = s.charAt(at), ch = [];
+  while ((m2 = /(?:^|[\s,;])([A-Z])[\.,]$/.exec(w2)) && base + m2.index + m2[0].length - 2 !== first) { ch.unshift(m2[1]); w2 = w2.slice(0, m2.index + (m2[0].length - 2)).replace(/[ \t\u00A0]+$/, ''); k++; }
+  // "A. B. C." đứng liền trước "D.": dãy tên điểm liên tiếp
+  if (k >= 2 && ch.slice(-2).every((c, i, a) => c.charCodeAt(0) === L.charCodeAt(0) - a.length + i)) return false;
+  const postLone = /^[A-Z](?:\s*[,\.]|\s+(?:và|hoặc|and|or)(?=\s|$))/.test(s.slice(end, end + 16).replace(/^[ \t\u00a0]+/, ''));
+  if (postLone && (!/[\.;!?]$/.test(w) || (k === 1 && PT_WORD.test(w2)))) return false; // "Điểm B. C và E", "điểm A. B. C"
+  return true;
+}
+
 function findLabels(toks, letters, regex, expectedIdx, allowCoerce) {
   const s = textOf(toks);
   const found = [];
@@ -2222,6 +2244,7 @@ function findLabels(toks, letters, regex, expectedIdx, allowCoerce) {
     if (m[0].length === 0) { re.lastIndex++; continue; }
     if (exp >= letters.length) break;
     let ok;
+    if (/^[A-D]$/.test(letter) && !midLabelOk(s, m.index, m.index + m[0].length, firstNonspace)) continue;
     if (letter === letters[exp]) ok = true;
     else if (allowCoerce && m.index === firstNonspace && !found.length && letters.includes(letter)) { ok = true; coerced = true; }
     else ok = false;
@@ -2241,11 +2264,12 @@ function afterTag(q, toks) {
   const m = QSTART_RE.exec(textOf(toks));
   if (!m) return toks;
   q.numSrc = m[1];
+  if (/^[\s\uFFFC]*Question/i.test(m[0])) q.en = true;
   const keep = toks.slice(0, m[0].length).filter((t) => t.kind === 'n');
   return trim(keep.concat(toks.slice(m[0].length)));
 }
 // nguồn câu hỏi ngay sau số câu: "Câu 43 (Nguyễn Khuyến – TP. HCM 2025). …", "Câu 46 [Đề minh họa BGD 2025]. …"
-const SRC_KW = /(?:19|20)\d{2}|S[ởo]\s*GD|SGD|THPT|THCS|Chuy[êe]n|Tr[ườư]+ng|Đề|minh\s*h[ọo]a|thi\s*th[ửu]|BGD|B[ộo]\s*GD|C[ụu]m|Li[êe]n\s*tr|TN\s*THPT|HSG|SGK|SBT|Olympic|[ÔO]n\s*thi|S[áa]ch/i;
+const SRC_KW = /(?:19|20)\d{2}|Ngu[ồo]n\s|S[ởo]\s*GD|SGD|THPT|THCS|Chuy[êe]n|Tr[ườư]+ng|Đề|minh\s*h[ọo]a|thi\s*th[ửu]|BGD|B[ộo]\s*GD|C[ụu]m|Li[êe]n\s*tr|TN\s*THPT|HSG|SGK|SBT|Olympic|[ÔO]n\s*thi|S[áa]ch/i;
 function isSrcNote(inner) {
   const t = inner.trim();
   if (t.length < 3 || tagLevel(t)) return false;
@@ -2256,6 +2280,8 @@ function isSrcNote(inner) {
 function takeSource(q, toks) {
   const s = textOf(toks), lead = keep0(toks), s2 = s.slice(lead);
   const m = /^(\s*)(?:\(([^()\n]{3,100})\)|\[([^\[\]\n]{3,100})\])([ \t]*[\.:]?)[ \t]*/.exec(s2);
+  // ghi chú do chính công cụ chèn ở bản GV (đọc lại file GV đã xuất): không phải nguồn câu hỏi
+  if (m && /^Đề gốc thiếu câu dẫn/i.test((m[3] || '').trim())) { q.noStem = true; return trim(toks.slice(0, lead).concat(toks.slice(lead + m[0].length))); }
   if (!m || !isSrcNote(m[2] || m[3])) return toks;
   const a = lead + m[1].length, b = a + 2 + (m[2] || m[3]).length;
   q.srcNote = trim(toks.slice(a, b));
@@ -2278,6 +2304,7 @@ function stripQprefix0(q, toks) {
   let m = QSTART_RE.exec(s) || (USE_NUMQ ? NUMQ_RE.exec(s) : null);
   if (m) {
     q.numSrc = m[1];
+    if (/^[\s\uFFFC]*Question/i.test(m[0])) q.en = true;   // câu viết bằng tiếng Anh ("Question 1. …")
     const keep = toks.slice(0, m[0].length).filter((t) => t.kind === 'n');   // hình/công thức đứng trước chữ "Câu"
     toks = keep.concat(toks.slice(m[0].length));
     // "Bài 1 (2,0 điểm): ..." -> bỏ dấu ":" / "." thừa ngay sau phần điểm
@@ -2492,6 +2519,7 @@ function anyOrderLabels(toks, used) {
     const L = m[1];
     if (seen.has(L)) continue;
     if (!found.length && m.index !== first) return [];
+    if (!midLabelOk(s, m.index, m.index + m[0].length, first)) continue;
     found.push([m.index, m.index + m[0].length, L, m.index < toks.length ? toks[m.index].flag : false]);
     seen.add(L);
   }
@@ -2705,9 +2733,9 @@ function makeNumbering(numDoc, stylesDoc) {
 
 // ------------------------------------------------------------------ nhận diện lời giải / đáp án
 const NL = '(?![A-Za-zÀ-ỹ0-9])';
-const SOL_STRONG = '(?:h[ưu][ớo]ng\\s*d[ẫa]n\\s*gi[ảa]i(?:\\s*chi\\s*ti[ếe]t)?|h[ưu][ớo]ng\\s*d[ẫa]n\\s*ch[ấa]m|l[ờo]i\\s*gi[ảa]i(?:\\s*chi\\s*ti[ếe]t)?|b[àa]i\\s*gi[ảa]i|gi[ảa]i\\s*chi\\s*ti[ếe]t|đáp\\s*án\\s*(?:và|&|-|–)\\s*(?:l[ờo]i\\s*gi[ảa]i|h[ưu][ớo]ng\\s*d[ẫa]n(?:\\s*gi[ảa]i)?)(?:\\s*chi\\s*ti[ếe]t)?|hd\\s*gi[ảa]i|hdg|h[ưu][ớo]ng\\s*gi[ảa]i|ph[ưu][ơo]ng\\s*ph[áa]p\\s*gi[ảa]i|c[áa]ch\\s*gi[ảa]i)';
+const SOL_STRONG = '(?:h[ưu][ớo]ng\\s*d[ẫa]n\\s*gi[ảa]i(?:\\s*chi\\s*ti[ếe]t)?|h[ưu][ớo]ng\\s*d[ẫa]n\\s*ch[ấa]m|l[ờo]i\\s*gi[ảa]i(?:\\s*chi\\s*ti[ếe]t)?|b[àa]i\\s*gi[ảa]i|gi[ảa]i\\s*chi\\s*ti[ếe]t|đáp\\s*án\\s*(?:và|&|-|–)\\s*(?:l[ờo]i\\s*gi[ảa]i|h[ưu][ớo]ng\\s*d[ẫa]n(?:\\s*gi[ảa]i)?)(?:\\s*chi\\s*ti[ếe]t)?|hd\\s*gi[ảa]i|hdg|h[ưu][ớo]ng\\s*gi[ảa]i|ph[ưu][ơo]ng\\s*ph[áa]p\\s*gi[ảa]i|c[áa]ch\\s*gi[ảa]i|(?:detailed\\s*|worked\\s*|suggested\\s*)?solutions?|explanation)';
 const SOL_WEAK = '(?:h[ưu][ớo]ng\\s*d[ẫa]n|hd|gi[ảa]i|gi[ảa]i\\s*th[íi]ch|g[ợo]i\\s*[ýy](?:\\s*gi[ảa]i)?|l[ờo]i\\s*b[ìi]nh)';
-const ANS_WEAK = '(?:đáp\\s*án(?:\\s*chi\\s*ti[ếe]t)?(?:\\s*đúng)?(?:\\s*là)?|đáp\\s*số|đ\\.?\\s*s|đ\\.?\\s*a|đ\\/[as]|k[ếe]t\\s*qu[ảa]|answer|ans|key)';
+const ANS_WEAK = '(?:đáp\\s*án(?:\\s*chi\\s*ti[ếe]t)?(?:\\s*đúng)?(?:\\s*là)?|đáp\\s*số|đ\\.?\\s*s|đ\\.?\\s*a|đ\\/[as]|k[ếe]t\\s*qu[ảa]|(?:the\\s*)?correct\\s*(?:answer|option)(?:\\s*is)?|(?:the\\s*)?answer(?:\\s*is)?|ans|key)';
 const SOL_STRONG_RE = new RegExp('^[\\(\\[\\s]*' + SOL_STRONG + NL + '\\s*[\\)\\]]?\\s*[:\\.\\-–—]?\\s*', 'i');
 const SOL_WEAK_RE = new RegExp('^[\\(\\[\\s]*' + SOL_WEAK + '\\s*[\\)\\]]?\\s*(?:[:\\.\\-–—]|$)\\s*', 'i');
 const ANS_RE = new RegExp('^[\\(\\[\\s]*' + ANS_WEAK + '\\s*[\\)\\]]?\\s*(?:[:=\\.\\-–—]|$)\\s*', 'i');
@@ -2734,7 +2762,7 @@ function splitTail(toks) {
 }
 const BARE_ANS_RE = /^\s*[\(\[]?\s*(?:(?:đáp\s*án|đáp\s*số|đ\.?\s*s|đ\.?\s*a|chọn)(?:\s*đúng)?(?:\s*là)?\s*[:\.=\-–]?\s*)?\(?[A-D]\)?\s*[\.\)\]]?\s*$/i;
 const BARE_MARK_RE = /^\s*[\(\[]?(?:đáp\s*án|đáp\s*số|đ\.?\s*s|đ\.?\s*a)\s*[:\.=\-–]?\s*$/i;
-const TFKEY_RE = /([a-d])\s*[\-–:=\.\)]?\s*(đúng|sai|Đ|S)(?![A-Za-zÀ-ỹ])/gi;
+const TFKEY_RE = /([a-d])\s*[\-–:=\.\)]?\s*(đúng|sai|true|false|Đ|S)(?![A-Za-zÀ-ỹ])/gi;
 function keyPairs(str) {
   const re = /(\d{1,3})\s*[\.\-–:\)=]?\s*([A-D])(?![A-Za-zÀ-ỹ0-9])/g;
   const out = []; let m, expect = 1;
@@ -3100,6 +3128,7 @@ function parseRaw(body, qkeys, popt) {
     // ký hiệu do người soạn đặt: "[LT]" mở phần lý thuyết, "[BT]" mở phần bài tập (bỏ khỏi chữ)
     let ltMark = null;
     { const mm = /^(\s*)\[\s*(LT|BT)\s*\]\s*/i.exec(textOf(tk)); if (mm) { ltMark = mm[2].toUpperCase(); tk = tk.slice(0, mm[1].length).concat(tk.slice(mm[0].length)); } }
+    if (!ltMark && hasQlfMark(el, 'LT')) ltMark = 'LT';   // dấu ẩn do công cụ ghi khi xuất (đọc lại file GV)
     if (ltMark) { ents.push({ el, toks: tk, lay, ltMark }); return; }
     // "Phần I. Trắc nghiệmCâu 1: [NB]": tiêu đề phần và câu đầu viết liền một dòng -> tách làm hai đoạn
     if (!boxed) {
@@ -3514,6 +3543,17 @@ function parseRaw(body, qkeys, popt) {
         pc.open = false;
       }
     }
+    // đọc lại file GV đã xuất: câu song ngữ có dấu ẩn _QLF_VI (đầu phần tiếng Việt), _QLF_ES / _QLF_VS (đầu lời giải tiếng Anh / tiếng Việt)
+    if (cur && mode !== 'sol' && hasQlfMark(el, 'VI')) {
+      const E = cur; E.en = true;
+      cur = newQ(ei); cur.src = E.src; cur.numSrc = E.numSrc; cur.biSrc = E; qs.push(cur);
+      const t2 = takeSource(cur, toks);
+      if (hasContent(t2)) cur.stem.push(t2);
+      mode = 'stem'; expOpt = 0; expStmt = 0; blankSeen = false;
+      continue;
+    }
+    if (cur && cur.biSrc && hasQlfMark(el, 'ES')) cur.esAt = cur.sol.length;
+    if (cur && cur.biSrc && hasQlfMark(el, 'VS')) cur.vsAt = cur.sol.length;
     // tiêu đề lời giải
     const sm = solMarker(txt);
     if (sm && !(USE_NUMQ && !cur)) {
@@ -3649,6 +3689,19 @@ function parseRaw(body, qkeys, popt) {
           }
         }
       }
+      if (startsLabel && r.found.length > 1 && !cur.anyOrder) {
+        // mỗi phương án một dòng (các dòng kế tiếp lần lượt bắt đầu bằng các nhãn còn lại tới D):
+        // nhãn giữa dòng này chỉ là chữ trong nội dung (tên điểm…), không tách
+        const L0 = r.found[0][2], need = 'ABCD'.slice('ABCD'.indexOf(L0) + 1);
+        let got = '';
+        for (let j = ei + 1; j < ents.length && got.length < need.length; j++) {
+          const e = ents[j]; if (!e.toks) break;
+          const t = textOf(e.toks).replace(/\uFFFC/g, ' ').trim(); if (!t) continue;
+          const mm = /^([A-D])\s*[\.\)]/.exec(t); if (!mm || mm[1] !== need[got.length]) break;
+          got += mm[1];
+        }
+        if (need && got === need) r = { found: [r.found[0]], exp: 'ABCD'.indexOf(L0) + 1, coerced: r.coerced };
+      }
       if (startsLabel || (mode === 'opts' && !r.found.length)) {
         if (startsLabel) { expOpt = absorbOptions(cur, toks, r.found, r.coerced); mode = 'opts'; }
         else {
@@ -3692,7 +3745,7 @@ function parseRaw(body, qkeys, popt) {
       } else if (mode === 'stmts' && Object.keys(cur.stmts).length && cur.inlineSol) {
         cur.sol.push(toks); rk('sol');
       } else if (mode === 'stmts' && expStmt >= 4 && 'd' in cur.stmts && txt && !(hasDrawing(toks) && !txt.replace(/\uFFFC/g, '').trim()) &&
-                 (/^\s*[a-d]\s*[\.\)]/.test(s) || /^\s*(?:đúng|sai|phát\s+biểu\s+(?:này\s+)?(?:đúng|sai)|ý\s+[a-d])\b/i.test(s) || solLike(s) || (isUpper0(s) && /[\.!?]\s*$/.test(textOf(cur.stmts.d).trim())))) {
+                 (/^\s*[a-d]\s*[\.\)]/.test(s) || /^\s*(?:đúng|sai|true|false|phát\s+biểu\s+(?:này\s+)?(?:đúng|sai)|ý\s+[a-d])(?![A-Za-zÀ-ỹ])/i.test(s) || solLike(s) || (isUpper0(s) && /[\.!?]\s*$/.test(textOf(cur.stmts.d).trim())))) {
         // đã đủ a), b), c), d): nhãn ý lặp lại / "Đúng, Sai" / câu mới -> lời giải dù không có dòng "Hướng dẫn giải"
         mode = 'sol'; cur.sol.push(toks); cur.autoSol = cur.autoSol || 'đoạn sau ý d)';
         cur.warn.push('Không có dòng "Hướng dẫn giải": đã nhận lời giải từ đoạn ngay sau ý d) ("' + s.trim().slice(0, 40) + '…"), hãy xem lại.');
@@ -3721,7 +3774,7 @@ function parseRaw(body, qkeys, popt) {
     if (q.part === 1) {
       pi++;
       for (const t of q.sol) {
-        const mm = /^\s*[\(\[]?\s*(?:(?:đáp\s*án|đáp\s*số|đ\.?\s*s|chọn|đ\.?\s*a)(?:\s*đúng)?(?:\s*là)?\s*[:\.=\-–]?\s*)\(?([A-D])\)?(?![A-Za-zÀ-ỹ0-9])/i.exec(textOf(trim(t))) || /^\s*\(?([A-D])\)?\s*[\.\)]?\s*$/.exec(textOf(trim(t)));
+        const mm = /^\s*[\(\[]?\s*(?:(?:đáp\s*án|đáp\s*số|đ\.?\s*s|chọn|đ\.?\s*a|(?:the\s*)?correct\s*(?:answer|option)(?:\s*is)?|(?:the\s*)?answer(?:\s*is)?|choose)(?:\s*đúng)?(?:\s*là)?\s*[:\.=\-–]?\s*)\(?([A-D])\)?(?![A-Za-zÀ-ỹ0-9])/i.exec(textOf(trim(t))) || /^\s*\(?([A-D])\)?\s*[\.\)]?\s*$/.exec(textOf(trim(t)));
         if (mm) { q.textAns = mm[1].toUpperCase(); break; }
       }
       q.sol = q.sol.filter((t) => { const x = textOf(trim(t)); return !(BARE_ANS_RE.test(x) || BARE_MARK_RE.test(x)); });
@@ -3732,7 +3785,7 @@ function parseRaw(body, qkeys, popt) {
         const x = textOf(trim(t));
         if (!(solMarker(x) && solMarker(x).kind === 'ans')) return true;
         const found = {}; let mm; const re = new RegExp(TFKEY_RE.source, 'gi'); let c = 0;
-        while ((mm = re.exec(x)) !== null) { found[mm[1].toLowerCase()] = /^(đúng|Đ)$/i.test(mm[2]) ? 'Đ' : 'S'; c++; }
+        while ((mm = re.exec(x)) !== null) { found[mm[1].toLowerCase()] = /^(đúng|Đ|true)$/i.test(mm[2]) ? 'Đ' : 'S'; c++; }
         if (c >= 3) { Object.assign(q.tf, found); return false; }
         return true;
       });
@@ -3860,6 +3913,13 @@ function finalizeQ(q) {
         if (oth.length) q.warn.push('Đáp án đánh dấu là ' + q.ans + ' nhưng ' + oth.map(([nm, L]) => nm + ' ghi ' + L).join(', ') + ': đã lấy ' + q.ans + ', hãy kiểm tra lại.');
       }
     }
+    if (q.enQ && q.manualAns === undefined) {
+      // câu song ngữ: đối chiếu đáp án với bản tiếng Anh đi kèm
+      const E = q.enQ;
+      if (!E.ans) finalizeQ(E);
+      if (!q.ans && E.ans) { q.ans = E.ans; q.warn = q.warn.filter((w) => !/^Chưa (đánh dấu|chọn) đáp án/.test(w)); q.warn.push('Đáp án ' + E.ans + ': tự lấy theo bản tiếng Anh (Question ' + (E.numSrc || '') + ').'); }
+      else if (q.ans && E.ans && E.ans !== q.ans) q.warn.push('Bản tiếng Anh đánh dấu ' + E.ans + ', bản tiếng Việt đánh dấu ' + q.ans + ': đã lấy ' + q.ans + ', hãy kiểm tra lại.');
+    }
     const miss = ['A', 'B', 'C', 'D'].filter((c) => !(c in q.opts));
     if (miss.length) q.warn.push('Thiếu đáp án ' + miss.join(', '));
   } else if (q.part === 2) {
@@ -3890,7 +3950,8 @@ function finalizeQ(q) {
     if (Object.keys(q.tf || {}).length && Object.keys(q.tf).length < Object.keys(q.stmts).length) q.warn.push('Có ý chưa có đáp án Đúng/Sai');
     else if (!Object.keys(stmtTruth(q)).length && Object.keys(q.stmts).length) q.warn.push('Chưa biết ý nào Đúng, ý nào Sai (không có gạch chân/tô màu ở ý đúng và lời giải không ghi đúng/sai)');
   }
-  if (!q.sol.some((t) => hasContent(trim(t))) && !(q.part === 2 && Object.keys(stmtTruth(q)).length)) q.warn.push('Chưa có hướng dẫn giải');
+  if (!q.sol.some((t) => hasContent(trim(t))) && !(q.enQ && q.enQ.sol.some((t) => hasContent(trim(t)))) && !(q.part === 2 && Object.keys(stmtTruth(q)).length)) q.warn.push('Chưa có hướng dẫn giải');
+  if (q.enQ) q.warn.push('Câu song ngữ: đã tự gộp bản tiếng Anh (Question ' + (q.enQ.numSrc || '') + ') vào câu này, in nghiêng ngay trên bản tiếng Việt.');
   if (q.part === 3 && !q.ansText) {
     // "…Kết quả: 4" / "Đáp số: 22,4" ở cuối một dòng lời giải (không phải dòng đầu): lấy làm đáp án số
     const k0 = q.sol.findIndex((t) => hasContent(trim(t)));
@@ -4147,7 +4208,7 @@ function buildOptionParas(q, showAnswer) {
   return paras;
 }
 
-function labelRuns(num) { return [lit('Câu ' + num + '.', { bold: true, color: BLUE }), lit(' ')]; }
+function labelRuns(num, q) { return [lit((q && q.en && !q.enOf ? 'Question ' : 'Câu ') + num + '.', { bold: true, color: BLUE }), lit(' ')]; }
 
 function cleanTable(src) {
   const tbl = src.cloneNode(true);
@@ -4192,14 +4253,15 @@ function isFigTok(t) {
   const ex = dr.getElementsByTagNameNS(NS.wp, 'extent')[0];
   return !!ex && parseInt(ex.getAttribute('cx') || '0', 10) >= 1080000 && parseInt(ex.getAttribute('cy') || '0', 10) >= 720000;
 }
-function stemParas(q, num) {
+function stemParas(q, num, noLabel) {
   const out = [];
   const pics = [];   // hình luôn đặt ở cuối câu dẫn (ngay trước các đáp án/phát biểu), canh giữa
   let labelDone = false, tagDone = false;
   const lab = () => {
     let r;
-    if (q.srcNote && STYLE !== 'm1' && hasContent(q.srcNote)) r = [lit('Câu ' + num, { bold: true, color: BLUE }), lit(' ')].concat(runsFrom(q.srcNote), [lit((q.srcPunct || '.') + ' ')], tagDone ? [] : tagRuns(q));
-    else r = labelRuns(num).concat(tagDone ? [] : tagRuns(q));
+    if (noLabel) { tagDone = true; return (q.srcNote && STYLE !== 'm1' && hasContent(q.srcNote) ? runsFrom(q.srcNote).concat([lit((q.srcPunct || '.') + ' ')]) : []).concat(q.noStem ? [lit('[Đề gốc thiếu câu dẫn – cần bổ sung]', { italic: true, color: RED })] : []); }
+    if (q.srcNote && STYLE !== 'm1' && hasContent(q.srcNote)) r = [lit((q.en && !q.enOf ? 'Question ' : 'Câu ') + num, { bold: true, color: BLUE }), lit(' ')].concat(runsFrom(q.srcNote), [lit((q.srcPunct || '.') + ' ')], tagDone ? [] : tagRuns(q));
+    else r = labelRuns(num, q).concat(tagDone ? [] : tagRuns(q));
     if (q.noStem && !tagDone) r = r.concat([lit('[Đề gốc thiếu câu dẫn – cần bổ sung]', { italic: true, color: RED })]);
     tagDone = true; return r;
   };
@@ -4306,17 +4368,18 @@ function buildSolParasTF(q) {
   for (const L of 'abcd') {
     const v = tfv[L];
     if (!(L in q.stmts) && !groups[L].length) continue;
-    const word = v === 'Đ' ? 'đúng' : v === 'S' ? 'sai' : null;
+    const word = q.en ? (v === 'Đ' ? 'True' : v === 'S' ? 'False' : null) : v === 'Đ' ? 'đúng' : v === 'S' ? 'sai' : null;
     const lab = M1 ? [lit('\t'), lit(L + '. ')] : [lit(L + ')', { bold: true, color: BLUE }), lit(' ')];
     let head = null;
     if (L in first) {
       let rest = first[L];
-      { const mv = /^[\.\s]*(?:[\[\(]\s*(?:Đ|S|đúng|sai)\s*[\]\)]|(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(?:đúng|sai)(?![A-Za-zÀ-ỹ]))[\s\.:]*/i.exec(textOf(rest)); if (mv) rest = trim(rest.slice(mv[0].length)); }
+      { const mv = /^[\.\s]*(?:[\[\(]\s*(?:Đ|S|đúng|sai|true|false)\s*[\]\)]|(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(?:đúng|sai|true|false)(?![A-Za-zÀ-ỹ]))[\s\.:,;]*/i.exec(textOf(rest)); if (mv) rest = trim(rest.slice(mv[0].length)); }
       // "Đúng vì …" -> "Phát biểu này đúng, vì …" (phần sau viết thường thì nối bằng dấu phẩy)
       const r0 = textOf(rest).replace(/^\s+/, '').charAt(0), lowR = !!r0 && r0 !== r0.toUpperCase() && r0 === r0.toLowerCase();
-      if (word) head = lab.concat([lit('Phát biểu này '), lit(word, { color: BLUE }), lit(lowR ? ',' : '.')], hasContent(rest) ? [lit(' ')].concat(runsFrom(rest)) : []);
+      if (word && q.en) head = lab.concat([lit(word, { color: BLUE }), lit('.')], hasContent(rest) ? [lit(' ')].concat(runsFrom(rest)) : []);
+      else if (word) head = lab.concat([lit('Phát biểu này '), lit(word, { color: BLUE }), lit(lowR ? ',' : '.')], hasContent(rest) ? [lit(' ')].concat(runsFrom(rest)) : []);
       else head = lab.concat(runsFrom(rest));
-    } else if (word) head = lab.concat([lit('Phát biểu này '), lit(word, { color: BLUE }), lit('.')]);
+    } else if (word) head = lab.concat(q.en ? [lit(word, { color: BLUE }), lit('.')] : [lit('Phát biểu này '), lit(word, { color: BLUE }), lit('.')]);
     if (head) { head.forEach(inlineAnchor); out.push(makeP(head, M1 ? { tabs: [426] } : undefined)); }
     for (const toks of groups[L]) if (toks) put(toks);
   }
@@ -4354,6 +4417,18 @@ const SOL_STYLES = {
 const RPR_AFTER_COLOR = ['spacing', 'w', 'kern', 'position', 'sz', 'szCs', 'highlight', 'u', 'effect', 'bdr', 'shd', 'fitText', 'vertAlign', 'rtl', 'cs', 'em', 'lang', 'eastAsianLayout', 'specVanish', 'oMath'];
 const RPR_AFTER_SZ = ['highlight', 'u', 'effect', 'bdr', 'shd', 'fitText', 'vertAlign', 'rtl', 'cs', 'em', 'lang', 'eastAsianLayout', 'specVanish', 'oMath'];
 const PPR_AFTER_SHD = ['tabs', 'suppressAutoHyphens', 'kinsoku', 'wordWrap', 'overflowPunct', 'topLinePunct', 'autoSpaceDE', 'autoSpaceDN', 'bidi', 'adjustRightInd', 'snapToGrid', 'spacing', 'ind', 'contextualSpacing', 'mirrorIndents', 'suppressOverlap', 'jc', 'textDirection', 'textAlignment', 'textboxTightWrap', 'outlineLvl', 'divId', 'cnfStyle', 'rPr', 'sectPr', 'pPrChange'];
+// màu chữ mặc định của file (docDefaults / kiểu Normal) là đen: lời giải chữ đen không cần ghi w:color
+let BLACK_DEF = true;
+function defaultBlack(files) {
+  try {
+    const f = files && files['word/styles.xml'];
+    if (!f) return true;
+    const s = new TextDecoder().decode(f);
+    const d = (/<w:docDefaults>[\s\S]*?<\/w:docDefaults>/.exec(s) || [''])[0];
+    const n = (/<w:style\b[^>]*w:type="paragraph"[^>]*w:default="1"[^>]*>[\s\S]*?<\/w:style>/.exec(s) || [''])[0];
+    return !/<w:color\b[^>]*w:val="(?!000000|auto)[0-9A-Fa-f]{6}"/i.test(d + n) && !/w:themeColor=/.test((/<w:color\b[^>]*>/.exec(d + n) || [''])[0]);
+  } catch (e) { return false; }
+}
 function styleSolBlock(elems) {
   const cfg = SOL_STYLES[SOLSTYLE];
   if (!cfg || STYLE === 'm1') return elems;
@@ -4387,10 +4462,12 @@ function styleSolBlock(elems) {
       }
       if (cv === BLUE || cv === RED) continue;   // chữ "đúng/sai", nhãn ý, dấu đáp án: giữ nguyên
       Array.from(rPr.children).filter((c) => isW(c, 'i') || isW(c, 'iCs') || isW(c, 'color')).forEach((c) => rPr.removeChild(c));
+      if (BLACK_DEF && /^0{6}$/.test(col)) continue;   // chữ đen: để màu mặc định (không ghi w:color), đọc lại file GV vẫn giữ in đậm
       const cc = mk('color'); cc.setAttributeNS(NS.w, 'w:val', col);
       put(rPr, cc, RPR_AFTER_COLOR);
     }
     for (const r of Array.from(el.getElementsByTagNameNS(NS.w, 'r'))) {
+      if (BLACK_DEF && /^0{6}$/.test(col)) break;
       if (findW(r, 'rPr') || !findW(r, 't')) continue;
       const rPr = mk('rPr'), cc = mk('color'); cc.setAttributeNS(NS.w, 'w:val', col); rPr.appendChild(cc); r.insertBefore(rPr, r.firstChild);
     }
@@ -4444,11 +4521,12 @@ function stmtTruth(q) {
   const t = Object.assign({}, q.tf || {});
   if (!Object.keys(t).length) {
     for (const toks of q.sol) {
-      const m = (q.ucStmt ? /^\s*([a-dA-D])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai)\b/i : /^\s*([a-d])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai)\b/i).exec(textOf(toks));
+      const m = (q.ucStmt ? /^\s*([a-dA-D])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai|true|false)(?![A-Za-zÀ-ỹ])/i : /^\s*([a-d])(?:\s*[\.\)]\s*|\s+)(?:[\.\s]*)(?:Ph[áa]t bi[ểe]u\s*(?:này\s*)?)?(đúng|sai|true|false)(?![A-Za-zÀ-ỹ])/i).exec(textOf(toks));
       const L = m ? m[1].toLowerCase() : null;
-      if (m && !(L in t)) t[L] = m[2].toLowerCase() === 'đúng' ? 'Đ' : 'S';
+      if (m && !(L in t)) t[L] = /^(đúng|true)$/i.test(m[2]) ? 'Đ' : 'S';
     }
   }
+  if (!Object.keys(t).length && q.enQ) return stmtTruth(q.enQ);   // câu song ngữ: bản tiếng Việt chưa có đáp án thì theo bản tiếng Anh
   return t;
 }
 
@@ -4635,6 +4713,21 @@ function bodyGroups(qs) {
 // ------------------------------------------------------------------ XUẤT 1 FILE
 const PART_NAME = { 1: 'PHẦN I. CÂU TRẮC NGHIỆM PHƯƠNG ÁN NHIỀU LỰA CHỌN', 2: 'PHẦN II. CÂU TRẮC NGHIỆM ĐÚNG SAI', 3: 'PHẦN III. CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN', 4: 'PHẦN IV. CÂU TỰ LUẬN' };
 // nối các phần trong một file: đánh lại id hình / VML / bookmark của bản sao thứ k để Word không báo trùng
+// dấu ẩn (bookmark tên bắt đầu bằng "_" nên Word không hiện) đánh dấu đầu phần lý thuyết của từng dạng:
+// khi đọc lại chính file đã xuất (Định dạng lại file GV), dấu này có vai trò như "[LT]" của đề gốc
+let QLF_BM = 0;
+function qlfMark(els, kind) {
+  const root = els.find((e) => isW(e, 'p') || (e.getElementsByTagNameNS && e.getElementsByTagNameNS(NS.w, 'p').length));
+  if (!root) return els;
+  const p = isW(root, 'p') ? root : root.getElementsByTagNameNS(NS.w, 'p')[0];
+  if (Array.from(p.getElementsByTagNameNS(NS.w, 'bookmarkStart')).some((b) => /^_QLF_/.test(wattr(b, 'name') || ''))) return els;
+  const n = ++QLF_BM, r = Math.floor(Math.random() * 46656), id = String(700000 + ((r * 7 + n) % 290000));
+  const pPr = findW(p, 'pPr'), ref = pPr ? pPr.nextSibling : p.firstChild;
+  p.insertBefore(mk('bookmarkStart', { id, name: '_QLF_' + kind + n + '_' + r.toString(36) }), ref);
+  p.insertBefore(mk('bookmarkEnd', { id }), ref);
+  return els;
+}
+const hasQlfMark = (el, kind) => !!el && !!el.getElementsByTagNameNS && Array.from(el.getElementsByTagNameNS(NS.w, 'bookmarkStart')).some((b) => new RegExp('^_QLF_' + kind).test(wattr(b, 'name') || ''));
 function bumpIds(els, k) {
   for (const root of els) for (const el of [root].concat(Array.from(root.getElementsByTagName('*')))) {
     if (el.namespaceURI === NS.wp && el.localName === 'docPr') { const n = parseInt(el.getAttribute('id'), 10); if (!isNaN(n)) el.setAttribute('id', String(n + k * 100000)); }
@@ -4661,7 +4754,7 @@ function solOnlyPart(qs, opt) {
     g.pq.forEach((q, i) => {
       const { qs2, ansT } = p3Ans(q);
       const tf = q.part === 2 ? stmtTruth(q) : {};
-      const hasSol = qs2.sol.some((t) => hasContent(trim(t))) || (q.part === 2 && Object.keys(tf).length > 0);
+      const hasSol = qs2.sol.some((t) => hasContent(trim(t))) || (q.enQ && q.enQ.sol.some((t) => hasContent(trim(t)))) || (q.part === 2 && Object.keys(tf).length > 0);
       let ans = '';
       if (q.part === 1) ans = q.ans || '';
       else if (q.part === 2) ans = 'abcd'.split('').filter((L) => tf[L]).map((L) => L + ') ' + tf[L]).join('; ');
@@ -4670,7 +4763,7 @@ function solOnlyPart(qs, opt) {
       const head = [lit('Câu ' + (i + 1) + '.', { bold: true, color: BLUE })];
       if (ans) head.push(lit(' Đáp án: ', { bold: true, color: BLUE }), lit(ans, { bold: true, color: RED }));
       els.push(makeP(head, { keepNext: hasSol, before: 60 }));
-      if (hasSol) els.push(...styleSolBlock(buildSolParas(qs2)));
+      if (hasSol) els.push(...styleSolBlock(solParasBi(q, qs2)));
     });
   }
   return els;
@@ -4683,6 +4776,30 @@ function breakAfter(els) {
   return els;
 }
 
+// in nghiêng toàn bộ chữ (trừ nhãn câu / nhãn phương án màu xanh) của các đoạn bản tiếng Anh
+function italicEls(els) {
+  const RPR_ORDER = ['rStyle', 'rFonts', 'b', 'bCs', 'i'];
+  for (const el of els) for (const r of Array.from(el.getElementsByTagNameNS(NS.w, 'r'))) {
+    let rp = findW(r, 'rPr');
+    const col = rp ? findW(rp, 'color') : null;
+    if (col && (wattr(col, 'val') || '').toUpperCase() === BLUE.toUpperCase()) continue;
+    if (!rp) { rp = mk('rPr'); r.insertBefore(rp, r.firstChild); }
+    if (findW(rp, 'i')) continue;
+    const nx = Array.from(rp.children).find((c) => c.namespaceURI === NS.w && RPR_ORDER.indexOf(c.localName) < 0);
+    rp.insertBefore(mk('i'), nx || null);
+  }
+  return els;
+}
+// lời giải câu song ngữ: Solution (tiếng Anh, in nghiêng) rồi Hướng dẫn giải tiếng Việt, chung một khối
+function solParasBi(q, qs2) {
+  const vi = buildSolParas(qs2);
+  const E = q.enQ;
+  if (!E || !E.sol.some((t) => hasContent(trim(t)))) return vi;
+  const en = buildSolParas(p3Ans(E).qs2).slice(1);
+  const viR = vi.slice(1);
+  return [vi[0]].concat(qlfMark(italicEls(en), 'ES'), viR.length ? qlfMark(viR, 'VS') : []);
+}
+
 function buildBody(qs, showAnswer, headerElems) {
   const body = [].concat(headerElems);
   const emitted = new Set();
@@ -4691,13 +4808,13 @@ function buildBody(qs, showAnswer, headerElems) {
   const secs = multi ? Array.from(new Set(qs.map((q) => q.sec || 0))).sort((a, b) => a - b) : [null];
   for (const sc of secs) {
   const sq = sc === null ? qs : qs.filter((q) => (q.sec || 0) === sc);
-  if (multi && sc > 0 && SEC_TH && SEC_TH[sc]) body.push(...SEC_TH[sc].map((e) => e.cloneNode(true)));
+  if (multi && sc > 0 && SEC_TH && SEC_TH[sc]) body.push(...qlfMark(SEC_TH[sc].map((e) => e.cloneNode(true)), 'LT'));
   // không chia phần: một dãy câu theo thứ tự đề gốc, đánh số 1 → hết, không có dòng tiêu đề phần
   const groups = NOPARTS && STYLE !== 'm1' ? [{ part: 0, pq: sq.slice() }] : [1, 2, 3, 4].map((p) => ({ part: p, pq: sq.filter((q) => q.part === p) }));
   for (const { part: gp, pq } of groups) {
     if (!pq.length) continue;
     const hk = (sc === null ? 0 : sc) + '.' + gp;
-    if (gp && STYLE !== 'm1' && S && S.review && S.headEls && S.headEls.has(hk)) body.push(S.headEls.get(hk).cloneNode(true));
+    if (gp && STYLE !== 'm1' && S && S.review && S.headEls && S.headEls.has(hk)) body.push(qlfMark([S.headEls.get(hk).cloneNode(true)], 'BT')[0]);
     else if (gp) body.push(partTitle(gp, pq.length));
     const newNo = new Map(); pq.forEach((q, i) => newNo.set(q, i + 1));
     pq.forEach((q, i) => {
@@ -4710,7 +4827,15 @@ function buildBody(qs, showAnswer, headerElems) {
       }
       // đoạn nghi là dữ kiện chung (gợi ý chưa nhận): bản HS vẫn in ngay trước câu để không mất dữ kiện
       if (!showAnswer && q.sugg && !q.sugg.cluster && q.sugg.items && q.sugg.items.length) body.push(...clusterParas({ intro: q.sugg.items[0], body: q.sugg.items.slice(1) }, {}));
-      body.push(...stemParas(q, i + 1));
+      if (q.enQ) {
+        // câu song ngữ: bản tiếng Anh (in nghiêng, mang số câu) rồi bản tiếng Việt; đáp án theo bản tiếng Việt
+        const E = q.enQ;
+        if (part === 1) E.ans = q.ans; else if (part === 2) E.tf = Object.assign({}, stmtTruth(q));
+        body.push(...italicEls(stemParas(E, i + 1)));
+        if (part === 1) body.push(...italicEls(buildOptionParas(E, showAnswer)));
+        else if (part === 2) body.push(...italicEls(buildStmtParas(E, showAnswer)));
+        body.push(...qlfMark(stemParas(q, i + 1, true), 'VI'));   // dấu ẩn: phần tiếng Việt bắt đầu (để đọc lại file GV)
+      } else body.push(...stemParas(q, i + 1));
       if (part === 1) body.push(...buildOptionParas(q, showAnswer));
       else if (part === 2) body.push(...buildStmtParas(q, showAnswer));
       const { qs2, ansT } = p3Ans(q);
@@ -4728,7 +4853,7 @@ function buildBody(qs, showAnswer, headerElems) {
       } else if (showAnswer && q.part === 3 && !ansT && STYLE !== 'm1' && HSBOX) {
         body.push(ansBoxTbl(null, BLUE), makeP([], { line: 240, after: 0, before: 0, keepNext: true }));   // chưa có đáp số: 4 ô trống như bản HS
       } else if (showAnswer && q.part === 3 && ansT) body.push(STYLE === 'm1' ? makeP([lit('Đáp án: ' + ansT, { bold: true, color: BLUE })], { keepNext: true, before: 120 }) : makeP([lit('Đáp án: ', { bold: true, color: BLUE }), lit(ansT, { bold: true })], { keepNext: true }));
-      if (showAnswer && (qs2.sol.some((t) => hasContent(trim(t))) || (q.part === 2 && Object.keys(stmtTruth(q)).length))) body.push(...styleSolBlock(buildSolParas(qs2)));
+      if (showAnswer && (qs2.sol.some((t) => hasContent(trim(t))) || (q.enQ && q.enQ.sol.some((t) => hasContent(trim(t)))) || (q.part === 2 && Object.keys(stmtTruth(q)).length))) body.push(...styleSolBlock(solParasBi(q, qs2)));
       unKeep(body[body.length - 1]);
     });
   }
@@ -5160,7 +5285,7 @@ function linesToParas(q, text, origParas) {
 }
 
 // cảnh báo do công cụ đã tự xử lý xong: không hiện ở màn hình xem lại, chỉ ghi vào báo cáo sau khi xuất
-const isAutoWarn = (w) => /(đã (sửa|sắp xếp|bỏ|chuyển|thêm|được đổi)|tự (đổi|gán|lấy)|nối thêm dòng)/.test(w) && !/hãy (kiểm tra|xem lại)/.test(w);
+const isAutoWarn = (w) => /(đã (sửa|sắp xếp|bỏ|chuyển|thêm|được đổi)|tự (đổi|gán|lấy|gộp)|nối thêm dòng)/.test(w) && !/hãy (kiểm tra|xem lại)/.test(w);
 // ------------------------------------------------------------------ CÂU CẦN XEM: chọn Có / Không ngay trên bảng báo cáo
 const ackKey = (w) => String(w || '').replace(/\s*\([^)]*\)\s*\.?$/, '').replace(/\s+/g, ' ').trim();
 const isAcked = (q, w) => !!(q.acked && q.acked.has(ackKey(w)));
@@ -5252,13 +5377,29 @@ function pickCopy(body) {
     return k;
   });
   const segs = starts.map((st, n) => kids.slice(st, n + 1 < starts.length ? starts[n + 1] : kids.length).filter((e) => !isW(e, 'sectPr')));
-  const nq = segs.map((sg) => sg.filter((e) => isW(e, 'p') && /^Câu\s*\d+/i.test(tx(e))).length);
+  const nq = segs.map((sg) => sg.filter((e) => isW(e, 'p') && /^(?:Câu|Question)\s*\d+/i.test(tx(e))).length);
   if (nq[0] < 5 || nq.some((n) => Math.abs(n - nq[0]) > Math.max(2, nq[0] * 0.2))) return;
-  const score = segs.map((sg) => sg.reduce((a, e) => a + (isW(e, 'p') && /^(Hướng dẫn giải|Lời giải)/i.test(tx(e)) ? 3 : 0) + e.getElementsByTagNameNS(NS.w, 'u').length + e.getElementsByTagNameNS(NS.w, 'highlight').length, 0));
+  const score = segs.map((sg) => sg.reduce((a, e) => a + (isW(e, 'p') && /^(Hướng dẫn giải|Lời giải|Solution)/i.test(tx(e)) ? 3 : 0) + e.getElementsByTagNameNS(NS.w, 'u').length + e.getElementsByTagNameNS(NS.w, 'highlight').length, 0));
   let best = 0; score.forEach((v, n) => { if (v > score[best]) best = n; });
   segs.forEach((sg, n) => { if (n !== best) sg.forEach((e) => body.removeChild(e)); });
   COPYNOTE = 'File có ' + segs.length + ' bản của cùng một đề nối nhau; công cụ chỉ dùng bản ' + (best + 1) + ' (bản có đáp án và hướng dẫn giải), bỏ ' + (segs.length - 1) + ' bản còn lại.';
 }
+// câu tiếng Anh ("Question n") ngay trước bản dịch tiếng Việt cùng số câu, cùng phần, cùng số phương án/ý: gộp thành 1 câu song ngữ
+function pairBilingual(qs, reg) {
+  // lời giải tiếng Anh của câu song ngữ đọc lại từ file GV: chuyển về bản tiếng Anh
+  for (const V of qs) if (V.biSrc && V.esAt !== undefined) { const b = V.vsAt !== undefined && V.vsAt >= V.esAt ? V.vsAt : V.sol.length; V.biSrc.sol = V.biSrc.sol.concat(V.sol.splice(V.esAt, b - V.esAt)); }
+  for (let i = 0; i + 1 < qs.length; i++) {
+    const E = qs[i], V = qs[i + 1];
+    if (!E.en || V.en || E.part !== V.part || E.cluster || V.cluster || V.enQ) continue;
+    if (E.numSrc && V.numSrc && E.numSrc !== V.numSrc) continue;
+    const ko = (q) => (q.part === 1 ? Object.keys(q.opts).sort().join('') : q.part === 2 ? Object.keys(q.stmts).sort().join('') : '');
+    if (ko(E) !== ko(V)) continue;
+    V.enQ = E; E.enOf = V;
+    qs.splice(i, 1); reg.delete(E.id);
+    finalizeQ(V);
+  }
+}
+
 async function load(arrayBuffer, lopt) {
   lopt = lopt || {};
   { const h = new Uint8Array(arrayBuffer.slice(0, 4)); if (h[0] === 0xD0 && h[1] === 0xCF && h[2] === 0x11 && h[3] === 0xE0) throw new Error('Đây là file Word cũ (.doc, Word 97-2003). Hãy mở bằng Word → Tệp → Lưu thành → chọn "Word Document (*.docx)", rồi chọn lại file .docx.'); }
@@ -5298,6 +5439,7 @@ async function load(arrayBuffer, lopt) {
   const reg = new Map();
   applyStmtMarks(qs);
   for (const q of qs) { q.id = UID++; reg.set(q.id, q); finalizeQ(q); }
+  pairBilingual(qs, reg);
   markDuplicates(qs);
   const title = (parsed.titleTxt || '').replace(/^[A-Z]\d+-[A-Z]\d+-/, '');
   S = {
@@ -5308,7 +5450,7 @@ async function load(arrayBuffer, lopt) {
     theory: parsed.theoryEls.map((e) => { const c = e.cloneNode(true); if (parsed.theoryMark && parsed.theoryMark.has(e)) stripLtMark(c); return c; }),
     theorySol: parsed.theoryEls.map((e) => !!(parsed.theorySol && parsed.theorySol.has(e))),
     // đề ôn tập có "[BT]": tiêu đề phần giữ đúng chữ gốc (theo từng dạng)
-    review: parsed.ents.some((e) => e.ltMark === 'BT'),
+    review: parsed.ents.some((e) => e.ltMark === 'BT' || hasQlfMark(e.el, 'BT')),
     headEls: (() => { const m = new Map(); for (const h of parsed.heads || []) { const k = (h.sec || 0) + '.' + h.part; if (!m.has(k) && parsed.ents[h.ei] && isW(parsed.ents[h.ei].el, 'p')) m.set(k, parsed.ents[h.ei].el.cloneNode(true)); } return m; })(),
     secTheory: (parsed.secTh || []).map((t) => (t ? t.els.map((e) => { const c = e.cloneNode(true); if (t.mark.has(e)) stripLtMark(c); return c; }) : null)),
     seq: qs.slice(),
@@ -5319,7 +5461,9 @@ async function load(arrayBuffer, lopt) {
   const emN = qs.filter((q) => q.essayMaybe).length;
   const essayHint = parsed.noHead && !lopt.forcePart && emN ? { n: emN } : null;
   const secs = qs.some((q) => q.sec > 0) ? Array.from(new Set(qs.map((q) => q.sec || 0))).sort((a, b) => a - b).map((k) => ({ k, name: secName(k) })) : null;
-  return { title, theory, secs, order, views: order.map((id) => viewOf(reg.get(id))), essayHint, raw: rawList(body, parsed, qs), map: wordMap(parsed, qs, wpi) };
+  let qlf = null; try { const t = getDocVar(files, QLF_VAR); qlf = t ? JSON.parse(t) : null; } catch (e) { qlf = null; }
+  S.qlf = qlf;
+  return { title, theory, secs, order, views: order.map((id) => viewOf(reg.get(id))), essayHint, raw: rawList(body, parsed, qs), map: wordMap(parsed, qs, wpi), qlf };
 }
 // thứ tự đoạn văn đúng như Word đếm (body.paragraphs): mọi w:p trong thân, kể cả trong bảng; bỏ đoạn trong hộp văn bản và bản dự phòng (mc:Fallback)
 function wordParaIndex(body) {
@@ -5657,6 +5801,43 @@ function addPageNumbers(sect, out, opt) {
   return changed;
 }
 
+// ---- dấu ẩn của file đã xuất: biến tài liệu (docVariable) "QLF" trong word/settings.xml (Word giữ nguyên khi lưu)
+const QLF_VAR = 'QLF';
+const SETTINGS_AFTER_DOCVARS = ['rsids', 'mathPr', 'attachedSchema', 'themeFontLang', 'clrSchemeMapping', 'doNotIncludeSubdocsInStats', 'doNotAutoCompressPictures', 'forceUpgrade', 'captions', 'readModeInkLockDown', 'smartTagType', 'schemaLibrary', 'shapeDefaults', 'doNotEmbedSmartTags', 'decimalSymbol', 'listSeparator'];
+function setDocVar(out, name, val) {
+  const f = out['word/settings.xml'];
+  if (!f) return;
+  try {
+    const d = new DOMParser().parseFromString(new TextDecoder().decode(f), 'application/xml');
+    if (d.getElementsByTagName('parsererror').length) return;
+    const rt = d.documentElement;
+    let dv = Array.from(rt.children).find((c) => c.namespaceURI === NS.w && c.localName === 'docVars');
+    if (!dv) { dv = d.createElementNS(NS.w, 'w:docVars'); rt.insertBefore(dv, Array.from(rt.children).find((c) => SETTINGS_AFTER_DOCVARS.includes(c.localName)) || null); }
+    for (const c of Array.from(dv.children)) if (c.getAttributeNS(NS.w, 'name') === name) dv.removeChild(c);
+    const v = d.createElementNS(NS.w, 'w:docVar'); v.setAttributeNS(NS.w, 'w:name', name); v.setAttributeNS(NS.w, 'w:val', val); dv.appendChild(v);
+    out['word/settings.xml'] = new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ser(rt));
+  } catch (e) { /* không ghi được dấu: bỏ qua */ }
+}
+function getDocVar(files, name) {
+  const f = files['word/settings.xml'];
+  if (!f) return null;
+  try {
+    const d = new DOMParser().parseFromString(new TextDecoder().decode(f), 'application/xml');
+    const v = Array.from(d.getElementsByTagNameNS(NS.w, 'docVar')).find((c) => c.getAttributeNS(NS.w, 'name') === name);
+    return v ? v.getAttributeNS(NS.w, 'val') : null;
+  } catch (e) { return null; }
+}
+const shortHash = (t) => { let h = 5381; const s = String(t || '').replace(/\s+/g, ' ').trim(); for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36).slice(-5); };
+// đáp án của từng câu theo đúng số câu in ra (để lần "Định dạng lại file GV" sau so sánh)
+function qlfQList(qs) {
+  const out = [];
+  for (const g of bodyGroups(qs)) g.pq.forEach((q, i) => {
+    const v = q.part === 1 ? (q.ans || '') : q.part === 2 ? 'abcd'.split('').map((L) => stmtTruth(q)[L] || '-').join('') : q.part === 3 ? (p3Ans(q).ansT || '') : '';
+    out.push([g.sec || 0, g.part, i + 1, v]);
+  });
+  return out;
+}
+
 async function generate(opt, ids, extra) {
   if (!S) throw new Error('Chưa mở file đề.');
   extra = extra || {};
@@ -5685,6 +5866,7 @@ async function generate(opt, ids, extra) {
   if (!opt.tende) opt.tende = S.title || 'ĐỀ';
   const titleMode = extra.titleMode || opt.titleMode;
   const root = S.root, body = S.body, files = S.files;
+  BLACK_DEF = defaultBlack(files);
   const pagesGuess = Math.max(1, Math.round(qs.length / 4));
   const result = {};
   const combo = !M1 && (opt.combo === 'key' || opt.combo === 'gvhs') ? opt.combo : '';
@@ -5694,12 +5876,16 @@ async function generate(opt, ids, extra) {
     // bản HS: bỏ lời giải của các bài ôn lý thuyết (điền khuyết, nối câu)
     const thEls = opt.keepTheory && S.theory && S.theory.length ? S.theory.filter((e, i) => show || !(S.theorySol && S.theorySol[i])).map((e) => e.cloneNode(true)) : [];
     SEC_TH = opt.keepTheory && S.secTheory ? S.secTheory : null;
+    if (thEls.length) qlfMark(thEls, 'LT');
     // tách hẳn khỏi cây gốc: bản sau dựng lại không kéo mất phần tử của bản trước
     return buildBody(qs, show, header.concat(thEls)).map((e) => e.cloneNode(true));
   };
-  const pack = async (elems, splitSects) => {
+  const pack = async (elems, splitSects, kind) => {
     while (body.firstChild) body.removeChild(body.firstChild);
     const out = Object.assign({}, files);
+    try {
+      setDocVar(out, QLF_VAR, JSON.stringify({ v: 1, k: kind || '', st: STYLE, ma1: opt.ma1 || '', ma: opt.ma || '', pn: opt.pageNum || '', p4: opt.p4 || '', np: NOPARTS ? 1 : 0, th: opt.keepTheory ? 1 : 0, tm: titleMode || '', hb: HSBOX ? 1 : 0, q: kind === 'gv' ? qlfQList(qs) : [] }));
+    } catch (e) { /* bỏ qua */ }
     let sectEl = M1 || opt.fresh ? null : (S.sectClone ? S.sectClone.cloneNode(true) : null);
     if (M1) {
       sectEl = DOC.createElementNS(NS.w, 'w:sectPr');
@@ -5725,13 +5911,13 @@ async function generate(opt, ids, extra) {
     // 1 file = bản HS rồi bản GV (đúng như 2 file xuất riêng) ghép lại; bản GV bắt đầu ở trang mới, số trang liên tục cả file
     const hsEls = breakAfter(mkElems(false));
     const gvEls = bumpIds(mkElems(true), 1);
-    result.ONE = await pack(hsEls.concat(gvEls));
+    result.ONE = await pack(hsEls.concat(gvEls), null, 'gvhs');
   } else if (combo === 'key') {
     // 1 file = đề HS (giữ nguyên cấu trúc) rồi phần HƯỚNG DẪN GIẢI (chỉ đáp án + lời giải như bản GV) sang trang mới
     const hsEls = mkElems(false);
-    result.ONE = await pack(hsEls.concat(bumpIds(solOnlyPart(qs, opt), 1)));
+    result.ONE = await pack(hsEls.concat(bumpIds(solOnlyPart(qs, opt), 1)), null, 'key');
   } else for (const who of extra.only || ['GV', 'HS']) {
-    result[who] = await pack(mkElems(who === 'GV'));
+    result[who] = await pack(mkElems(who === 'GV'), null, who.toLowerCase());
   }
   const count = [1, 2, 3, 4].map((p) => qs.filter((q) => q.part === p).length);
   const notes = [];
@@ -5869,6 +6055,191 @@ function leakScan(body) {
   }
   return bad;
 }
+
+// ---- "Định dạng lại file GV": đọc lại file GV đang mở, xuất lại đúng kiểu lúc xuất, báo cáo những gì thay đổi
+const M_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
+function sigText(p) {
+  let t = '';
+  const walk = (n) => {
+    for (const c of Array.from(n.childNodes)) {
+      if (c.nodeType !== 1) continue;
+      if (c.namespaceURI === M_NS && (c.localName === 'oMath' || c.localName === 'oMathPara')) { t += '[' + (c.textContent || '').replace(/\s+/g, '') + ']'; continue; }
+      if (isW(c, 't')) { t += c.textContent || ''; continue; }
+      if (isW(c, 'tab')) { t += ' '; continue; }
+      if (isW(c, 'drawing') || isW(c, 'object') || isW(c, 'pict')) { t += '[▣]'; continue; }
+      if (isW(c, 'pPr') || isW(c, 'rPr') || isW(c, 'del') || isW(c, 'instrText')) continue;
+      walk(c);
+    }
+  };
+  walk(p);
+  return t.replace(/[ \s]+/g, ' ').trim();
+}
+function sigFmt(p, dbg) {
+  const pPr = findW(p, 'pPr');
+  const at = (el, nm, a) => { const e = el ? findW(el, nm) : null; return e ? (a ? wattr(e, a) : '1') || '' : ''; };
+  const pk = pPr ? [at(pPr, 'shd', 'fill'), at(pPr, 'jc', 'val'), at(pPr, 'ind', 'left'), at(pPr, 'ind', 'hanging'), at(pPr, 'ind', 'firstLine'), at(pPr, 'spacing', 'line'), at(pPr, 'spacing', 'before'), at(pPr, 'spacing', 'after')].join(',') : '';
+  const runs = [];
+  for (const r of Array.from(p.getElementsByTagNameNS(NS.w, 'r'))) {
+    let up = r.parentNode, inM = false; while (up && up !== p) { if (up.namespaceURI === M_NS) { inM = true; break; } up = up.parentNode; }
+    if (inM) continue;
+    const tx = Array.from(r.getElementsByTagNameNS(NS.w, 't')).map((x) => x.textContent || '').join('');
+    if (!tx) continue;
+    if (!tx.trim()) continue;   // dấu cách: không tính định dạng
+    const rp = findW(r, 'rPr');
+    const off = (nm) => { const e = rp ? findW(rp, nm) : null; if (!e) return ''; const v = wattr(e, 'val'); return v === '0' || v === 'false' || v === 'none' ? '' : (v || '1'); };
+    const k = rp ? [at(rp, 'rFonts', 'ascii'), at(rp, 'sz', 'val'), (at(rp, 'color', 'val') || '').toUpperCase().replace(/^(?:000000|AUTO)$/, ''), off('b'), off('i'), off('u'), at(rp, 'highlight', 'val'), at(rp, 'vertAlign', 'val'), at(rp, 'shd', 'fill')].join(',') : '';
+    if (runs.length && runs[runs.length - 1][0] === k) runs[runs.length - 1][1] += tx; else runs.push([k, tx]);
+  }
+  // so định dạng theo chữ, không theo dấu cách (dấu cách đầu/cuối mỗi đoạn chạy có thể nằm ở run bên cạnh)
+  for (const x of runs) x[1] = x[1].replace(/\s+/g, '');
+  if (dbg) return JSON.stringify(runs);
+  return pk + '|' + shortHash(JSON.stringify(runs));
+}
+const HDG_LINE = /^(?:Hướng dẫn giải|Lời giải|Hướng dẫn chấm|Solution)\b/i;
+const PHAN_LINE = /^\s*PH[ẦA]N\s+(?:I{1,3}|IV)\b/i;
+function docBlocks(xml) {
+  const d = new DOMParser().parseFromString(xml, 'application/xml');
+  const body = d.getElementsByTagNameNS(NS.w, 'body')[0];
+  const blocks = new Map(), heads = [];
+  let key = 'đầu', h = 0, lt = 0, seenQ = false;
+  if (!body) return { blocks, heads };
+  for (const el of Array.from(body.children)) {
+    if (isW(el, 'sectPr')) continue;
+    if (isW(el, 'p')) {
+      const t0 = sigText(el);
+      if (hasQlfMark(el, 'LT') && seenQ) { lt++; key = 'lt' + lt; }
+      else if (PHAN_LINE.test(t0)) { h++; key = 'h' + h; heads.push(t0); }
+      else { const m = /^(?:Câu|Question)\s*(\d{1,3})\b/.exec(t0); if (m) { key = h + '.' + m[1]; seenQ = true; } }
+    }
+    const ps = isW(el, 'p') ? [el] : Array.from(el.getElementsByTagNameNS(NS.w, 'p'));
+    if (!blocks.has(key)) blocks.set(key, []);
+    for (const p of ps) blocks.get(key).push({ t: sigText(p), f: sigFmt(p) });
+  }
+  return { blocks, heads };
+}
+const wordsOf = (t) => (t.toLowerCase().match(/[0-9a-zà-ỹđ]+/g) || []);
+const SKIP_W = new Set(['câu', 'question', 'hướng', 'dẫn', 'giải', 'lời', 'chấm', 'phát', 'biểu', 'này', 'đúng', 'sai', 'true', 'false', 'a', 'b', 'c', 'd', 'chọn', 'đáp', 'án', 'số']);
+// so sánh cả file: mỗi đoạn của bản mới ghép với đoạn cùng chữ ở bản đang mở (ưu tiên cùng câu, rồi tới chỗ khác trong file)
+function diffDocs(oldB, newB) {
+  const okeys = Array.from(oldB.blocks.keys()), nkeys = Array.from(newB.blocks.keys());
+  const byT = new Map();   // chữ -> [{k, i}] ở bản đang mở
+  for (const k of okeys) oldB.blocks.get(k).forEach((x, i) => { if (!x.t) return; if (!byT.has(x.t)) byT.set(x.t, []); byT.get(x.t).push({ k, i }); });
+  const used = new Set(), res = new Map();
+  const R = (k) => { if (!res.has(k)) res.set(k, { fmtSol: 0, fmtStem: 0, txt: 0, newSol: false, lost: [] }); return res.get(k); };
+  for (const k of nkeys) {
+    const n = newB.blocks.get(k), o = oldB.blocks.get(k) || [];
+    const nh = n.findIndex((x) => HDG_LINE.test(x.t));
+    if (nh >= 0 && !o.some((x) => HDG_LINE.test(x.t)) && o.length) R(k).newSol = true;
+    n.forEach((x, i) => {
+      if (!x.t) return;
+      const c = byT.get(x.t) || [];
+      const m = c.find((y) => y.k === k && !used.has(y.k + '#' + y.i)) || c.find((y) => !used.has(y.k + '#' + y.i));
+      if (!m) { if (!(R(k).newSol && i === nh)) R(k).txt++; return; }
+      used.add(m.k + '#' + m.i);
+      if (oldB.blocks.get(m.k)[m.i].f !== x.f) { if (nh >= 0 && i > nh) R(k).fmtSol++; else R(k).fmtStem++; }
+    });
+  }
+  // chữ có ở bản đang mở mà không còn ở bản định dạng lại (tính trên cả file)
+  const cnt = new Map();
+  for (const k of okeys) for (const x of oldB.blocks.get(k)) for (const w of wordsOf(x.t)) if (!SKIP_W.has(w) && !/^\d{1,3}$/.test(w)) cnt.set(w, (cnt.get(w) || 0) + 1);
+  for (const k of nkeys) for (const x of newB.blocks.get(k)) for (const w of wordsOf(x.t)) if (cnt.has(w)) cnt.set(w, cnt.get(w) - 1);
+  for (const k of okeys) {
+    const lost = [];
+    for (const x of oldB.blocks.get(k)) for (const w of wordsOf(x.t)) if ((cnt.get(w) || 0) > 0) { lost.push(w); cnt.set(w, cnt.get(w) - 1); }
+    if (lost.length) R(k).lost = lost;
+  }
+  return res;
+}
+function inferOpt(r, oldB) {
+  const m1 = oldB.heads.some((t) => Object.values(M1_TITLE).some((x) => t.toUpperCase().startsWith(x))) && /^Mã chuyên đề:/i.test(r.title || '');
+  return {
+    style: m1 ? 'm1' : 'cur', p4: 'keep', ma1: m1 ? (r.title || '').replace(/^Mã chuyên đề:\s*/i, '').trim() : '',
+    titleMode: 'keep', tende: '', loai: 'ĐỀ KIỂM TRA', mon: 'VẬT LÍ', lop: '', thoigian: '', ma: '',
+    keepTag: true, hsBox: true, keepTheory: true, noParts: !oldB.heads.length, pageNum: 'xy',
+  };
+}
+let REFMT = false;   // đang "Định dạng lại file GV"
+async function reformat(arrayBuffer, ropt) {
+  REFMT = true;
+  try { return await reformat0(arrayBuffer, ropt); } finally { REFMT = false; }
+}
+async function reformat0(arrayBuffer, ropt) {
+  ropt = ropt || {};
+  const oldXml = await docXmlOf(arrayBuffer);
+  const r = await load(arrayBuffer);
+  const q0 = r.qlf;
+  if (q0 && q0.k === 'hs') throw new Error('File đang mở là bản HỌC SINH. Chức năng này chỉ dùng cho file GIÁO VIÊN do công cụ xuất ra.');
+  if (q0 && (q0.k === 'key' || q0.k === 'gvhs')) throw new Error('File đang mở là file xuất gộp (1 file). Chức năng này chỉ dùng cho file GIÁO VIÊN xuất riêng.');
+  if (!r.order.length) throw new Error('Không nhận ra câu hỏi nào trong file đang mở.');
+  const oldB = docBlocks(oldXml);
+  let opt, inferred = false;
+  if (q0 && q0.k === 'gv') {
+    opt = { style: q0.st === 'm1' ? 'm1' : 'cur', p4: q0.p4 || 'keep', ma1: q0.ma1 || '', titleMode: 'keep', tende: '', loai: 'ĐỀ KIỂM TRA', mon: 'VẬT LÍ', lop: '', thoigian: '', ma: q0.ma || '', keepTag: true, hsBox: q0.hb !== 0, keepTheory: q0.th !== 0, noParts: !!q0.np, pageNum: q0.pn || 'xy' };
+  } else { opt = inferOpt(r, oldB); inferred = true; }
+  if (opt.style === 'm1') opt.p4 = 'keep';
+  const before = r.views.map((v) => v.part);
+  const viewsBefore = r.views;
+  const g = await generate(opt, r.order, opt.style === 'm1' ? { only: ['GV'] } : { only: ['GV'], titleMode: 'keep' });
+  const qsB = r.order.map((id) => S.reg.get(id)).filter(Boolean);
+  const curQ = qlfQList(qsB);
+  // nhãn hiển thị + id câu theo khóa "tiêu đề phần thứ h . số câu"
+  const lab = new Map(), PN = { 1: 'Phần I', 2: 'Phần II', 3: 'Phần III', 4: 'Phần IV' };
+  const multi = multiSec(qsB);
+  bodyGroups(qsB).forEach((gr, gi) => gr.pq.forEach((q, i) => lab.set((NOPARTS && STYLE !== 'm1' ? 0 : gi + 1) + '.' + (i + 1), { id: q.id, text: 'Câu ' + (i + 1) + (gr.part ? ' (' + PN[gr.part] + (multi ? ', ' + secName(gr.sec || 0) : '') + ')' : ''), part: gr.part, sec: gr.sec || 0, n: i + 1 })));
+  const newBuf = await g.gv.arrayBuffer();
+  const newB = docBlocks(await docXmlOf(newBuf));
+  const items = [];
+  const at = (k) => lab.get(k) || { id: null, text: /^lt/.test(k) ? 'Phần lý thuyết' : k === 'đầu' ? 'Đầu đề' : /^h/.test(k) ? 'Tiêu đề phần' : 'Đoạn ' + k };
+  // 1) thay đổi do định dạng lại
+  const DD = diffDocs(oldB, newB);
+  for (const [k, d] of DD) {
+    const L = at(k), msg = [];
+    if (d.newSol) msg.push('thêm dòng tiêu đề "Hướng dẫn giải"');
+    if (d.fmtSol) msg.push('định dạng lại ' + d.fmtSol + ' dòng hướng dẫn giải');
+    if (d.fmtStem) msg.push('định dạng lại ' + d.fmtStem + ' dòng đề/phương án');
+    if (d.txt) msg.push('chuẩn hoá cách viết ' + d.txt + ' dòng');
+    if (msg.length) items.push({ kind: 'fix', id: L.id, label: L.text, text: msg.join('; ') });
+    if (d.lost.length) items.push({ kind: 'loss', id: L.id, label: L.text, text: 'có chữ không còn sau khi định dạng lại: "' + d.lost.slice(0, 8).join(', ') + (d.lost.length > 8 ? ', …' : '') + '"' });
+  }
+  // 2) đáp án đã đổi so với lúc xuất (theo dấu ẩn)
+  // đáp án lần trước: lần "Định dạng lại" gần nhất (add-in lưu trong tài liệu) hoặc lúc xuất (dấu ẩn)
+  const prevQ = Array.isArray(ropt.prevQ) && ropt.prevQ.length ? ropt.prevQ : q0 && Array.isArray(q0.q) ? q0.q : [];
+  if (prevQ.length) {
+    const om = new Map(prevQ.map((x) => [x[0] + '.' + x[1] + '.' + x[2], x[3]]));
+    for (const x of curQ) {
+      const k = x[0] + '.' + x[1] + '.' + x[2];
+      if (!om.has(k)) continue;
+      const a = om.get(k), b = x[3];
+      if ((a || '') !== (b || '') && b) {
+        const L = Array.from(lab.values()).find((v) => v.sec === x[0] && v.part === x[1] && v.n === x[2]) || { text: 'Câu ' + x[2] };
+        items.push({ kind: 'ans', id: L.id, label: L.text, text: 'đáp án ' + (a || '(chưa có)') + ' → ' + b });
+      }
+    }
+    if (prevQ.length !== curQ.length) items.push({ kind: 'ans', id: null, label: 'Cả đề', text: 'số câu ' + prevQ.length + ' → ' + curQ.length + ' so với lần trước' });
+  }
+  // 3) tra soát: các câu cần xem
+  const idLab = new Map(Array.from(lab.values()).map((v) => [v.id, v.text]));
+  for (const v of viewsBefore) for (const w of v.warn) items.push({ kind: 'warn', id: v.id, label: idLab.get(v.id) || 'Câu', text: w });
+  // đọc lại bản mới: số câu từng phần phải giữ nguyên
+  const r2 = await load(newBuf);
+  const after = r2.views.map((v) => v.part);
+  const cnt = (a) => [1, 2, 3, 4].map((p) => a.filter((x) => x === p).length).join('/');
+  // số câu từng phần và số dòng tiêu đề phần phải giữ nguyên (file xuất từ bản cũ có nhiều dạng: chưa tách lại được các dạng)
+  const headsOk = !oldB.heads.length || oldB.heads.length === newB.heads.length;
+  const ok = cnt(before) === cnt(after) && headsOk;
+  if (!headsOk) items.unshift({ kind: 'loss', id: null, label: 'Cả đề', text: 'số dòng tiêu đề phần thay đổi (' + oldB.heads.length + ' → ' + newB.heads.length + ')' + (inferred ? ': file GV này xuất từ phiên bản cũ, chưa có dấu của công cụ nên không tách lại được các dạng/mục. Hãy xuất lại file GV từ đề gốc bằng bản mới.' : '.') });
+  // sau khi đọc lại, id câu thuộc bản mới: gắn lại id theo thứ tự để nút "đi tới câu" dùng được sau khi ghi đè
+  const qs2 = r2.order.map((id) => S.reg.get(id)).filter(Boolean), key2 = new Map();
+  bodyGroups(qs2).forEach((gr) => gr.pq.forEach((q, i) => key2.set((gr.sec || 0) + '.' + gr.part + '.' + (i + 1), q.id)));
+  const byId = new Map(Array.from(lab.values()).map((v) => [v.id, v]));
+  for (const it of items) { const v = it.id ? byId.get(it.id) : null; it.newId = v && ok ? key2.get(v.sec + '.' + v.part + '.' + v.n) || null : null; }
+  // vị trí đoạn đầu câu trong Word (để bấm "Đến"): s = file đang mở, s2 = sau khi ghi đè
+  const pos = (m) => new Map(((m && m.qs) || []).map((x) => [x.id, x.start]));
+  const P1 = pos(r.map), P2 = pos(r2.map);
+  for (const it of items) { it.s = it.id && P1.has(it.id) ? P1.get(it.id) : null; it.s2 = it.newId && P2.has(it.newId) ? P2.get(it.newId) : null; }
+  return { gv: g.gv, items, opt, inferred, ok, count: { before: cnt(before), after: cnt(after) }, title: r.title, curQ };
+}
+async function docXmlOf(buf) { const z = await JSZip.loadAsync(buf); const f = z.file('word/document.xml'); return f ? await f.async('string') : ''; }
 
 async function quick(arrayBuffer, opt) {
   opt = opt || {};
@@ -6309,7 +6680,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
+window.DeThi = { reformat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText }, headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
 })();
 
 </script>
@@ -7668,7 +8039,7 @@ window.DeThi = { headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, ins
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản v2026.11.15.5 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản 2026.11.19 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }

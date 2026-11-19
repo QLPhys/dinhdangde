@@ -286,6 +286,50 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
         });
       } catch (e) { /* bỏ qua */ }
       send({ ready: 1 });
+    } else if (m === 'rf') {
+      // Định dạng lại file GV: báo cáo trước, thầy bấm "Ghi đè" mới thay nội dung file đang mở
+      document.body.classList.add('cx');
+      W.innerHTML = '<div class="t">Đang tra soát file GV…</div>';
+      let items = [], info = {}, done = false, msg = '', busy = false;
+      const G = [
+        ['loss', 'Có thể mất chữ – xem kỹ trước khi ghi đè', 'warn'],
+        ['ans', 'Đã thay đổi so với lần trước', ''],
+        ['fix', 'Công cụ định dạng lại', ''],
+        ['warn', 'Cần xem (tra soát)', 'warn'],
+      ];
+      const draw = () => {
+        const n = (k) => items.filter((x) => x.k === k).length;
+        const loss = n('loss') > 0, can = info.ok && !done;
+        let h = '<div class="row cxtop"><b>' + (done ? '✓ Đã định dạng lại file GV' : 'Định dạng lại file GV') + '</b><span style="flex:1"></span><button type="button" id="x" title="Đóng (Esc)">✕</button></div>';
+        h += '<div class="mut">' + (done ? 'Nội dung file đã được thay bằng bản định dạng lại. Bấm Ctrl+Z trong Word nếu muốn lấy lại; kiểm tra xong thầy lưu file (Ctrl+S).'
+          : (info.inf ? 'File chưa có dấu của công cụ (xuất từ bản cũ): công cụ tự nhận kiểu ' + (info.m1 ? 'Ngân hàng đề (Mẫu 1)' : 'đề thường') + '. ' : '') + 'Số câu từng phần (I/II/III/IV): ' + esc(info.cnt || '') + '.') + '</div>';
+        if (!info.ok && !done) h += '<div class="cxw" style="color:#c0281d;font-weight:600">Không ghi đè được: kết quả định dạng lại khác cấu trúc file đang mở (xem mục đầu danh sách). File giữ nguyên.</div>';
+        h += '<div class="sb">';
+        if (!items.length) h += '<div style="color:var(--ok);font-weight:600;padding:6px 2px">✓ File GV đã đúng định dạng, không có gì cần cập nhật.</div>';
+        for (const [k, t, cl] of G) {
+          const its = items.map((x, i) => [x, i]).filter(([x]) => x.k === k);
+          if (!its.length) continue;
+          const body = its.map(([x, i]) => { const pos = done ? x.s2 : x.s; return '<div class="cxi"><div><div class="cxh">' + esc(x.l) + '</div><div class="cxw"' + (cl ? '' : ' style="color:inherit"') + '>• ' + esc(x.t) + '</div></div>' + (pos != null ? '<button type="button" data-g="' + i + '">Đến</button>' : '<span></span>') + '</div>'; }).join('');
+          h += k === 'warn' ? '<details class="cxo"' + (items.length === its.length ? ' open' : '') + '><summary>' + t + ' · ' + its.length + ' mục</summary>' + body + '</details>' : '<div class="cxh" style="margin:6px 0 2px' + (cl ? ';color:#c0281d' : '') + '">' + t + ' · ' + its.length + '</div>' + body;
+        }
+        h += '</div><div class="st" id="st">' + esc(msg) + '</div>';
+        h += '<div class="row" style="border-top:1px solid #edf0f5;padding-top:7px">' + (can ? '<button class="pri" type="button" id="ow"' + (busy ? ' disabled' : '') + '>' + (loss ? 'Vẫn ghi đè file GV' : 'Ghi đè file GV') + '</button>' : '') + '<button type="button" id="no">' + (done || !can ? 'Đóng' : 'Thôi') + '</button></div>';
+        W.innerHTML = h;
+        W.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const x = items[+b.dataset.g]; const pos = done ? x.s2 : x.s; if (pos != null) send({ go: pos }); }; });
+        const ow = document.getElementById('ow');
+        if (ow) ow.onclick = () => { busy = true; msg = 'Đang ghi đè…'; draw(); send({ ow: 1 }); };
+        document.getElementById('no').onclick = () => send({ close: 1 });
+        document.getElementById('x').onclick = () => send({ close: 1 });
+      };
+      try {
+        Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, (a) => {
+          let v = null; try { v = JSON.parse(a.message); } catch (e) { return; }
+          if (v.items) { items = v.items; info = v.info || {}; draw(); }
+          if (v.done) { done = true; busy = false; msg = ''; items = items.filter((x) => x.k !== 'loss'); draw(); }
+          if (v.err) { busy = false; msg = v.err; draw(); }
+        });
+      } catch (e) { /* bỏ qua */ }
+      send({ ready: 1 });
     } else if (m === 'part') {
       // đề chưa có tiêu đề phần: chọn phần cho từng nhóm câu trước khi xuất
       let R = []; try { R = JSON.parse(P.get('r') || '[]'); } catch (e) { R = []; }
@@ -319,6 +363,6 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
     }
   }
   if (window.Office && Office.onReady) Office.onReady(render); else render();
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' || m === 'cx' ? { close: 1 } : { cancel: 1 }); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' || m === 'cx' || m === 'rf' ? { close: 1 } : { cancel: 1 }); });
 })();
 </script></body></html>
