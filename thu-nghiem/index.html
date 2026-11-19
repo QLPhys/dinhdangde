@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.19-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.19-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -6074,10 +6074,13 @@ function sigText(p) {
   walk(p);
   return t.replace(/[ \s]+/g, ' ').trim();
 }
-function sigFmt(p, dbg) {
+function sigFmt(p, dbg, def) {
+  def = def || {};
   const pPr = findW(p, 'pPr');
   const at = (el, nm, a) => { const e = el ? findW(el, nm) : null; return e ? (a ? wattr(e, a) : '1') || '' : ''; };
-  const pk = pPr ? [at(pPr, 'shd', 'fill'), at(pPr, 'jc', 'val'), at(pPr, 'ind', 'left'), at(pPr, 'ind', 'hanging'), at(pPr, 'ind', 'firstLine'), at(pPr, 'spacing', 'line'), at(pPr, 'spacing', 'before'), at(pPr, 'spacing', 'after')].join(',') : '';
+  // Word khi lưu bỏ các giá trị mặc định (lề 0, cách đoạn 0, phông/cỡ chữ của kiểu Normal): so theo giá trị có hiệu lực
+  const z = (v) => (v === '0' ? '' : v);
+  const pk = pPr ? [at(pPr, 'shd', 'fill').toUpperCase().replace(/^AUTO$/, ''), at(pPr, 'jc', 'val').replace(/^(?:left|start)$/, ''), z(at(pPr, 'ind', 'left')), z(at(pPr, 'ind', 'hanging')), z(at(pPr, 'ind', 'firstLine')), at(pPr, 'spacing', 'line'), z(at(pPr, 'spacing', 'before')), z(at(pPr, 'spacing', 'after'))].join(',') : ',,,,,,,';
   const runs = [];
   for (const r of Array.from(p.getElementsByTagNameNS(NS.w, 'r'))) {
     let up = r.parentNode, inM = false; while (up && up !== p) { if (up.namespaceURI === M_NS) { inM = true; break; } up = up.parentNode; }
@@ -6087,7 +6090,7 @@ function sigFmt(p, dbg) {
     if (!tx.trim()) continue;   // dấu cách: không tính định dạng
     const rp = findW(r, 'rPr');
     const off = (nm) => { const e = rp ? findW(rp, nm) : null; if (!e) return ''; const v = wattr(e, 'val'); return v === '0' || v === 'false' || v === 'none' ? '' : (v || '1'); };
-    const k = rp ? [at(rp, 'rFonts', 'ascii'), at(rp, 'sz', 'val'), (at(rp, 'color', 'val') || '').toUpperCase().replace(/^(?:000000|AUTO)$/, ''), off('b'), off('i'), off('u'), at(rp, 'highlight', 'val'), at(rp, 'vertAlign', 'val'), at(rp, 'shd', 'fill')].join(',') : '';
+    const k = [(rp && at(rp, 'rFonts', 'ascii')) || def.font || '', (rp && at(rp, 'sz', 'val')) || def.sz || '', rp ? (at(rp, 'color', 'val') || '').toUpperCase().replace(/^(?:000000|AUTO)$/, '') : '', rp ? off('b') : '', rp ? off('i') : '', rp ? off('u') : '', rp ? at(rp, 'highlight', 'val').replace(/^none$/, '') : '', rp ? at(rp, 'vertAlign', 'val').replace(/^baseline$/, '') : '', rp ? at(rp, 'shd', 'fill').toUpperCase().replace(/^AUTO$/, '') : ''].join(',');
     if (runs.length && runs[runs.length - 1][0] === k) runs[runs.length - 1][1] += tx; else runs.push([k, tx]);
   }
   // so định dạng theo chữ, không theo dấu cách (dấu cách đầu/cuối mỗi đoạn chạy có thể nằm ở run bên cạnh)
@@ -6097,7 +6100,18 @@ function sigFmt(p, dbg) {
 }
 const HDG_LINE = /^(?:Hướng dẫn giải|Lời giải|Hướng dẫn chấm|Solution)\b/i;
 const PHAN_LINE = /^\s*PH[ẦA]N\s+(?:I{1,3}|IV)\b/i;
-function docBlocks(xml) {
+async function docDefs(buf) {
+  try {
+    const z = await JSZip.loadAsync(buf); const f = z.file('word/styles.xml'); if (!f) return {};
+    const x = await f.async('string');
+    const dd = (/<w:docDefaults>[\s\S]*?<\/w:docDefaults>/.exec(x) || [''])[0];
+    const nm = (/<w:style\b[^>]*w:type="paragraph"[^>]*w:default="1"[^>]*>[\s\S]*?<\/w:style>/.exec(x) || [''])[0];
+    const g = (src, re) => { const m = re.exec(src); return m ? m[1] : ''; };
+    const FR = /<w:rFonts\b[^>]*w:ascii="([^"]+)"/, SZ = /<w:sz\b[^>]*w:val="(\d+)"/;
+    return { font: g(nm, FR) || g(dd, FR) || '', sz: g(nm, SZ) || g(dd, SZ) || '20' };
+  } catch (e) { return {}; }
+}
+function docBlocks(xml, def) {
   const d = new DOMParser().parseFromString(xml, 'application/xml');
   const body = d.getElementsByTagNameNS(NS.w, 'body')[0];
   const blocks = new Map(), heads = [];
@@ -6113,7 +6127,7 @@ function docBlocks(xml) {
     }
     const ps = isW(el, 'p') ? [el] : Array.from(el.getElementsByTagNameNS(NS.w, 'p'));
     if (!blocks.has(key)) blocks.set(key, []);
-    for (const p of ps) blocks.get(key).push({ t: sigText(p), f: sigFmt(p) });
+    for (const p of ps) blocks.get(key).push({ t: sigText(p), f: sigFmt(p, false, def) });
   }
   return { blocks, heads };
 }
@@ -6171,7 +6185,7 @@ async function reformat0(arrayBuffer, ropt) {
   if (q0 && q0.k === 'hs') throw new Error('File đang mở là bản HỌC SINH. Chức năng này chỉ dùng cho file GIÁO VIÊN do công cụ xuất ra.');
   if (q0 && (q0.k === 'key' || q0.k === 'gvhs')) throw new Error('File đang mở là file xuất gộp (1 file). Chức năng này chỉ dùng cho file GIÁO VIÊN xuất riêng.');
   if (!r.order.length) throw new Error('Không nhận ra câu hỏi nào trong file đang mở.');
-  const oldB = docBlocks(oldXml);
+  const oldB = docBlocks(oldXml, await docDefs(arrayBuffer));
   let opt, inferred = false;
   if (q0 && q0.k === 'gv') {
     opt = { style: q0.st === 'm1' ? 'm1' : 'cur', p4: q0.p4 || 'keep', ma1: q0.ma1 || '', titleMode: 'keep', tende: '', loai: 'ĐỀ KIỂM TRA', mon: 'VẬT LÍ', lop: '', thoigian: '', ma: q0.ma || '', keepTag: true, hsBox: q0.hb !== 0, keepTheory: q0.th !== 0, noParts: !!q0.np, pageNum: q0.pn || 'xy' };
@@ -6187,7 +6201,7 @@ async function reformat0(arrayBuffer, ropt) {
   const multi = multiSec(qsB);
   bodyGroups(qsB).forEach((gr, gi) => gr.pq.forEach((q, i) => lab.set((NOPARTS && STYLE !== 'm1' ? 0 : gi + 1) + '.' + (i + 1), { id: q.id, text: 'Câu ' + (i + 1) + (gr.part ? ' (' + PN[gr.part] + (multi ? ', ' + secName(gr.sec || 0) : '') + ')' : ''), part: gr.part, sec: gr.sec || 0, n: i + 1 })));
   const newBuf = await g.gv.arrayBuffer();
-  const newB = docBlocks(await docXmlOf(newBuf));
+  const newB = docBlocks(await docXmlOf(newBuf), await docDefs(newBuf));
   const items = [];
   const at = (k) => lab.get(k) || { id: null, text: /^lt/.test(k) ? 'Phần lý thuyết' : k === 'đầu' ? 'Đầu đề' : /^h/.test(k) ? 'Tiêu đề phần' : 'Đoạn ' + k };
   // 1) thay đổi do định dạng lại
@@ -6680,7 +6694,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { reformat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText }, headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
+window.DeThi = { reformat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText, docDefs }, headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
 })();
 
 </script>
@@ -8039,7 +8053,7 @@ window.DeThi = { reformat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText }, hea
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản 2026.11.19-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản 2026.11.19-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
