@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.24-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.25-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4809,7 +4809,7 @@ function buildBody(qs, showAnswer, headerElems) {
   const secs = multi ? Array.from(new Set(qs.map((q) => q.sec || 0))).sort((a, b) => a - b) : [null];
   for (const sc of secs) {
   const sq = sc === null ? qs : qs.filter((q) => (q.sec || 0) === sc);
-  if (!FRAG && multi && sc > 0 && SEC_TH && SEC_TH[sc]) body.push(...qlfMark(SEC_TH[sc].map((e) => e.cloneNode(true)), 'LT'));
+  if (multi && sc > 0 && SEC_TH && SEC_TH[sc]) body.push(...qlfMark(SEC_TH[sc].map((e) => e.cloneNode(true)), 'LT'));
   // không chia phần: một dãy câu theo thứ tự đề gốc, đánh số 1 → hết, không có dòng tiêu đề phần
   const groups = NOPARTS && STYLE !== 'm1' ? [{ part: 0, pq: sq.slice() }] : [1, 2, 3, 4].map((p) => ({ part: p, pq: sq.filter((q) => q.part === p) }));
   for (const { part: gp, pq } of groups) {
@@ -5913,7 +5913,8 @@ async function generate(opt, ids, extra) {
   };
   if (extra.frag) {
     // định dạng câu chọn: chỉ phần thân các câu (không tiêu đề đề, tiêu đề phần, lý thuyết, số trang)
-    FRAG = extra.frag; SEC_TH = null;
+    // lý thuyết của dạng sau (nằm trong vùng chọn) vẫn giữ nguyên, không bị coi là lời giải
+    FRAG = extra.frag; SEC_TH = S.secTheory || null;
     try {
       const who = extra.frag.show ? 'GV' : 'HS';
       result[who] = await pack(buildBody(qs, !!extra.frag.show, []).map((e) => e.cloneNode(true)), null, 'frag');
@@ -6238,6 +6239,11 @@ async function docKind(buf) {
 // fopt: {part, start, show (true = bản GV), style, keepTag, hsBox}; vào: Flat OPC của vùng chọn (hoặc ArrayBuffer .docx)
 async function fragment(src, fopt) {
   fopt = fopt || {};
+  // vùng chọn lấy từ file do công cụ xuất (có dấu ẩn): đọc như "Định dạng lại file GV" (giữ in đậm chữ đen trong lời giải)
+  if (fopt.refmt) { REFMT = true; try { return await fragment0(src, fopt); } finally { REFMT = false; } }
+  return await fragment0(src, fopt);
+}
+async function fragment0(src, fopt) {
   const buf = typeof src === 'string' ? await flatToDocx(src) : src;
   const r = await load(buf, { forcePart: fopt.part || 0, noTitle: true });
   if (!r.order.length) throw new Error('Không nhận ra câu hỏi nào trong vùng đã chọn. Bôi đen từ dòng "Câu …" đến hết câu (gồm phương án, lời giải) rồi bấm lại.');
@@ -8133,7 +8139,7 @@ window.DeThi = { reformat, fragment, docKind, flatToDocx, docxToFlat, _rfDbg: { 
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản 2026.11.24-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản 2026.11.25-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
