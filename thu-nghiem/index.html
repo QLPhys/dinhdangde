@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.25-b1</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.25-b2</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -6243,6 +6243,8 @@ async function fragment(src, fopt) {
   if (fopt.refmt) { REFMT = true; try { return await fragment0(src, fopt); } finally { REFMT = false; } }
   return await fragment0(src, fopt);
 }
+// bản HS không cần đáp án: bỏ các nhắc thiếu đáp án
+const NOANS_RE = /^(?:Chưa đánh dấu đáp án|Chưa chọn đáp án|Chưa có hướng dẫn giải|Thiếu đáp án|Có ý chưa có đáp án|Chưa biết ý nào Đúng|Chưa có đáp án số)|chưa rõ đáp án/;
 async function fragment0(src, fopt) {
   const buf = typeof src === 'string' ? await flatToDocx(src) : src;
   const r = await load(buf, { forcePart: fopt.part || 0, noTitle: true });
@@ -6254,7 +6256,7 @@ async function fragment0(src, fopt) {
   const ooxml = await docxToFlat(await blob.arrayBuffer());
   const qs = r.order.map((id) => S.reg.get(id)).filter(Boolean);
   const n0 = Math.max(1, fopt.start | 0);
-  const info = r.views.map((v, i) => ({ n: n0 + i, part: v.part, ans: v.ans || (v.ansText || ''), hasSol: !!(v.sol && v.sol.length), warn: v.warn.filter((w) => !/^(?:Câu song ngữ|Đã tự|tự (?:đổi|gán|lấy|gộp))/i.test(w)) }));
+  const info = r.views.map((v, i) => ({ n: n0 + i, part: v.part, ans: v.ans || (v.ansText || ''), hasSol: !!(v.sol && v.sol.length), warn: v.warn.filter((w) => !/^(?:Câu song ngữ|Đã tự|tự (?:đổi|gán|lấy|gộp))/i.test(w) && (show || !NOANS_RE.test(w))) }));
   return { ooxml, n: qs.length, info, parts: Array.from(new Set(qs.map((q) => q.part))), hadAns: r.views.some((v) => v.ans || v.ansText || (v.sol && v.sol.length) || (v.tf && Object.keys(v.tf).length)) };
 }
 
@@ -8139,7 +8141,7 @@ window.DeThi = { reformat, fragment, docKind, flatToDocx, docxToFlat, _rfDbg: { 
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản 2026.11.25-b1 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản 2026.11.25-b2 (kênh Thử nghiệm)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }

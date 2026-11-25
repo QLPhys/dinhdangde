@@ -6,7 +6,7 @@
 :root{--ink:#1b2433;--mut:#5b6575;--blue:#0a6cff;--ok:#1f7a3a;--warn:#8a4b00;--err:#a3261f;--line:#cfd8e6}
 *{box-sizing:border-box} html,body{margin:0;height:100%;background:#fff;color:var(--ink);font:14px/1.45 'Segoe UI',system-ui,sans-serif}
 .w{padding:14px 16px;display:flex;flex-direction:column;gap:10px;height:100%}
-.t{font-size:14.5px} .k-ok .t{color:var(--ok);font-weight:600} .k-warn .t{color:var(--warn)} .k-err .t{color:var(--err)}
+.t{font-size:14.5px;white-space:pre-line} .k-ok .t{color:var(--ok);font-weight:600} .k-warn .t{color:var(--warn)} .k-err .t{color:var(--err)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button{font:inherit;border-radius:8px;border:1px solid var(--line);background:#fff;padding:7px 14px;cursor:pointer;min-height:36px}
 button.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
@@ -363,6 +363,17 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
     }
   }
   if (window.Office && Office.onReady) Office.onReady(render); else render();
+  // Ctrl+Shift+L: xem nhật ký lỗi của add-in (để tra lỗi)
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l'))) return;
+    e.preventDefault();
+    let a = [];
+    try { a = JSON.parse(localStorage.getItem('qlf.bugs') || '[]'); } catch (x) {}
+    const d = document.createElement('pre');
+    d.style.cssText = 'position:fixed;inset:0;margin:0;padding:8px;background:#fff;color:#000;font:11px/1.35 Consolas,monospace;white-space:pre-wrap;overflow:auto;z-index:99';
+    d.textContent = a.length ? a.join('\n') : '(nhật ký trống)';
+    document.body.appendChild(d);
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' || m === 'cx' || m === 'rf' ? { close: 1 } : { cancel: 1 }); });
 })();
 </script></body></html>

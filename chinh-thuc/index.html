@@ -899,7 +899,7 @@ body.side-wide .stage .step { padding-right: 330px; } body.side-wide .rawlist { 
     <div class="mid"><span class="aria" aria-live="polite" style="display:contents"><b id="dkStep">Bước 1/4</b><span id="dkName">Chọn đề thô</span></span><button class="rst" id="dkReset" type="button" hidden title="Bỏ tác vụ hiện tại và bắt đầu lại với đề khác">↺ Làm đề khác</button><button class="rst dkow" id="dkOw" type="button" hidden>💾 Ghi đè file gốc…</button></div>
     <button class="btn pri" id="dkNext" type="button">Tiếp tục ›</button>
   </nav>
-  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.19</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
+  <p class="foot"><b>QL Physics</b> — Your vision - Your future<br>Chạy hoàn toàn trên máy của bạn, file đề không gửi đi đâu.<br><span id="verTx">Phiên bản 2026.11.25</span> · <button type="button" class="lnkbtn" id="bugBtn">Báo lỗi (sao chép thông tin)</button></p>
 </main>
 
 <!-- hộp thoại: đổi / thêm câu -->
@@ -4680,6 +4680,7 @@ function ansBoxTbl(chars, labColor) {
   return t;
 }
 let SEC_TH = null;   // lý thuyết của từng dạng (mục 1, 2, …) khi giữ lý thuyết
+let FRAG = null;     // định dạng câu chọn trong Word: {start} = số câu đầu tiên; không tiêu đề phần, không lý thuyết
 const multiSec = (qs) => STYLE !== 'm1' && !NOPARTS && qs.some((q) => q.sec > 0);
 function secName(sc) {
   const els = sc ? (S.secTheory && S.secTheory[sc]) || [] : S.theory || [];
@@ -4814,10 +4815,13 @@ function buildBody(qs, showAnswer, headerElems) {
   for (const { part: gp, pq } of groups) {
     if (!pq.length) continue;
     const hk = (sc === null ? 0 : sc) + '.' + gp;
-    if (gp && STYLE !== 'm1' && S && S.review && S.headEls && S.headEls.has(hk)) body.push(qlfMark([S.headEls.get(hk).cloneNode(true)], 'BT')[0]);
+    if (FRAG) { /* câu chọn: không chèn tiêu đề phần */ }
+    else if (gp && STYLE !== 'm1' && S && S.review && S.headEls && S.headEls.has(hk)) body.push(qlfMark([S.headEls.get(hk).cloneNode(true)], 'BT')[0]);
     else if (gp) body.push(partTitle(gp, pq.length));
-    const newNo = new Map(); pq.forEach((q, i) => newNo.set(q, i + 1));
-    pq.forEach((q, i) => {
+    const n0 = FRAG ? Math.max(1, FRAG.start | 0) - 1 : 0;   // câu chọn: đánh tiếp theo câu đứng trước
+    const newNo = new Map(); pq.forEach((q, i) => newNo.set(q, n0 + i + 1));
+    pq.forEach((q, i0) => {
+      const i = n0 + i0;
       const part = q.part;
       if (q.cluster && !emitted.has(q.cluster)) {
         emitted.add(q.cluster);
@@ -4858,7 +4862,7 @@ function buildBody(qs, showAnswer, headerElems) {
     });
   }
   }
-  if (STYLE !== 'm1') body.push(makeP([lit('--------------------- HẾT ------------------------', { bold: true })], { jc: 'center', before: 120 }));
+  if (STYLE !== 'm1' && !FRAG) body.push(makeP([lit('--------------------- HẾT ------------------------', { bold: true })], { jc: 'center', before: 120 }));
   return body;
 }
 
@@ -5431,7 +5435,7 @@ async function load(arrayBuffer, lopt) {
   const wpi = wordParaIndex(body);
   pickCopy(body);
   const copyNote = COPYNOTE;
-  const parsed = parseRaw(body, questionNumKeys(numDoc), { num: makeNumbering(numDoc, stylesDoc), part: lopt.forcePart || 0, clu: lopt.clu || null, partAt: lopt.partAt || null });
+  const parsed = parseRaw(body, questionNumKeys(numDoc), { num: makeNumbering(numDoc, stylesDoc), part: lopt.forcePart || 0, clu: lopt.clu || null, partAt: lopt.partAt || null, noTitle: !!lopt.noTitle });
   const qs = parsed.qs;
   if (!qs.length) throw new Error('Không nhận ra câu hỏi nào. Đề cần có dạng "Câu 1: ..." hoặc câu tự đánh số.');
   const sect = Array.from(body.children).filter((c) => isW(c, 'sectPr')).pop() || null;
@@ -5907,7 +5911,15 @@ async function generate(opt, ids, extra) {
     for (const name of Object.keys(out)) if (name !== '[Content_Types].xml') z.file(name, out[name]);
     return await z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
   };
-  if (combo === 'gvhs') {
+  if (extra.frag) {
+    // định dạng câu chọn: chỉ phần thân các câu (không tiêu đề đề, tiêu đề phần, lý thuyết, số trang)
+    // lý thuyết của dạng sau (nằm trong vùng chọn) vẫn giữ nguyên, không bị coi là lời giải
+    FRAG = extra.frag; SEC_TH = S.secTheory || null;
+    try {
+      const who = extra.frag.show ? 'GV' : 'HS';
+      result[who] = await pack(buildBody(qs, !!extra.frag.show, []).map((e) => e.cloneNode(true)), null, 'frag');
+    } finally { FRAG = null; }
+  } else if (combo === 'gvhs') {
     // 1 file = bản HS rồi bản GV (đúng như 2 file xuất riêng) ghép lại; bản GV bắt đầu ở trang mới, số trang liên tục cả file
     const hsEls = breakAfter(mkElems(false));
     const gvEls = bumpIds(mkElems(true), 1);
@@ -6074,10 +6086,13 @@ function sigText(p) {
   walk(p);
   return t.replace(/[ \s]+/g, ' ').trim();
 }
-function sigFmt(p, dbg) {
+function sigFmt(p, dbg, def) {
+  def = def || {};
   const pPr = findW(p, 'pPr');
   const at = (el, nm, a) => { const e = el ? findW(el, nm) : null; return e ? (a ? wattr(e, a) : '1') || '' : ''; };
-  const pk = pPr ? [at(pPr, 'shd', 'fill'), at(pPr, 'jc', 'val'), at(pPr, 'ind', 'left'), at(pPr, 'ind', 'hanging'), at(pPr, 'ind', 'firstLine'), at(pPr, 'spacing', 'line'), at(pPr, 'spacing', 'before'), at(pPr, 'spacing', 'after')].join(',') : '';
+  // Word khi lưu bỏ các giá trị mặc định (lề 0, cách đoạn 0, phông/cỡ chữ của kiểu Normal): so theo giá trị có hiệu lực
+  const z = (v) => (v === '0' ? '' : v);
+  const pk = pPr ? [at(pPr, 'shd', 'fill').toUpperCase().replace(/^AUTO$/, ''), at(pPr, 'jc', 'val').replace(/^(?:left|start)$/, ''), z(at(pPr, 'ind', 'left')), z(at(pPr, 'ind', 'hanging')), z(at(pPr, 'ind', 'firstLine')), at(pPr, 'spacing', 'line'), z(at(pPr, 'spacing', 'before')), z(at(pPr, 'spacing', 'after'))].join(',') : ',,,,,,,';
   const runs = [];
   for (const r of Array.from(p.getElementsByTagNameNS(NS.w, 'r'))) {
     let up = r.parentNode, inM = false; while (up && up !== p) { if (up.namespaceURI === M_NS) { inM = true; break; } up = up.parentNode; }
@@ -6087,7 +6102,7 @@ function sigFmt(p, dbg) {
     if (!tx.trim()) continue;   // dấu cách: không tính định dạng
     const rp = findW(r, 'rPr');
     const off = (nm) => { const e = rp ? findW(rp, nm) : null; if (!e) return ''; const v = wattr(e, 'val'); return v === '0' || v === 'false' || v === 'none' ? '' : (v || '1'); };
-    const k = rp ? [at(rp, 'rFonts', 'ascii'), at(rp, 'sz', 'val'), (at(rp, 'color', 'val') || '').toUpperCase().replace(/^(?:000000|AUTO)$/, ''), off('b'), off('i'), off('u'), at(rp, 'highlight', 'val'), at(rp, 'vertAlign', 'val'), at(rp, 'shd', 'fill')].join(',') : '';
+    const k = [(rp && at(rp, 'rFonts', 'ascii')) || def.font || '', (rp && at(rp, 'sz', 'val')) || def.sz || '', rp ? (at(rp, 'color', 'val') || '').toUpperCase().replace(/^(?:000000|AUTO)$/, '') : '', rp ? off('b') : '', rp ? off('i') : '', rp ? off('u') : '', rp ? at(rp, 'highlight', 'val').replace(/^none$/, '') : '', rp ? at(rp, 'vertAlign', 'val').replace(/^baseline$/, '') : '', rp ? at(rp, 'shd', 'fill').toUpperCase().replace(/^AUTO$/, '') : ''].join(',');
     if (runs.length && runs[runs.length - 1][0] === k) runs[runs.length - 1][1] += tx; else runs.push([k, tx]);
   }
   // so định dạng theo chữ, không theo dấu cách (dấu cách đầu/cuối mỗi đoạn chạy có thể nằm ở run bên cạnh)
@@ -6097,7 +6112,18 @@ function sigFmt(p, dbg) {
 }
 const HDG_LINE = /^(?:Hướng dẫn giải|Lời giải|Hướng dẫn chấm|Solution)\b/i;
 const PHAN_LINE = /^\s*PH[ẦA]N\s+(?:I{1,3}|IV)\b/i;
-function docBlocks(xml) {
+async function docDefs(buf) {
+  try {
+    const z = await JSZip.loadAsync(buf); const f = z.file('word/styles.xml'); if (!f) return {};
+    const x = await f.async('string');
+    const dd = (/<w:docDefaults>[\s\S]*?<\/w:docDefaults>/.exec(x) || [''])[0];
+    const nm = (/<w:style\b[^>]*w:type="paragraph"[^>]*w:default="1"[^>]*>[\s\S]*?<\/w:style>/.exec(x) || [''])[0];
+    const g = (src, re) => { const m = re.exec(src); return m ? m[1] : ''; };
+    const FR = /<w:rFonts\b[^>]*w:ascii="([^"]+)"/, SZ = /<w:sz\b[^>]*w:val="(\d+)"/;
+    return { font: g(nm, FR) || g(dd, FR) || '', sz: g(nm, SZ) || g(dd, SZ) || '20' };
+  } catch (e) { return {}; }
+}
+function docBlocks(xml, def) {
   const d = new DOMParser().parseFromString(xml, 'application/xml');
   const body = d.getElementsByTagNameNS(NS.w, 'body')[0];
   const blocks = new Map(), heads = [];
@@ -6113,7 +6139,7 @@ function docBlocks(xml) {
     }
     const ps = isW(el, 'p') ? [el] : Array.from(el.getElementsByTagNameNS(NS.w, 'p'));
     if (!blocks.has(key)) blocks.set(key, []);
-    for (const p of ps) blocks.get(key).push({ t: sigText(p), f: sigFmt(p) });
+    for (const p of ps) blocks.get(key).push({ t: sigText(p), f: sigFmt(p, false, def) });
   }
   return { blocks, heads };
 }
@@ -6158,6 +6184,82 @@ function inferOpt(r, oldB) {
     keepTag: true, hsBox: true, keepTheory: true, noParts: !oldB.heads.length, pageNum: 'xy',
   };
 }
+// ---- "Định dạng câu chọn" (add-in): Word đưa vùng chọn dạng Flat OPC (pkg:package), trả lại Flat OPC để chèn thay
+const PKG_NS = 'http://schemas.microsoft.com/office/2006/xmlPackage';
+const b64ToU8 = (b) => { const bin = atob(String(b).replace(/\s+/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+const u8ToB64 = (u) => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+async function flatToDocx(flat) {
+  const d = new DOMParser().parseFromString(flat, 'application/xml');
+  if (d.getElementsByTagName('parsererror').length) throw new Error('Không đọc được vùng chọn từ Word.');
+  const z = new JSZip(), ov = [];
+  for (const pt of Array.from(d.getElementsByTagNameNS(PKG_NS, 'part'))) {
+    const name = (pt.getAttributeNS(PKG_NS, 'name') || pt.getAttribute('pkg:name') || '').replace(/^\//, '');
+    const ct = pt.getAttributeNS(PKG_NS, 'contentType') || pt.getAttribute('pkg:contentType') || '';
+    if (!name) continue;
+    const xd = Array.from(pt.children).find((c) => c.localName === 'xmlData'), bd = Array.from(pt.children).find((c) => c.localName === 'binaryData');
+    if (xd) { const el = Array.from(xd.children)[0]; if (!el) continue; z.file(name, '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + new XMLSerializer().serializeToString(el)); }
+    else if (bd) z.file(name, b64ToU8(bd.textContent || ''));
+    else continue;
+    ov.push('<Override PartName="/' + name.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" ContentType="' + ct.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '"/>');
+  }
+  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' + ov.join('') + '</Types>');
+  return await z.generateAsync({ type: 'arraybuffer' });
+}
+async function docxToFlat(buf) {
+  const z = await JSZip.loadAsync(buf);
+  const ctx = await z.file('[Content_Types].xml').async('string');
+  const cd = new DOMParser().parseFromString(ctx, 'application/xml');
+  const defs = new Map(), ovs = new Map();
+  for (const e of Array.from(cd.documentElement.children)) {
+    if (e.localName === 'Default') defs.set((e.getAttribute('Extension') || '').toLowerCase(), e.getAttribute('ContentType'));
+    else if (e.localName === 'Override') ovs.set((e.getAttribute('PartName') || '').replace(/^\//, ''), e.getAttribute('ContentType'));
+  }
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const parts = [];
+  for (const name of Object.keys(z.files)) {
+    const f = z.files[name];
+    if (f.dir || name === '[Content_Types].xml' || /^docProps\//.test(name)) continue;
+    const ct = ovs.get(name) || defs.get((name.split('.').pop() || '').toLowerCase()) || 'application/octet-stream';
+    if (/xml$/i.test(ct) || /\.(?:xml|rels)$/i.test(name)) {
+      let x = await f.async('string');
+      x = x.replace(/^﻿/, '').replace(/^<\?xml[^>]*\?>\s*/, '');
+      if (name === 'word/document.xml') x = x.replace(/<w:sectPr\b[\s\S]*?<\/w:sectPr>(\s*<\/w:body>)/, '$1');   // bỏ thiết lập trang của bản tạm
+      parts.push('<pkg:part pkg:name="/' + esc(name) + '" pkg:contentType="' + esc(ct) + '"' + (/relationships/.test(ct) ? ' pkg:padding="256"' : '') + '><pkg:xmlData>' + x + '</pkg:xmlData></pkg:part>');
+    } else {
+      const u = await f.async('uint8array');
+      parts.push('<pkg:part pkg:name="/' + esc(name) + '" pkg:contentType="' + esc(ct) + '" pkg:compression="store"><pkg:binaryData>' + u8ToB64(u) + '</pkg:binaryData></pkg:part>');
+    }
+  }
+  return '<?xml version="1.0" standalone="yes"?>\n<?mso-application progid="Word.Document"?>\n<pkg:package xmlns:pkg="' + PKG_NS + '">' + parts.join('') + '</pkg:package>';
+}
+// dấu ẩn QLF của file đang mở ({k: 'gv'|'hs'|'key'|'gvhs', st: 'cur'|'m1', …}) hoặc null (đề thô / chưa có dấu)
+async function docKind(buf) {
+  try { const z = await JSZip.loadAsync(buf); const f = z.file('word/settings.xml'); if (!f) return null; const t = getDocVar({ 'word/settings.xml': await f.async('uint8array') }, QLF_VAR); return t ? JSON.parse(t) : null; } catch (e) { return null; }
+}
+// fopt: {part, start, show (true = bản GV), style, keepTag, hsBox}; vào: Flat OPC của vùng chọn (hoặc ArrayBuffer .docx)
+async function fragment(src, fopt) {
+  fopt = fopt || {};
+  // vùng chọn lấy từ file do công cụ xuất (có dấu ẩn): đọc như "Định dạng lại file GV" (giữ in đậm chữ đen trong lời giải)
+  if (fopt.refmt) { REFMT = true; try { return await fragment0(src, fopt); } finally { REFMT = false; } }
+  return await fragment0(src, fopt);
+}
+// bản HS không cần đáp án: bỏ các nhắc thiếu đáp án
+const NOANS_RE = /^(?:Chưa đánh dấu đáp án|Chưa chọn đáp án|Chưa có hướng dẫn giải|Thiếu đáp án|Có ý chưa có đáp án|Chưa biết ý nào Đúng|Chưa có đáp án số)|chưa rõ đáp án/;
+async function fragment0(src, fopt) {
+  const buf = typeof src === 'string' ? await flatToDocx(src) : src;
+  const r = await load(buf, { forcePart: fopt.part || 0, noTitle: true });
+  if (!r.order.length) throw new Error('Không nhận ra câu hỏi nào trong vùng đã chọn. Bôi đen từ dòng "Câu …" đến hết câu (gồm phương án, lời giải) rồi bấm lại.');
+  const show = fopt.show !== false;
+  const opt = { style: fopt.style === 'm1' ? 'm1' : 'cur', titleMode: 'keep', tende: 'x', loai: '', mon: '', lop: '', thoigian: '', ma: '', keepTag: fopt.keepTag !== false, hsBox: fopt.hsBox !== false, keepTheory: false, pageNum: 'off', p4: 'keep' };
+  const g = await generate(opt, r.order, { only: [show ? 'GV' : 'HS'], frag: { start: fopt.start || 1, show } });
+  const blob = show ? g.gv : g.hs;
+  const ooxml = await docxToFlat(await blob.arrayBuffer());
+  const qs = r.order.map((id) => S.reg.get(id)).filter(Boolean);
+  const n0 = Math.max(1, fopt.start | 0);
+  const info = r.views.map((v, i) => ({ n: n0 + i, part: v.part, ans: v.ans || (v.ansText || ''), hasSol: !!(v.sol && v.sol.length), warn: v.warn.filter((w) => !/^(?:Câu song ngữ|Đã tự|tự (?:đổi|gán|lấy|gộp))/i.test(w) && (show || !NOANS_RE.test(w))) }));
+  return { ooxml, n: qs.length, info, parts: Array.from(new Set(qs.map((q) => q.part))), hadAns: r.views.some((v) => v.ans || v.ansText || (v.sol && v.sol.length) || (v.tf && Object.keys(v.tf).length)) };
+}
+
 let REFMT = false;   // đang "Định dạng lại file GV"
 async function reformat(arrayBuffer, ropt) {
   REFMT = true;
@@ -6171,7 +6273,7 @@ async function reformat0(arrayBuffer, ropt) {
   if (q0 && q0.k === 'hs') throw new Error('File đang mở là bản HỌC SINH. Chức năng này chỉ dùng cho file GIÁO VIÊN do công cụ xuất ra.');
   if (q0 && (q0.k === 'key' || q0.k === 'gvhs')) throw new Error('File đang mở là file xuất gộp (1 file). Chức năng này chỉ dùng cho file GIÁO VIÊN xuất riêng.');
   if (!r.order.length) throw new Error('Không nhận ra câu hỏi nào trong file đang mở.');
-  const oldB = docBlocks(oldXml);
+  const oldB = docBlocks(oldXml, await docDefs(arrayBuffer));
   let opt, inferred = false;
   if (q0 && q0.k === 'gv') {
     opt = { style: q0.st === 'm1' ? 'm1' : 'cur', p4: q0.p4 || 'keep', ma1: q0.ma1 || '', titleMode: 'keep', tende: '', loai: 'ĐỀ KIỂM TRA', mon: 'VẬT LÍ', lop: '', thoigian: '', ma: q0.ma || '', keepTag: true, hsBox: q0.hb !== 0, keepTheory: q0.th !== 0, noParts: !!q0.np, pageNum: q0.pn || 'xy' };
@@ -6187,7 +6289,7 @@ async function reformat0(arrayBuffer, ropt) {
   const multi = multiSec(qsB);
   bodyGroups(qsB).forEach((gr, gi) => gr.pq.forEach((q, i) => lab.set((NOPARTS && STYLE !== 'm1' ? 0 : gi + 1) + '.' + (i + 1), { id: q.id, text: 'Câu ' + (i + 1) + (gr.part ? ' (' + PN[gr.part] + (multi ? ', ' + secName(gr.sec || 0) : '') + ')' : ''), part: gr.part, sec: gr.sec || 0, n: i + 1 })));
   const newBuf = await g.gv.arrayBuffer();
-  const newB = docBlocks(await docXmlOf(newBuf));
+  const newB = docBlocks(await docXmlOf(newBuf), await docDefs(newBuf));
   const items = [];
   const at = (k) => lab.get(k) || { id: null, text: /^lt/.test(k) ? 'Phần lý thuyết' : k === 'đầu' ? 'Đầu đề' : /^h/.test(k) ? 'Tiêu đề phần' : 'Đoạn ' + k };
   // 1) thay đổi do định dạng lại
@@ -6680,7 +6782,7 @@ async function buildSet(items, cfg, onProg) {
   return { zip, zipName: root + '.zip', reports, hsAll, gvs };
 }
 
-window.DeThi = { reformat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText }, headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
+window.DeThi = { reformat, fragment, docKind, flatToDocx, docxToFlat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText, docDefs }, headingPart, clusterInfo, SOLSEC_RE, QSTART_T, ans3FromSol, inspect, setSummary, buildSet, mergeDocx, load, generate, quick, reset, roundPlan, roundTxt, fit4Plan, edit: editQ, revert: revertQ, preview: previewQ, replace: replaceQ, add: addQ, cluster: applySugg, noSugg, setTag, setTags, tagState, warnKind, ackKey, ack: ackQ };
 })();
 
 </script>
@@ -8039,7 +8141,7 @@ window.DeThi = { reformat, _rfDbg: { docBlocks, docXmlOf, sigFmt, sigText }, hea
   window.addEventListener('error', (e) => bugLog('Lỗi: ' + (e && e.message ? e.message : e)));
   window.addEventListener('unhandledrejection', (e) => bugLog('Lỗi: ' + (e && e.reason && e.reason.message ? e.reason.message : e && e.reason)));
   $('bugBtn').addEventListener('click', async () => {
-    const info = ['Công cụ định dạng đề — phiên bản 2026.11.19 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
+    const info = ['Công cụ định dạng đề — phiên bản 2026.11.25 (kênh Chính thức)', 'File đề: ' + (rawName ? rawName + '.docx' : '(chưa chọn)'),
       'Trình duyệt: ' + navigator.userAgent, 'Bước: ' + (typeof cur !== 'undefined' ? cur + 1 : '?'),
       'Lỗi gần đây:', ...((window.__bugs || []).length ? window.__bugs : ['(không có)']), '', 'Mô tả lỗi của thầy/cô: '].join('\n');
     let ok = false; try { await navigator.clipboard.writeText(info); ok = true; } catch (e) { /* bỏ qua */ }
