@@ -97,6 +97,7 @@ small, .muted { color: var(--ink2); }
         <li>Nút riêng <b>Định dạng lại GV</b> trên ribbon (trước đây phải vào Xuất GV + HS mới có).</li>
         <li>Báo cáo Định dạng lại file GV không còn báo nhầm "đổi định dạng" ở mọi câu (Word bỏ các giá trị mặc định khi lưu file).</li>
         <li><b>Cần cài lại một lần</b> để có nút mới: đóng Word, chạy lại CaiDat_AddIn_Word.cmd (QL_Format) hoặc CaiDat_PhongEm.Phys.cmd. Chưa cài lại thì các chức năng cũ vẫn chạy và tự cập nhật như thường.</li>
+        <li>Cài lại rồi mà thẻ vẫn chưa có nút mới (Word còn giữ bản cũ trong bộ nhớ tạm): File → Options → Trust Center → Trust Center Settings… → Trusted Add-in Catalogs, tích ô <i>"Next time Office starts, clear all previously-started web add-ins cache"</i> → OK; đóng hết Word, mở lại; rồi Home → Add-ins → More Add-ins → SHARED FOLDER → chọn QL_Format (và PhongEm.Phys) → Add.</li>
       </ul>
       <h3>Chính thức · v2026.11.19 (19/11) · Định dạng lại file GV; nhận đúng tên điểm A, B, C, D; câu tiếng Anh / song ngữ</h3>
       <ul>
