@@ -363,6 +363,17 @@ body.sym .st{min-height:14px;font-size:11px} body.sym textarea{min-height:90px;f
     }
   }
   if (window.Office && Office.onReady) Office.onReady(render); else render();
+  // Ctrl+Shift+L: xem nhật ký lỗi của add-in (để tra lỗi)
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l'))) return;
+    e.preventDefault();
+    let a = [];
+    try { a = JSON.parse(localStorage.getItem('qlf.bugs') || '[]'); } catch (x) {}
+    const d = document.createElement('pre');
+    d.style.cssText = 'position:fixed;inset:0;margin:0;padding:8px;background:#fff;color:#000;font:11px/1.35 Consolas,monospace;white-space:pre-wrap;overflow:auto;z-index:99';
+    d.textContent = a.length ? a.join('\n') : '(nhật ký trống)';
+    document.body.appendChild(d);
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m !== 'ans') send(m === 'sym' || m === 'scan' || m === 'cx' || m === 'rf' ? { close: 1 } : { cancel: 1 }); });
 })();
 </script></body></html>
